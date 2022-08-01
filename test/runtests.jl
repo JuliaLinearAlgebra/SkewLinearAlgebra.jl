@@ -3,7 +3,7 @@ import .SkewLinearAlgebra as SLA
 using Test
 
 @testset "SkewLinearAlgebra.jl" begin
-    for n in [2,10,200]
+    for n in [2,20,200]
         A=randn(n,n)
         for i=1:n
             A[i,i]=0
@@ -29,6 +29,23 @@ using Test
         @test (A*2).data ==A.data*2
         @test (2*A).data ==2*A.data
         @test (A/2).data == A.data/2
+        C=A+A
+        @test C.data==A.data+A.data
+        B=SLA.SkewSymmetric(B)
+        C=A-B
+        @test C.data==-A.data
+        B=triu(A)
+        @test B≈triu(A.data)
+        B=tril(A,n-2)
+        @test B≈tril(A.data,n-2)
+        k=dot(A,A)
+        B=Matrix(A)
+        for i=1:n
+            for j=1:n
+                B[i,j]*=B[i,j]
+            end
+        end
+        @test k≈sum(B)
 
         if n>1
             @test getindex(A,2,1)==A.data[2,1]
@@ -71,7 +88,7 @@ using Test
     end
 end
 @testset "hessenberg.jl" begin
-    for n in [2,10,200]
+    for n in [2,20,200]
         A=randn(n,n)
         for i=1:n
             A[i,i]=0
@@ -89,9 +106,19 @@ end
             @test Q≈HB.Q
         end
     end
+    """
+    A=zeros(4,4)
+    A[2:4,1]=ones(3)
+    A[1,2:4]=-ones(3)
+    A=SLA.SkewSymmetric(A)
+    B=Matrix(A)
+    HA=hessenberg(A)
+    HB=hessenberg(B)
+    @test Matrix(HA.H)≈Matrix(HB.H)
+    """
 end
 @testset "eigen.jl" begin
-    for n in [2,10,200]
+    for n in [2,20,200]
         A=randn(n,n)
         for i=1:n
             A[i,i]=0
@@ -109,7 +136,7 @@ end
         @test valA ≈ valB
         valA, Qr, Qim = eigen(A)
         valB,Q=eigen(B)
-        Q2=Qr+Qim.*1im
+        Q2 = Qr + Qim.*1im
         @test real(Q2*diagm(valA)*adjoint(Q2))≈A
         valA=imag(valA)
         valB=imag(valB)
@@ -120,7 +147,7 @@ end
 end
 @testset "exp.jl" begin
 
-    for n in [2,10,200]
+    for n in [2,20,200]
         A=randn(n,n)
         for i=1:n
             A[i,i]=0

@@ -6,19 +6,27 @@ and types for skew-symmetricmatrices, i.e A=-A^T
 module SkewLinearAlgebra
 
 import LinearAlgebra as LA
-import Base: \, /, *, ^, +, -, ==, copy
+import LinearAlgebra: similar,require_one_based_indexing, BlasReal,BlasFloat, 
+        checksquare,transpose, adjoint,real,imag,dot,tr,tril,
+        tril!,triu,triu!,mul!,axpy!,norm,eigtype,eigvals!,eigvals,eigen,eigen!,
+        eigmax,eigmin,
+        hessenberg,hessenberg!,Tridiagonal,UnitLowerTriangular,UpperHessenberg,Diagonal,Matrix,diagm,Array,SymTridiagonal
+import LinearAlgebra.BLAS: gemv!,ger!
+import Base: \, /, *, ^, +, -, ==, copy,copyto!, size,setindex!,getindex,display,conj,conj!,similar,
+        isreal
 export 
     #Types
     SkewSymmetric,
     SkewHessenberg,
     #functions
-    isskewsymmetric
+    isskewsymmetric,
+    getQ
 
 struct SkewSymmetric{T<:Real,S<:AbstractMatrix{<:T}} <: AbstractMatrix{T}
     data::S
 
     function SkewSymmetric{T,S}(data) where {T,S<:AbstractMatrix{<:T}}
-        LA.require_one_based_indexing(data)
+        require_one_based_indexing(data)
         new{T,S}(data)  
     end
 end
@@ -30,8 +38,8 @@ build as a skew-symmetric matrix. 'isskewsymmetric(A)' allows to verify skew-sym
 """
 
 function SkewSymmetric(A::AbstractMatrix)
-    LA.checksquare(A)
-    n=LA.size(A,1)
+    checksquare(A)
+    n=size(A,1)
     n>1 || throw("Skew-symmetric cannot be of size  1x1")
     return skewsymmetric_type(typeof(A))(A)
 end
@@ -57,115 +65,119 @@ function skewsymmetric_type(::Type{T}) where {S<:AbstractMatrix, T<:AbstractMatr
 end
 skewsymmetric_type(::Type{T}) where {T<:Number} = throw("Number cannot be skewsymmetric")
 
+"""
+    getindex(A,i,j)
+
+Returns the value A(i,j)
+"""
+
 @inline function Base.getindex(A::SkewSymmetric, i::Integer, j::Integer)
     @boundscheck checkbounds(A, i, j)
     return @inbounds A.data[i,j]
 end 
 
+"""
+    setindex!(A,v,i,j)
+Set A(i,j)=v and A(j,i)=-v to conserve skew-symmetry
+"""
+
 function Base.setindex!(A::SkewSymmetric, v, i::Integer, j::Integer)
     i!=j || throw("Cannot modify zero diagonal element")
-    Base.setindex!(A.data, v, i, j)
-    Base.setindex!(A.data, -v, j, i)
+    setindex!(A.data, v, i, j)
+    setindex!(A.data, -v, j, i)
 end
 
-Base.similar(A::SkewSymmetric, ::Type{T}) where {T} = SkewSymmetric(LA.similar(parent(A), T))
-Base.similar(A::SkewSymmetric) = SkewSymmetric(LA.similar(parent(A)))
+similar(A::SkewSymmetric, ::Type{T}) where {T} = SkewSymmetric(LA.similar(parent(A), T))
+similar(A::SkewSymmetric) = SkewSymmetric(similar(parent(A)))
 
 # Conversion
 function Matrix(A::SkewSymmetric)
-    B =copy(A.data)
+    B = copy(A.data)
     return B
 end
 Array(A::SkewSymmetric) = convert(Matrix, A)
 
-Base.parent(A::SkewSymmetric) = A.data
+parent(A::SkewSymmetric) = A.data
 SkewSymmetric{T,S}(A::SkewSymmetric{T,S}) where {T,S<:AbstractMatrix{T}} = A
 SkewSymmetric{T,S}(A::SkewSymmetric) where {T,S<:AbstractMatrix{T}} = SkewSymmetric{T,S}(convert(S,A.data))
-#AbstractMatrix{T}(A::SkewSymmetric) where {T} = SkewSymmetric(convert(AbstractMatrix{T}, A.data))
+Base.AbstractMatrix{T}(A::SkewSymmetric) where {T} = SkewSymmetric(convert(AbstractMatrix{T}, A.data))
 
-Base.copy(A::SkewSymmetric{T,S}) where {T,S} = (B = Base.copy(A.data); SkewSymmetric{T,typeof(B)}(B))
+copy(A::SkewSymmetric{T,S}) where {T,S} = (B = Base.copy(A.data); SkewSymmetric{T,typeof(B)}(B))
 
-function Base.copyto!(dest::SkewSymmetric, src::SkewSymmetric)
-    Base.copyto!(dest.data, src.data)
+function copyto!(dest::SkewSymmetric, src::SkewSymmetric)
+    copyto!(dest.data, src.data)
     return dest
 end
-Base.size(A::SkewSymmetric,n) = size(A.data,n)
-Base.size(A::SkewSymmetric) = size(A.data)
-# fill[stored]!
-fill!(A::SkewSymmetric,uplo::Char, x) = fillstored!(A,uplo, x)
-function fillstored!(A::SkewSymmetric{T},uplo::Char, x) where T
-    xT = convert(T, x)
-    if uplo != 'U' &&uplo !='L'
-        throw(ArgumentError("uplo must be 'U' or 'L'"))
-    end
-    if uplo == 'U'
-        LA.fillband!(A.data, xT, 0, size(A,2)-1)
-        LA.fillband!(-A.data, xT, size(A,2)-1,0)
-    else # A.uplo == 'L'
-        LA.fillband!(A.data, xT, 1-size(A,1), 0)
-        LA.fillband!(-A.data, xT,0, 1-size(A,1))
-    end
-    return A
-end
+size(A::SkewSymmetric,n) = size(A.data,n)
+size(A::SkewSymmetric) = size(A.data)
+
+
+"""
+    isskewsymmetric(A)
+
+Verifies skew-symmetry of a matrix
+"""
 
 function isskewsymmetric(A::SkewSymmetric) 
     n=size(A,1)
     for i=1:n
-        Base.getindex(A,i,i) == 0 || return false
+        getindex(A,i,i) == 0 || return false
         for j=1:i-1
-            Base.getindex(A,i,j) == -Base.getindex(A,j,i) ||return false
+            getindex(A,i,j) == -getindex(A,j,i) ||return false
         end
     end
     return true
 end
 
-#adjoint(A::Hermitian) = A
-LA.transpose(A::SkewSymmetric) = SkewSymmetric(-A.data)
-LA.adjoint(A::SkewSymmetric{<:Real}) = SkewSymmetric(-A.data)
-LA.adjoint(A::SkewSymmetric) = SkewSymmetric(-A.data)
-LA.real(A::SkewSymmetric{<:Real}) = A
-LA.real(A::SkewSymmetric) = A
-LA.imag(A::SkewSymmetric) = SkewSymmetric(LA.imag(A.data))
+#Classic operators on a matrix
+Base.isreal(A::SkewSymmetric)=true
+transpose(A::SkewSymmetric) = SkewSymmetric(-A.data)
+adjoint(A::SkewSymmetric{<:Real}) = SkewSymmetric(-A.data)
+adjoint(A::SkewSymmetric) = SkewSymmetric(-A.data)
+real(A::SkewSymmetric{<:Real}) = A
+real(A::SkewSymmetric) = A
+imag(A::SkewSymmetric) = SkewSymmetric(LA.imag(A.data))
 
-Base.copy(A::SkewSymmetric) =SkewSymmetric(Base.copy(parent(A)))
-Base.display(A::SkewSymmetric) = display(A.data)
-Base.conj(A::SkewSymmetric) = typeof(A)(A.data)
-Base.conj!(A::SkewSymmetric) = typeof(A)(A.data)
-LA.tr(A::SkewSymmetric) = 0
+copy(A::SkewSymmetric) =SkewSymmetric(Base.copy(parent(A)))
+display(A::SkewSymmetric) = display(A.data)
+conj(A::SkewSymmetric) = typeof(A)(A.data)
+conj!(A::SkewSymmetric) = typeof(A)(A.data)
+tr(A::SkewSymmetric) = 0
 
 
+tril!(A::SkewSymmetric) = tril!(A.data)
+tril(A::SkewSymmetric)  = tril(A.data)
+triu!(A::SkewSymmetric) = triu!(A.data)
+triu(A::SkewSymmetric)  = triu(A.data)
+tril!(A::SkewSymmetric,k::Integer) = tril!(A.data,k)
+tril(A::SkewSymmetric,k::Integer)  = tril(A.data,k)
+triu!(A::SkewSymmetric,k::Integer) = triu!(A.data,k)
+triu(A::SkewSymmetric,k::Integer)  = triu(A.data,k)
 
-for (T, trans, real) in [(:SkewSymmetric, :transpose, :identity)]
-    @eval begin
-        function dot(A::$T, B::$T)
-            n = size(A, 2)
-            if n != size(B, 2)
-                throw(DimensionMismatch("A has dimensions $(size(A)) but B has dimensions $(size(B))"))
-            end
 
-            dotprod = zero(dot(first(A), first(B)))
-            @inbounds for j in 1:n
-                for i in 1:(j - 1)
-                    dotprod += 2 * $real(LA.dot(A.data[i, j], B.data[i, j]))
-                end
-            end
-            
-            return dotprod
+function LA.dot(A::SkewSymmetric, B::SkewSymmetric)
+    n = size(A, 2)
+    if n != size(B, 2)
+        throw(DimensionMismatch("A has dimensions $(size(A)) but B has dimensions $(size(B))"))
+    end
+    dotprod = zero(dot(first(A), first(B)))
+    @inbounds for j = 1:n
+        for i = 1:(j - 1)
+            dotprod += 2 *(dot(A.data[i, j], B.data[i, j]))
         end
     end
+    
+    return dotprod
 end
 
 Base. -(A::SkewSymmetric) = SkewSymmetric(- A.data)
 
 
-
-
-#for f in (:+, :-)
-#    @eval begin
-#        $f(A::SymTridiagonal, B::Symmetric) = Symmetric($f(A, B.data), sym_uplo(B.uplo))
-#        $f(A::Symmetric, B::SymTridiagonal) = Symmetric($f(A.data, B), sym_uplo(A.uplo))
-#   end
-#end
+for f in (:+, :-)
+    @eval begin
+        $f(A::SkewSymmetric, B::SkewSymmetric) = SkewSymmetric($f(A.data, B.data))
+   end
+end
 
 ## Matvec
 @inline function LA.mul!(y::StridedVector{T}, A::SkewSymmetric{T,<:StridedMatrix}, x::StridedVector{T},
@@ -219,7 +231,7 @@ function LA.dot(x::AbstractVector, A::SkewSymmetric, y::AbstractVector)
     @inbounds for j = 1:length(y)
         @simd for i = 1:j-1
             Aij = data[i,j]
-            r += LA.dot(x[i], Aij, y[j]) + LA.dot(x[j], -Aij, y[i])
+            r += dot(x[i], Aij, y[j]) + dot(x[j], -Aij, y[i])
         end
     end
     
