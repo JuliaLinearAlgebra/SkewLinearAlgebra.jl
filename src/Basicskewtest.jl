@@ -18,8 +18,10 @@ for i=1:n
         
     end
 end
-B=copy(A)
+B=Hermitian(copy(A).*1im)
+C=Symmetric(A)
 A=SLA.SkewSymmetric(A)
+
 #B=SLA.SkewSymmetric(B)
 #B=SLA.copyto!(B,A)
 #B=SLA.Matrix(A)
@@ -48,9 +50,11 @@ A=SLA.SkewSymmetric(A)
 #B=B.*1im
 #B=Hermitian(B)
 #B=Symmetric(B)
-@btime hessenberg!(A) setup=(A = copy($A))
-@btime hessenberg(B)
-
+@btime hessenberg(A) 
+"""
+@btime eigen(B)
+@btime eigen(C)
+"""
 #@btime exp(B) 
 #@btime exp(A) 
 a=1

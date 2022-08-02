@@ -117,6 +117,8 @@ end
     mul!(Q,W,Yt)
     return
 end
+
+
 @views function skeweigen!(S::SkewSymmetric)
     n = size(S.data,1)
     tau,E = sktrd!(S)
@@ -129,80 +131,46 @@ end
     vals .*= -1
     Qdiag = trisol.vectors
 
-    Qr   = similar(A,(n+1)÷2,n)
-    Qim  = similar(A,n÷2,n)
+    Qr   = similar(A,n,(n+1)÷2)
+    Qim  = similar(A,n,n÷2)
     temp = similar(A,n,n)
     
     Q  = diagm(ones(n))
-    Q1 = similar(A,n,(n+1)÷2)
-    Q2 = similar(A,n,n÷2)
+    Q1 = similar(A,(n+1)÷2,n)
+    Q2 = similar(A,n÷2,n)
     
     
     for i=1:n-2
         t = tau[n-i-1]
         leftHouseholder!(Q[n-i:n,n-i-1:n], A[n-i:n,n-i-1], s[n-i-1:n], t)
     end
-    
-    """
-    #T = similar(A,2,2)
-    #G = similar(A,n-1,2)
-    #F = similar(A,n-1,2)
-    #temp2 = similar(A,2,n-1)
-    oldi=0
-    @inbounds for i=1:2:n-3
-            k=n-i-1
-            t1 = tau[k]
-            t2=tau[k-1]
-            T[1,1] = -t2
-            T[2,2] = -t1
-            T[1,2] = t1*t2/2
-            T[2,1] = t1*t2/2
-            G[1:i+2,:] = A[k:n,k-1:k]
-            G[1,1] = 1
-            G[2,2] = 1
-            
-            mul!(F[1:i+2,:],G[1:i+2,:],T)
-            mul!(temp2[:,1:i+2],transpose(G[1:i+2,:]),Q[k:n,k:n])
-            mul!(temp[k:n,k:n],F[1:i+2,:],temp2[:,1:i+2])
-            @simd for d=k:n
-                @simd for j=k:n
-                    @inbounds Q[j,d] -= temp[j,d]
-                end
-            end
-            
-            oldi=i
-            #leftHouseholder!(Q[n-i:n,n-i-1:n],E[1:i+1],s[n-i-1:n],t) 
+    @inbounds for j=1:n
+        @simd for i=1:2:n-1
+            k=(i+1)÷2
+            Q1[k,j] = Qdiag[i,j]
+            Q2[k,j] = Qdiag[i+1,j]
+        end   
     end
-    if oldi==n-4
-        t=tau[1]
-        E=A[2:n,1]
-        E[1]=1
-        leftHouseholder!(Q[2:n,1:n],E,s[1:n],t)
-    end
-    """
-    """
-    WYform(A,tau,Q[2:n,2:n])
-    Q += I
-    """
 
     c = 1
     @inbounds for i=1:2:n-1
         k1 = (i+1)÷2
-        Qr[k1,:] = Qdiag[i,:]
-        Qr[k1,:] .*=c
-        Qim[k1,:] = Qdiag[i+1,:]
-        Qim[k1,:] .*=c
-        Q1[:,(i+1)÷2] = Q[:,i]
-        Q2[:,(i+1)÷2] = Q[:,i+1]
+        @simd for j=1:n
+            Qr[j,k1] = Q[j,i]*c
+            Qim[j,k1] = Q[j,i+1]*c
+        end
         c *= (-1)
     end
+    
     if n%2==1
-        Qr[(n+1)÷2,:] = Qdiag[n,:]
-        Qr[(n+1)÷2,:] .*= c
-        Q1[:,(n+1)÷2] = Q[:,n]
+        k=(n+1)÷2
+        @simd for j=1:n
+            Qr[j,k] = Q[j,n]*c
+        end
+        Q1[k,:] = Qdiag[n,:]
     end
-    mul!(temp,Q1,Qr) #temp is Qr
-    mul!(Qdiag,Q2,Qim) #Qdiag is Qim
+    mul!(temp,Qr,Q1) #temp is Qr
+    mul!(Qdiag,Qim,Q2) #Qdiag is Qim
     
     return vals,temp,Qdiag
 

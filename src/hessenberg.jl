@@ -64,23 +64,20 @@ Returns Q.
 end
 
 @views function householder_reflector!(x,v,n)
-    v[2:n] = x[2:n]
-    v .*= 1/(x[1]+sign(x[1])*norm(x))
+    div=1/(x[1]+sign(x[1])*norm(x))
     v[1] = 1
+    @simd for j=2:n
+        @inbounds v[j] = x[j]*div
+    end
     tau = 2/((norm(v)^2))
     return v,tau
 end
 
 @views function leftHouseholder!(A::AbstractMatrix,v::AbstractArray,s::AbstractArray,tau::Number)
     gemv!('T',1.0,A,v,0.0,s)
+    #mul!(s,transpose(A),v)
     ger!(-tau,v,s,A)
     return
-end
-
-@views function rightHouseholder!(A::AbstractMatrix,v::AbstractVector,s::AbstractVector,tau::Number)
-    gemv!('N',1.0,A,v,0.0,s)
-    ger!(-tau,s,v,A)
-    return 
 end
 
 @views function skewhess!(A::AbstractMatrix,tau::AbstractVector,E::AbstractVector)
@@ -92,11 +89,9 @@ end
 
         A[i+1,i] -= stau*dot(v,A[i+1:end,i])
         E[i] = A[i+1,i]
-        A[i+1,i] = 1
-        tau[i] = stau
-        A[i+2:end,i] = v[2:end]
-        A[i,i+1] = -A[i+1,i]
-
+        @simd for j=1:n-i
+            @inbounds A[i+j,i] = v[j]
+        end
         leftHouseholder!(A[i+1:end,i+1:end],v,atmp[i+1:end],stau)
 
         s = mul!(atmp[i+1:end], A[i+1:end,i+1:end], v)
@@ -108,6 +103,7 @@ end
                 A[k,j]  = -A[j,k]
             end
         end
+        tau[i] = stau
     end
     return
 end
@@ -120,10 +116,9 @@ end
         temp2=0
         @simd for i=j+1:n
             @inbounds y[i] += temp1*A[i,j]
-            @inbounds temp2 -= A[i,j]*x[i]
+            @inbounds temp2 += A[i,j]*x[i]
         end
-        
-        y[j] += temp2
+        y[j] -= temp2
     end
 end
 @views function gemv2!(A::AbstractMatrix,x::AbstractVector,y::AbstractVector,n::Integer)
@@ -143,46 +138,43 @@ end
         #update A[i:n,i]
 
         if i>1
-            gemv!('n',1.0,A[i:n,1:i-1],W[i,1:i-1],1.0,A[i:n,i])
-            gemv!('n',-1.0,W[i:n,1:i-1],A[i,1:i-1],1.0,A[i:n,i])
+            mul!(A[i:n,i],A[i:n,1:i-1],W[i,1:i-1],1,1)
+            mul!(A[i:n,i],W[i:n,1:i-1],A[i,1:i-1],-1,1)
         end
         
         #Generate elementary reflector H(i) to annihilate A(i+2:n,i)
         
         v,stau = householder_reflector!(A[i+1:n,i],V[i:n-1],n-i)
-        A[i+1,i] -= stau*dot(v,A[i+1:end,i])
-        A[i+2:end,i] = v[2:end]
-        tau[i] = stau
+        A[i+1,i] -= stau*dot(v,A[i+1:n,i])
         E[i]   = A[i+1,i]
         A[i+1,i] = 1
-
-        #Compute W[i+1:n,i]
-        @inbounds mul!(W[i+1:n,i],A[i+1:n,i+1:n], A[i+1:n,i])  #Key point 60% of running time of sktrd!
-        #@inbounds skmv!(A[i+1:n,i+1:n], A[i+1:n,i],W[i+1:n,i],n-i)
-        #gemv!('n',1.0,A[i+1:n,i+1:n], A[i+1:n,i],0.0,W[i+1:n,i])
-        if i>1
-            mul!(W[1:i-1,i],transpose(W[i+1:n,1:i-1]),A[i+1:n,i])
-            #gemv!('t',1.0,W[i+1:n,1:i-1],A[i+1:n,i],0.0,W[1:i-1,i])
-            gemv!('n',1.0,A[i+1:n,1:i-1],W[1:i-1,i],1.0,W[i+1:n,i])
-            mul!(W[1:i-1,i],transpose(A[i+1:n,1:i-1]),A[i+1:n,i])
-            #gemv!('t',1.0,A[i+1:n,1:i-1],A[i+1:n,i],0.0,W[1:i-1,i])
-            gemv!('n',-1.0,W[i+1:n,1:i-1],W[1:i-1,i],1.0,W[i+1:n,i])
+        @simd for j=2:n-i
+            @inbounds A[i+j,i] = v[j]
         end
         
-        W[i+1:n,i] .*= stau
-        alpha = -0.5*stau*dot(W[i+1:n,i],A[i+1:n,i])
+        @inbounds mul!(W[i+1:n,i],A[i+1:n,i+1:n], A[i+1:n,i])  #Key point 60% of running time of sktrd!
+        if i>1
+            mul!(W[1:i-1,i],transpose(W[i+1:n,1:i-1]),A[i+1:n,i])
+            mul!(W[i+1:n,i],A[i+1:n,1:i-1],W[1:i-1,i],1,1)
+            mul!(W[1:i-1,i],transpose(A[i+1:n,1:i-1]),A[i+1:n,i])
+            mul!(W[i+1:n,i],W[i+1:n,1:i-1],W[1:i-1,i],-1,1)
+        end
+        @simd for j=1:n-i
+            @inbounds W[i+j,i] *= stau
+        end
+        alpha = -stau*dot(W[i+1:n,i],A[i+1:n,i])/2
         axpy!(alpha , A[i+1:n,i] , W[i+1:n,i])
-        
+        tau[i] = stau
     end
     return 
 end
 function set_nb(n::Integer)
     if n<=12
-        return max(n-3,1)
+        return max(n-4,1)
     elseif n<=100
         return 10
     else
-        return 50
+        return 60
     end
     return 1
 end
@@ -221,6 +213,35 @@ end
             end
             @inbounds A[s+j,s+j] = 0
         end
+        
+        """
+        for k = 1:n-s
+            @inbounds A[s+k,s+k] = 0
+            @simd for j = k+1:n-s
+                @inbounds A[s+j,s+k] += update[j,k]-update[k,j]
+                @inbounds A[s+k,s+j] = - A[s+j,s+k]
+            end
+            
+        end
+        """
+        """
+        N=n-nb-i+1
+        @inbounds (for j=1:N
+            A[s+j,s+j]=0
+            for l=1:nb
+                k2=i-1+l
+                temp1 = W[nb+j,l]
+                temp2 = A[s+j,k2]
+                @simd for t=j+1:N
+                    A[s+t,s+j] += A[s+t,k2]*temp1-W[nb+t,l]*temp2
+                end
+            end
+            
+            @simd for t=j+1:N
+                A[s+j,s+t]=-A[s+t,s+j] 
+            end
+        end)
+        """
         """
         A[s+1:n,s+1:n].+= update[1:n-s,1:n-s]
         A[s+1:n,s+1:n].-= transpose(update[1:n-s,1:n-s])
