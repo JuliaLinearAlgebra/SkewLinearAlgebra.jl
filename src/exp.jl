@@ -67,8 +67,30 @@ Returns the matrix exponential of A skew-symmetric using the eigenvalue decompos
 @views function LA.exp(A::SkewSymmetric)
     return skewexpm(copy(A))
 end
-        cis(A::SkewSymmetric) = exp(Hermitian(A.data.*1im))
+        
 @views function Base.cis(A::SkewSymmetric)
+    n = size(A,1)
+    if n == 1
+        return exp(A.data*1im)
+    end
+    vals,Qr,Qim = skeweigen!(A)
+    Q=Qim.*1im
+    Q.+=Qr
+    temp = similar(Q,n,n)
+    temp2 = similar(Q,n,n)
+    eig=similar(A,n)
+
+    @simd for i=1:n
+        @inbounds eig[i]=exp(-imag(vals[i]))
+    end
+    E=Diagonal(eig)
+    mul!(temp,Q,E)
+    mul!(temp2,temp,adjoint(Q))
+    temp .+= temp2
+    return temp
+end
+
+@views function Base.cos(A::SkewSymmetric)
     n = size(A,1)
     if n == 1
         return exp(A.data*1im)
@@ -81,7 +103,7 @@ end
     eig=similar(A,n)
 
     @simd for i=1:n
-        @inbounds eig[i]=exp(-real(vals[i]))
+        @inbounds eig[i]=exp(-imag(vals[i]))
     end
     E=Diagonal(eig)
     
@@ -90,10 +112,32 @@ end
     mul!(temp2,Q1,transpose(Qr))
     mul!(Q1,Q2,transpose(Qim))
     Q1 .+= temp2
-    return temp2
+    return Q1
 end
-cos(A::SkewSymmetric) = real(cis(A))
-sin(A::SkewSymmetric) = sin(cis(A))
+@views function Base.sin(A::SkewSymmetric)
+    n = size(A,1)
+    if n == 1
+        return exp(A.data*1im)
+    end
+    vals,Qr,Qim = skeweigen!(A)
+
+    temp2 = similar(A,n,n)
+    Q1=similar(A,n,n)
+    Q2=similar(A,n,n)
+    eig=similar(A,n)
+
+    @simd for i=1:n
+        @inbounds eig[i]=exp(-imag(vals[i]))
+    end
+    E=Diagonal(eig)
+    
+    mul!(Q1,Qr,E)
+    mul!(Q2,Qim,E)
+    mul!(temp2,Q1,transpose(Qim))
+    mul!(Q1,Q2,transpose(Qr))
+    Q1 .-= temp2
+    return Q1
+end
 
 function Base.tan(A::SkewSymmetric)
     E=cis(*(A,2))
