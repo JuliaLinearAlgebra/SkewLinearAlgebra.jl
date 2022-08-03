@@ -274,9 +274,9 @@ ldiv!(A::SkewSymmetric,b::Number) = ldiv!(A.data,b)
 rmul!(A::SkewSymmetric,b::Number) = rmul!(A.data,b)
 lmul!(A::SkewSymmetric,b::Number) = lmul!(A.data,b)
 
-
-end
-
 kron(A::SkewSymmetric,B::AbstractMatrix)=kron(A.data,B)
 kron(A::AbstractMatrix,B::SkewSymmetric)=kron(A,B.data)
+end
+
+
 
