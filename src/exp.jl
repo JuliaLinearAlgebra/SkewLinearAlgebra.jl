@@ -86,8 +86,7 @@ end
     E=Diagonal(eig)
     mul!(temp,Q,E)
     mul!(temp2,temp,adjoint(Q))
-    temp .+= temp2
-    return temp
+    return temp2
 end
 
 @views function Base.cos(A::SkewSymmetric)
