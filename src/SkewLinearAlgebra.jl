@@ -1,7 +1,7 @@
 # This file is a part of Julia. License is MIT: https://julialang.org/license
 """
 This module based on the LinearAlgebra module provides specialized functions
-and types for skew-symmetric matrices, i.e A=-A^T
+and types for skew-symmetricmatrices, i.e A=-A^T
 """
 module SkewLinearAlgebra
 
@@ -9,9 +9,9 @@ import LinearAlgebra as LA
 import LinearAlgebra: similar,require_one_based_indexing, BlasReal,BlasFloat, 
         checksquare,transpose, adjoint,real,imag,dot,tr,tril,
         tril!,triu,triu!,mul!,axpy!,norm,eigtype,eigvals!,eigvals,eigen,eigen!,
-        eigmax,eigmin,det,inv,inv!,lu,lu!,rmul!,lmul!,rdiv!,ldiv!, 
-        hessenberg,hessenberg!,Tridiagonal,UnitLowerTriangular,UpperHessenberg,Diagonal,Hermitian,Matrix,diagm,Array,SymTridiagonal
-        lu,lu!
+        eigmax,eigmin,det,logdet,inv,inv!,lu,lu!,rmul!,lmul!,rdiv!,ldiv!, 
+        hessenberg,hessenberg!,Tridiagonal,UnitLowerTriangular,UpperHessenberg,Diagonal,Hermitian,Matrix,diagm,Array,SymTridiagonal,
+        lu,lu!,lq,lq!,qr,qr!,schur,schur!,svd,svd!,svdvals,svdvals!,diag,rank,norm
 import LinearAlgebra.BLAS: gemv!,ger!
 import Base: \, /, *, ^, +, -, ==, copy,copyto!, size,setindex!,getindex,display,conj,conj!,similar,
         isreal,cos,sin,cosh,sinh,tanh,cis
@@ -245,7 +245,7 @@ include("exp.jl")
 Base. *(A::SkewSymmetric, x::Number) = SkewSymmetric(A.data*x)
 Base. *(x::Number, A::SkewSymmetric) = SkewSymmetric(x*A.data)
 Base. /(A::SkewSymmetric, x::Number) = SkewSymmetric(A.data/x)
-Base. \(A::SkewSymmetric,b) = \(A.data,b)
+Base. \(A::SkewSymmetric,b::AbstractVecOrMat) = \(A.data,b)
 
 det(A::SkewSymmetric) = det(A.data)
 logdet(A::SkewSymmetric) = logdet(A.data)
@@ -254,28 +254,31 @@ inv!(A::SkewSymmetric)  = inv!(A.data)
 
 lu(A::SkewSymmetric)  = lu(A.data)
 lu!(A::SkewSymmetric) = lu!(A.data)
-lu(A::SkewSymmetric)  = lq(A.data)
+lq(A::SkewSymmetric)  = lq(A.data)
 lq!(A::SkewSymmetric) = lq!(A.data)
 qr(A::SkewSymmetric)  = qr(A.data)
 qr!(A::SkewSymmetric) = qr!(A.data)
 schur(A::SkewSymmetric)=schur(A.data)
 schur!(A::SkewSymmetric)=schur!(A.data)
-svd(A::SkewSymmetric; full::Bool = false, alg::Algorithm = default_svd_alg(A))  = svd(A.data;full,alg)
-svd!(A::SkewSymmetric; full::Bool = false, alg::Algorithm = default_svd_alg(A))  = svd!(A.data;full,alg)
+#svd(A::SkewSymmetric; full::Bool = false, alg::Algorithm = default_svd_alg(A))  = svd(A.data;full,alg)
+#svd!(A::SkewSymmetric; full::Bool = false, alg::Algorithm = default_svd_alg(A))  = svd!(A.data;full,alg)
 svdvals(A::SkewSymmetric)=svdvals(A)
 svdvals!(A::SkewSymmetric)=svdvals!(A)
 diag(A::SkewSymmetric, k::Integer=0)=diag(A,k)
 rank(A::SkewSymmetric; atol::Real=0, rtol::Real=atol>0 ? 0 : n*ϵ)=rank(A.data;atol,rtol)
 rank(A::SkewSymmetric, rtol::Real)=rank(A.data,rtol)
-norm(A::SkewSymmetric, p::Real=2)=norm(A,p)
+#norm(A::SkewSymmetric, p::Real=2)=norm(A,p)
 
 rdiv!(A::SkewSymmetric,b::Number) = rdiv!(A.data,b)
 ldiv!(A::SkewSymmetric,b::Number) = ldiv!(A.data,b)
 rmul!(A::SkewSymmetric,b::Number) = rmul!(A.data,b)
 lmul!(A::SkewSymmetric,b::Number) = lmul!(A.data,b)
 
+
+
 kron(A::SkewSymmetric,B::AbstractMatrix)=kron(A.data,B)
 kron(A::AbstractMatrix,B::SkewSymmetric)=kron(A,B.data)
+
 end
 
 
