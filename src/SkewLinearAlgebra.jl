@@ -1,7 +1,7 @@
 # This file is a part of Julia. License is MIT: https://julialang.org/license
 """
 This module based on the LinearAlgebra module provides specialized functions
-and types for skew-symmetricmatrices, i.e A=-A^T
+and types for skew-symmetric matrices, i.e A=-A^T
 """
 module SkewLinearAlgebra
 
