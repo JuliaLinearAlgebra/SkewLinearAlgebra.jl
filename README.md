@@ -1,6 +1,6 @@
 # SkewLinearAlgebra
 [`tr`](@ref)
-This package proposes specialized functions for real skew-symmetric matrices i.e A=-A^T.
+This package proposes specialized functions for real skew-symmetric matrices i.e $A=-A^T$.
 It provides the structure SkewSymmetric and the basic linear operations on such 
 matrices. The package fits in the framework given by the package LinearAlgebra.
 
