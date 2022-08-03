@@ -273,30 +273,6 @@ rdiv!(A::SkewSymmetric,b::Number) = rdiv!(A.data,b)
 ldiv!(A::SkewSymmetric,b::Number) = ldiv!(A.data,b)
 rmul!(A::SkewSymmetric,b::Number) = rmul!(A.data,b)
 lmul!(A::SkewSymmetric,b::Number) = lmul!(A.data,b)
-cis(A::SkewSymmetric) = exp(Hermitian(A.data.*1im))
-cos(A::SkewSymmetric) = real(cis(A))
-sin(A::SkewSymmetric) = sin(cis(A))
-
-function Base.sinh(A::SkewSymmetric)
-    S =exp(A)
-    S .-= transpose(S)
-    S .*= 0.5
-    return S
-
-end
-function Base.cosh(A::SkewSymmetric)
-    C =exp(A)
-    C .-= transpose(C)
-    C .*= 0.5
-    return C
-end
-function Base.tanh(A::SkewSymmetric)
-    E=exp(A.*2)
-    return (E+LA.I)\(E-LA.I)
-    
-end
-
-
 
 
 end
