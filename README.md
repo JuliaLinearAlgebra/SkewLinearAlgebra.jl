@@ -79,7 +79,7 @@ julia> hessenberg(A)
   ```
   \usepackage{amsymb}\
  ## Hessenberg/tridiagonal reduction
-The hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$\
+The hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$ is an orthonormal matrix.
 The hessenberg function returns a structure of type [`SkewHessenberg`](@ref) containing the [`Tridiagonal`](@ref) reduction $H\in \mathbb{R}^{n\times n}$, the householder reflectors $v_i$ in a  [`UnitLowerTriangular`](@ref) $V\in \mathbb{R}^{n-1\times n-1}$  and the $n-2$ scalars $\tau_i$ associated to the reflectors. A function [`getQ`](@ref) is provided to retrieve the orthogonal transformation Q. 
 
   ```
