@@ -5,14 +5,9 @@ and types for skew-symmetricmatrices, i.e A=-A^T
 """
 module SkewLinearAlgebra
 
+
 import LinearAlgebra as LA
-import LinearAlgebra: similar,require_one_based_indexing, BlasReal,BlasFloat, 
-        checksquare,transpose, adjoint,real,imag,dot,tr,tril,
-        tril!,triu,triu!,mul!,axpy!,norm,eigtype,eigvals!,eigvals,eigen,eigen!,
-        eigmax,eigmin,det,logdet,inv,inv!,lu,lu!,rmul!,lmul!,rdiv!,ldiv!, 
-        hessenberg,hessenberg!,Tridiagonal,UnitLowerTriangular,UpperHessenberg,Diagonal,Hermitian,Matrix,diagm,Array,SymTridiagonal,
-        lu,lu!,lq,lq!,qr,qr!,schur,schur!,svd,svd!,svdvals,svdvals!,diag,rank,norm
-import LinearAlgebra.BLAS: gemv!,ger!
+using LinearAlgebra
 import Base: \, /, *, ^, +, -, ==, copy,copyto!, size,setindex!,getindex,display,conj,conj!,similar,
         isreal,cos,sin,cosh,sinh,tanh,cis
 export 
@@ -27,7 +22,7 @@ struct SkewSymmetric{T<:Real,S<:AbstractMatrix{<:T}} <: AbstractMatrix{T}
     data::S
 
     function SkewSymmetric{T,S}(data) where {T,S<:AbstractMatrix{<:T}}
-        require_one_based_indexing(data)
+        LA.require_one_based_indexing(data)
         new{T,S}(data)  
     end
 end
@@ -39,7 +34,7 @@ build as a skew-symmetric matrix. 'isskewsymmetric(A)' allows to verify skew-sym
 """
 
 function SkewSymmetric(A::AbstractMatrix)
-    checksquare(A)
+    LA.checksquare(A)
     n=size(A,1)
     n>1 || throw("Skew-symmetric cannot be of size  1x1")
     return skewsymmetric_type(typeof(A))(A)
@@ -88,29 +83,29 @@ function Base.setindex!(A::SkewSymmetric, v, i::Integer, j::Integer)
     setindex!(A.data, -v, j, i)
 end
 
-similar(A::SkewSymmetric, ::Type{T}) where {T} = SkewSymmetric(LA.similar(parent(A), T))
-similar(A::SkewSymmetric) = SkewSymmetric(similar(parent(A)))
+Base.similar(A::SkewSymmetric, ::Type{T}) where {T} = SkewSymmetric(LA.similar(parent(A), T))
+Base.similar(A::SkewSymmetric) = SkewSymmetric(similar(parent(A)))
 
 # Conversion
 function Matrix(A::SkewSymmetric)
     B = copy(A.data)
     return B
 end
-Array(A::SkewSymmetric) = convert(Matrix, A)
+Base.Array(A::SkewSymmetric) = convert(Matrix, A)
 
-parent(A::SkewSymmetric) = A.data
+Base.parent(A::SkewSymmetric) = A.data
 SkewSymmetric{T,S}(A::SkewSymmetric{T,S}) where {T,S<:AbstractMatrix{T}} = A
 SkewSymmetric{T,S}(A::SkewSymmetric) where {T,S<:AbstractMatrix{T}} = SkewSymmetric{T,S}(convert(S,A.data))
 Base.AbstractMatrix{T}(A::SkewSymmetric) where {T} = SkewSymmetric(convert(AbstractMatrix{T}, A.data))
 
-copy(A::SkewSymmetric{T,S}) where {T,S} = (B = Base.copy(A.data); SkewSymmetric{T,typeof(B)}(B))
+Base.copy(A::SkewSymmetric{T,S}) where {T,S} = (B = copy(A.data); SkewSymmetric{T,typeof(B)}(B))
 
 function copyto!(dest::SkewSymmetric, src::SkewSymmetric)
     copyto!(dest.data, src.data)
     return dest
 end
-size(A::SkewSymmetric,n) = size(A.data,n)
-size(A::SkewSymmetric) = size(A.data)
+Base.size(A::SkewSymmetric,n) = size(A.data,n)
+Base.size(A::SkewSymmetric) = size(A.data)
 
 
 """
@@ -132,28 +127,28 @@ end
 
 #Classic operators on a matrix
 Base.isreal(A::SkewSymmetric)=true
-transpose(A::SkewSymmetric) = SkewSymmetric(-A.data)
-adjoint(A::SkewSymmetric{<:Real}) = SkewSymmetric(-A.data)
-adjoint(A::SkewSymmetric) = SkewSymmetric(-A.data)
-real(A::SkewSymmetric{<:Real}) = A
-real(A::SkewSymmetric) = A
-imag(A::SkewSymmetric) = SkewSymmetric(LA.imag(A.data))
+Base.transpose(A::SkewSymmetric) = SkewSymmetric(-A.data)
+Base.adjoint(A::SkewSymmetric{<:Real}) = SkewSymmetric(-A.data)
+Base.adjoint(A::SkewSymmetric) = SkewSymmetric(-A.data)
+Base.real(A::SkewSymmetric{<:Real}) = A
+Base.real(A::SkewSymmetric) = A
+Base.imag(A::SkewSymmetric) = SkewSymmetric(LA.imag(A.data))
 
-copy(A::SkewSymmetric) =SkewSymmetric(Base.copy(parent(A)))
-display(A::SkewSymmetric) = display(A.data)
-conj(A::SkewSymmetric) = typeof(A)(A.data)
-conj!(A::SkewSymmetric) = typeof(A)(A.data)
-tr(A::SkewSymmetric) = 0
+Base.copy(A::SkewSymmetric) =SkewSymmetric(copy(parent(A)))
+Base.display(A::SkewSymmetric) = display(A.data)
+Base.conj(A::SkewSymmetric) = typeof(A)(A.data)
+Base.conj!(A::SkewSymmetric) = typeof(A)(A.data)
+LA.tr(A::SkewSymmetric) = 0
 
 
-tril!(A::SkewSymmetric) = tril!(A.data)
-tril(A::SkewSymmetric)  = tril(A.data)
-triu!(A::SkewSymmetric) = triu!(A.data)
-triu(A::SkewSymmetric)  = triu(A.data)
-tril!(A::SkewSymmetric,k::Integer) = tril!(A.data,k)
-tril(A::SkewSymmetric,k::Integer)  = tril(A.data,k)
-triu!(A::SkewSymmetric,k::Integer) = triu!(A.data,k)
-triu(A::SkewSymmetric,k::Integer)  = triu(A.data,k)
+LA.tril!(A::SkewSymmetric) = tril!(A.data)
+LA.tril(A::SkewSymmetric)  = tril(A.data)
+LA.triu!(A::SkewSymmetric) = triu!(A.data)
+LA.triu(A::SkewSymmetric)  = triu(A.data)
+LA.tril!(A::SkewSymmetric,k::Integer) = tril!(A.data,k)
+LA.tril(A::SkewSymmetric,k::Integer)  = tril(A.data,k)
+LA.triu!(A::SkewSymmetric,k::Integer) = triu!(A.data,k)
+LA.triu(A::SkewSymmetric,k::Integer)  = triu(A.data,k)
 
 
 function LA.dot(A::SkewSymmetric, B::SkewSymmetric)
@@ -247,37 +242,31 @@ Base. *(x::Number, A::SkewSymmetric) = SkewSymmetric(x*A.data)
 Base. /(A::SkewSymmetric, x::Number) = SkewSymmetric(A.data/x)
 Base. \(A::SkewSymmetric,b::AbstractVecOrMat) = \(A.data,b)
 
-det(A::SkewSymmetric) = det(A.data)
-logdet(A::SkewSymmetric) = logdet(A.data)
-inv(A::SkewSymmetric)  = inv(A.data)
-inv!(A::SkewSymmetric)  = inv!(A.data)
+LA.det(A::SkewSymmetric) = det(A.data)
+LA.logdet(A::SkewSymmetric) = logdet(A.data)
+LA.inv(A::SkewSymmetric)  = inv(A.data)
+LA.inv!(A::SkewSymmetric)  = inv!(A.data)
 
-lu(A::SkewSymmetric)  = lu(A.data)
-lu!(A::SkewSymmetric) = lu!(A.data)
-lq(A::SkewSymmetric)  = lq(A.data)
-lq!(A::SkewSymmetric) = lq!(A.data)
-qr(A::SkewSymmetric)  = qr(A.data)
-qr!(A::SkewSymmetric) = qr!(A.data)
-schur(A::SkewSymmetric)=schur(A.data)
-schur!(A::SkewSymmetric)=schur!(A.data)
-#svd(A::SkewSymmetric; full::Bool = false, alg::Algorithm = default_svd_alg(A))  = svd(A.data;full,alg)
-#svd!(A::SkewSymmetric; full::Bool = false, alg::Algorithm = default_svd_alg(A))  = svd!(A.data;full,alg)
-svdvals(A::SkewSymmetric)=svdvals(A)
-svdvals!(A::SkewSymmetric)=svdvals!(A)
-diag(A::SkewSymmetric, k::Integer=0)=diag(A,k)
-rank(A::SkewSymmetric; atol::Real=0, rtol::Real=atol>0 ? 0 : n*ϵ)=rank(A.data;atol,rtol)
-rank(A::SkewSymmetric, rtol::Real)=rank(A.data,rtol)
-#norm(A::SkewSymmetric, p::Real=2)=norm(A,p)
+LA.lu(A::SkewSymmetric)  = lu(A.data)
+LA.lu!(A::SkewSymmetric) = lu!(A.data)
+LA.lq(A::SkewSymmetric)  = lq(A.data)
+LA.lq!(A::SkewSymmetric) = lq!(A.data)
+LA.qr(A::SkewSymmetric)  = qr(A.data)
+LA.qr!(A::SkewSymmetric) = qr!(A.data)
+LA.schur(A::SkewSymmetric)=schur(A.data)
+LA.schur!(A::SkewSymmetric)=schur!(A.data)
+LA.rank(A::SkewSymmetric; atol::Real=0, rtol::Real=atol>0 ? 0 : n*ϵ)=rank(A.data;atol,rtol)
+LA.rank(A::SkewSymmetric, rtol::Real)=rank(A.data,rtol)
 
-rdiv!(A::SkewSymmetric,b::Number) = rdiv!(A.data,b)
-ldiv!(A::SkewSymmetric,b::Number) = ldiv!(A.data,b)
-rmul!(A::SkewSymmetric,b::Number) = rmul!(A.data,b)
-lmul!(A::SkewSymmetric,b::Number) = lmul!(A.data,b)
+LA.rdiv!(A::SkewSymmetric,b::Number) = rdiv!(A.data,b)
+LA.ldiv!(A::SkewSymmetric,b::Number) = ldiv!(A.data,b)
+LA.rmul!(A::SkewSymmetric,b::Number) = rmul!(A.data,b)
+LA.lmul!(A::SkewSymmetric,b::Number) = lmul!(A.data,b)
 
 
 
-kron(A::SkewSymmetric,B::AbstractMatrix)=kron(A.data,B)
-kron(A::AbstractMatrix,B::SkewSymmetric)=kron(A,B.data)
+LA.kron(A::SkewSymmetric,B::AbstractMatrix)=kron(A.data,B)
+LA.kron(A::AbstractMatrix,B::SkewSymmetric)=kron(A,B.data)
 
 end
 
