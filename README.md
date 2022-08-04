@@ -11,7 +11,7 @@ In particular, the package provides de following functions for $A::$ [`SkewSymme
 -SVD: [`svd`](@ref), [`svdvals`](@ref)\
 -Trigonometric functions:[`exp`](@ref), [`cis`](@ref),[`cos`](@ref),[`sin`](@ref),[`tan`](@ref),[`sinh`](@ref),[`cosh`](@ref),[`tanh`](@ref)
 
-The SkewSymmetric type uses the complete matrix representation as data. It doesn't verify automatically that the given matrix input is skew-symmetric. In particular, in-place methods could destroy the skew-symmetry. The provided function isskewsymmetric(A) allows to verify that A is indeed skew-symmetric.
+The SkewSymmetric type uses the complete matrix representation as data. It doesn't verify automatically that the given matrix input is skew-symmetric. In particular, in-place methods could destroy the skew-symmetry. The provided function [`isskewsymmetric(A)`](@ref) allows to verify that A is indeed skew-symmetric.
 Here is a basic example to initialize a [`SkewSymmetric`](@ref)
 ```
 julia> A = [0 2 -7 4; -2 0 -8 3; 7 8 0 1;-4 -3 -1 0]
@@ -81,7 +81,7 @@ julia> hessenberg(A)
   \usepackage{amsymb}\
  ## Hessenberg/tridiagonal reduction
 The hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$ is an orthonormal matrix.
-The hessenberg function returns a structure of type [`SkewHessenberg`](@ref) containing the [`Tridiagonal`](@ref) reduction $H\in \mathbb{R}^{n\times n}$, the householder reflectors $v_i$ in a  [`UnitLowerTriangular`](@ref) $V\in \mathbb{R}^{n-1\times n-1}$  and the $n-2$ scalars $\tau_i$ associated to the reflectors. A function [`getQ`](@ref) is provided to retrieve the orthogonal transformation Q. 
+The [`hessenberg`](@ref) function returns a structure of type [`SkewHessenberg`](@ref) containing the [`Tridiagonal`](@ref) reduction $H\in \mathbb{R}^{n\times n}$, the householder reflectors $v_i$ in a  [`UnitLowerTriangular`](@ref) $V\in \mathbb{R}^{n-1\times n-1}$  and the $n-2$ scalars $\tau_i$ associated to the reflectors. A function [`getQ`](@ref) is provided to retrieve the orthogonal transformation Q. 
 
   ```
   julia> H=hessenberg(A)
