@@ -3,7 +3,7 @@ import SkewLinearAlgebra as SLA
 using Test
 
 @testset "SkewLinearAlgebra.jl" begin
-    for n in [2,20,200]
+    for n in [2,20,153,200]
         A=randn(n,n)
         for i=1:n
             A[i,i]=0
@@ -84,11 +84,18 @@ using Test
         A.data[n,n]=0
         A.data[n,1]=4
         @test SLA.isskewsymmetric(A)==false
-        a=1
+        #LU=lu(A)
+        #@test LU.L*LU.U≈A.data
+        LQ=lq(A)
+        @test LQ.L*LQ.Q≈A.data
+        QR=qr(A)
+        @test QR.Q*QR.R≈A.data
+        F=schur(A)
+        @test A.data ≈ F.vectors * F.Schur * F.vectors'
     end
 end
 @testset "hessenberg.jl" begin
-    for n in [2,20,200]
+    for n in [2,20,153,200]
         A=randn(n,n)
         for i=1:n
             A[i,i]=0
@@ -118,7 +125,7 @@ end
     """
 end
 @testset "eigen.jl" begin
-    for n in [2,20,200]
+    for n in [2,20,153,200]
         A=randn(n,n)
         for i=1:n
             A[i,i]=0
@@ -135,19 +142,22 @@ end
         sort!(valB)
         @test valA ≈ valB
         valA, Qr, Qim = eigen(A)
-        valB,Q=eigen(B)
+        valB,Q = eigen(B)
         Q2 = Qr + Qim.*1im
-        @test real(Q2*diagm(valA)*adjoint(Q2))≈A
+        @test real(Q2*diagm(valA)*adjoint(Q2))≈A.data
         valA=imag(valA)
         valB=imag(valB)
         sort!(valA)
         sort!(valB)
         @test valA ≈ valB
+        Svd=svd(A)
+        @test Svd.U*Diagonal(Svd.S)*Svd.Vt≈A.data
+        @test svdvals(A)≈svdvals(B)
     end
 end
 @testset "exp.jl" begin
 
-    for n in [2,20,200]
+    for n in [2,20,153,200]
         A=randn(n,n)
         for i=1:n
             A[i,i]=0
@@ -158,5 +168,12 @@ end
         A=SLA.SkewSymmetric(A)
         B=Matrix(A)
         @test exp(B)≈exp(A)
+        @test cis(A)≈exp(Hermitian(A.data*1im))
+        @test cos(B)≈cos(A)
+        @test sin(B)≈sin(A)
+        #@test tan(B)≈tan(A)
+        @test sinh(B)≈sinh(A)
+        @test cosh(B)≈cosh(A)
+        @test tanh(B)≈tanh(A)
     end
 end
