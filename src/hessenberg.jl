@@ -27,7 +27,7 @@ Returns the tridiagonal reduction of A skew-symmetric.
 The result is returned as a SkewHessenberg structure.
 """
 
-@views function hessenberg!(A::SkewSymmetric{<:LA.BlasFloat})
+@views function LA.hessenberg!(A::SkewSymmetric{<:LA.BlasFloat})
     tau,E = sktrd!(A)
     n = size(A,1)
     return SkewHessenberg(Tridiagonal(E,zeros(n),-E),UnitLowerTriangular(A.data[2:end,1:end-1]),tau)
@@ -40,11 +40,15 @@ Returns the tridiagonal reduction of A skew-symmetric.
 The result is returned as a SkewHessenberg structure.
 """
 
-function hessenberg(A::SkewSymmetric{<:LA.BlasFloat})
+function LA.hessenberg(A::SkewSymmetric{<:LA.BlasFloat})
     return hessenberg!(copy(A))
 end
 
-display(F::SkewHessenberg) = display(F.H)
+function Base.display(F::SkewHessenberg)
+    display(F.H)
+    display(F.V)
+    display(F.τ)
+end
 
 """
     getQ(H)
@@ -66,16 +70,19 @@ end
 @views function householder_reflector!(x,v,n)
     div=1/(x[1]+sign(x[1])*norm(x))
     v[1] = 1
+    """
     @simd for j=2:n
         @inbounds v[j] = x[j]*div
     end
+    """
+    @inbounds v[2:end]=x[2:end]
+    v[2:end].*=div
     tau = 2/((norm(v)^2))
     return v,tau
 end
 
 @views function leftHouseholder!(A::AbstractMatrix,v::AbstractArray,s::AbstractArray,tau::Number)
-    gemv!('T',1.0,A,v,0.0,s)
-    #mul!(s,transpose(A),v)
+    mul!(s,transpose(A),v)
     ger!(-tau,v,s,A)
     return
 end
@@ -84,19 +91,17 @@ end
     n = size(A,1)
     atmp = similar(A,n)
     vtmp = similar(atmp)
-    @inbounds for i=1:n-2
+    @inbounds (for i=1:n-2
         v,stau = householder_reflector!(A[i+1:end,i], vtmp[i+1:end],n-i)
 
         A[i+1,i] -= stau*dot(v,A[i+1:end,i])
         E[i] = A[i+1,i]
-        @simd for j=1:n-i
-            @inbounds A[i+j,i] = v[j]
-        end
+        A[i+1:end,i]=v
         leftHouseholder!(A[i+1:end,i+1:end],v,atmp[i+1:end],stau)
 
         s = mul!(atmp[i+1:end], A[i+1:end,i+1:end], v)
         A[i+1,i+1]=  0
-        @inbounds for j=i+2:n
+        for j=i+2:n
             A[j,j]=0
             @simd for k=i+1:j-1
                 A[j,k] -= stau*s[j-i]*v[k-i]
@@ -104,37 +109,76 @@ end
             end
         end
         tau[i] = stau
-    end
+    end)
     return
 end
 @views function skmv!(A::AbstractMatrix,x::AbstractVector,y::AbstractVector,n::Integer)
     @simd for j=1:n
         @inbounds y[j]=0
     end
+    """
+    nb=60
+    oldk=0
+    for j=1:n
+        temp = x[j]
+        for k=j+1:nb:n-nb
+            k2=k+nb-1
+            @inbounds axpy!(temp,A[k:k2,j],y[k:k2])
+            @inbounds y[j] -= dot(A[k:k2,j],x[k:k2])
+            oldk=k
+        end
+        oldk+=nb
+        if oldk<n
+            @inbounds axpy!(temp,A[oldk:n,j],y[oldk:n])
+            @inbounds y[j] -= dot(A[oldk:n,j],x[oldk:n])
+        end
+    end
+    """
+    
+    for j=1:n
+        @inbounds axpy!(x[j],A[j+1:n,j],y[j+1:n])
+        @inbounds y[j] -= dot(A[j+1:n,j],x[j+1:n])
+    end
+    
+    """
+    nb=10
     @inbounds for j=1:n
         temp1=x[j]
         temp2=0
-        @simd for i=j+1:n
-            @inbounds y[i] += temp1*A[i,j]
-            @inbounds temp2 += A[i,j]*x[i]
+        oldi=0
+        for i=j+1:nb:n-nb
+            @simd for k=0:nb-1
+                i2=i+k
+                @inbounds y[i2] += temp1*A[i2,j]
+                @inbounds temp2 += A[i2,j]*x[i2]
+            end
+            old=i
         end
+        oldi+=nb
+        if oldi<n
+            @simd for i=oldi:n
+                @inbounds y[i] += temp1*A[i,j]
+                @inbounds temp2 += A[i,j]*x[i]
+            end
+        end 
         y[j] -= temp2
     end
+    """
 end
 @views function gemv2!(A::AbstractMatrix,x::AbstractVector,y::AbstractVector,n::Integer)
     @simd for j=1:n
         @inbounds y[j]=0
     end
-    for j=1:n
-        @inbounds temp1=x[j]
+    @inbounds(for j=1:n
+        temp1=x[j]
         @simd for i=1:n
-            @inbounds y[i] += temp1*A[i,j]
+            y[i] += temp1*A[i,j]
         end
-    end
+    end)
 end
 @views function latrd!(A::AbstractMatrix,E::AbstractVector,W::AbstractMatrix,V::AbstractVector,tau::AbstractVector,n::Number,nb::Number)
 
-    @inbounds for i=1:nb
+    @inbounds(for i=1:nb
         #update A[i:n,i]
 
         if i>1
@@ -147,25 +191,24 @@ end
         v,stau = householder_reflector!(A[i+1:n,i],V[i:n-1],n-i)
         A[i+1,i] -= stau*dot(v,A[i+1:n,i])
         E[i]   = A[i+1,i]
-        A[i+1,i] = 1
-        @simd for j=2:n-i
-            @inbounds A[i+j,i] = v[j]
-        end
+        A[i+1:end,i] = v
         
-        @inbounds mul!(W[i+1:n,i],A[i+1:n,i+1:n], A[i+1:n,i])  #Key point 60% of running time of sktrd!
+        mul!(W[i+1:n,i],A[i+1:n,i+1:n], A[i+1:n,i])  #Key point 60% of running time of sktrd!
+        #skmv!(A[i+1:n,i+1:n], A[i+1:n,i],W[i+1:n,i],n-i)
         if i>1
             mul!(W[1:i-1,i],transpose(W[i+1:n,1:i-1]),A[i+1:n,i])
             mul!(W[i+1:n,i],A[i+1:n,1:i-1],W[1:i-1,i],1,1)
             mul!(W[1:i-1,i],transpose(A[i+1:n,1:i-1]),A[i+1:n,i])
             mul!(W[i+1:n,i],W[i+1:n,1:i-1],W[1:i-1,i],-1,1)
         end
-        @simd for j=1:n-i
-            @inbounds W[i+j,i] *= stau
-        end
+        W[i+1:n,i] .*= stau
+        
         alpha = -stau*dot(W[i+1:n,i],A[i+1:n,i])/2
         axpy!(alpha , A[i+1:n,i] , W[i+1:n,i])
         tau[i] = stau
-    end
+        
+        
+    end)
     return 
 end
 function set_nb(n::Integer)
@@ -198,14 +241,14 @@ end
 
     oldi = 0
     
-    @inbounds for i = 1:nb:n-nb-2
+    @inbounds(for i = 1:nb:n-nb-2
         size = n-i+1
 
         latrd!(A[i:n,i:n],E[i:i+nb-1],W,V,tau[i:i+nb-1],size,nb)
         mul!(update[1:n-nb-i+1,1:n-nb-i+1],A[i+nb:n,i:i+nb-1],transpose(W[nb+1:size,:]))
 
         s = i+nb-1
-        
+        """
         for j = 1:n-s
             @simd for k = 1:j-1
                 @inbounds A[s+j,s+k] += update[j,k]-update[k,j]
@@ -213,32 +256,33 @@ end
             end
             @inbounds A[s+j,s+j] = 0
         end
-        
         """
+        
         for k = 1:n-s
-            @inbounds A[s+k,s+k] = 0
+            A[s+k,s+k] = 0
             @simd for j = k+1:n-s
-                @inbounds A[s+j,s+k] += update[j,k]-update[k,j]
-                @inbounds A[s+k,s+j] = - A[s+j,s+k]
+                A[s+j,s+k] += update[j,k]-update[k,j]
+                A[s+k,s+j] = - A[s+j,s+k]
             end
             
         end
-        """
+        
         """
         N=n-nb-i+1
         @inbounds (for j=1:N
+            k1=s+j
             A[s+j,s+j]=0
             for l=1:nb
                 k2=i-1+l
                 temp1 = W[nb+j,l]
-                temp2 = A[s+j,k2]
+                temp2 = A[k1,k2]
                 @simd for t=j+1:N
-                    A[s+t,s+j] += A[s+t,k2]*temp1-W[nb+t,l]*temp2
+                    A[s+t,k1] += A[s+t,k2]*temp1-W[nb+t,l]*temp2
                 end
             end
             
             @simd for t=j+1:N
-                A[s+j,s+t]=-A[s+t,s+j] 
+                A[k1,s+t]=-A[s+t,k1] 
             end
         end)
         """
@@ -247,7 +291,7 @@ end
         A[s+1:n,s+1:n].-= transpose(update[1:n-s,1:n-s])
         """
         oldi = i
-    end
+    end)
     oldi += nb
     if oldi < n
         skewhess!(A[oldi:n,oldi:n],tau[oldi:end],E[oldi:end])
