@@ -83,7 +83,7 @@ end
 
 @views function leftHouseholder!(A::AbstractMatrix,v::AbstractArray,s::AbstractArray,tau::Number)
     mul!(s,transpose(A),v)
-    ger!(-tau,v,s,A)
+    LA.BLAS.ger!(-tau,v,s,A)
     return
 end
 
