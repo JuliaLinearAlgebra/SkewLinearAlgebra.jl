@@ -1,32 +1,5 @@
 # This file is a part of Julia. License is MIT: https://julialang.org/license
-"""
-@views function skewexpm(A::SkewSymmetric)
-    n = size(A.data,1)
-    if n == 1
-        return exp(A.data)
-    end
 
-    vals,Qr,Qim = skeweigen!(A)
-    temp2 = similar(A.data,n,n)
-    QrS = copy(Qr)
-    QrC = copy(Qr)
-    QimS = copy(Qim)
-    QimC = copy(Qim)
-    for i=1:n
-        c = cos(imag(vals[i]))
-        s = sin(imag(vals[i]))
-        QrS[:,i] .*=s
-        QimS[:,i] .*=s
-        QrC[:,i] .*=c
-        QimC[:,i] .*=c
-    end
-    mul!(temp2,QrC-QimS,transpose(Qr))
-    mul!(A.data,QrS+QimC,transpose(Qim))
-    temp2 += A.data
-    return temp2
-end
-
-"""
 @views function skewexpm(A::SkewSymmetric)
     n = size(A,1)
     if n == 1
@@ -79,7 +52,6 @@ end
     temp = similar(Q,n,n)
     temp2 = similar(Q,n,n)
     eig=similar(A,n)
-
     @simd for i=1:n
         @inbounds eig[i]=exp(-imag(vals[i]))
     end
