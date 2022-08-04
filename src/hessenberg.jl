@@ -58,7 +58,7 @@ Returns Q.
 """
 @views function getQ(H::SkewHessenberg)
     n = size(H.H,1)
-    Q = Matrix(diagm(ones(n)))
+    Q = diagm(ones(n))
     s = similar(Q,n)
     for i = 1:n-2
         t = H.τ[n-i-1]
@@ -80,10 +80,27 @@ end
     tau = 2/((norm(v)^2))
     return v,tau
 end
+@inline @views function ger2!(tau::Number , v::StridedVector{T} , s::StridedVector{T}, 
+    A::StridedMatrix{T}) where {T<:LA.BlasFloat}
+    tau2 = promote(tau, zero(T))[1]
+    if tau2 isa Union{Bool,T}
+        return LA.BLAS.ger!(tau2, v, s, A)
+    else
+        m=length(v)
+        n=length(s)
+        @inbounds for j=1:n
+            temp=tau2*s[j]
+            @simd for i=1:m
+                A[i,j] += v[i]*temp
+            end
+        end
+
+    end
+end
 
 @views function leftHouseholder!(A::AbstractMatrix,v::AbstractArray,s::AbstractArray,tau::Number)
     mul!(s,transpose(A),v)
-    LA.BLAS.ger!(-tau,v,s,A)
+    ger2!(-tau,v,s,A)
     return
 end
 
@@ -204,7 +221,7 @@ end
         W[i+1:n,i] .*= stau
         
         alpha = -stau*dot(W[i+1:n,i],A[i+1:n,i])/2
-        axpy!(alpha , A[i+1:n,i] , W[i+1:n,i])
+        W[i+1:n,i].+=alpha.*A[i+1:n,i]
         tau[i] = stau
         
         
