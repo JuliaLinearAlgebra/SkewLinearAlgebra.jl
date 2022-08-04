@@ -8,7 +8,7 @@ In particular, the package provides de following functions for $A::$ [`SkewSymme
 
 -Tridiagonal reduction: [`hessenberg`](@ref)\
 -Eigensolvers: [`eigen`](@ref), [`eigvals`](@ref),[`eigmax`](@ref),[`eigmin`](@ref)\
--SVD: [`svd`](@ref), [`svdvals`](@ref)
+-SVD: [`svd`](@ref), [`svdvals`](@ref)\
 -Trigonometric functions:[`exp`](@ref), [`cis`](@ref),[`cos`](@ref),[`sin`](@ref),[`tan`](@ref),[`sinh`](@ref),[`cosh`](@ref),[`tanh`](@ref)
 
 The SkewSymmetric type uses the complete matrix representation as data. It doesn't verify automatically that the given matrix input is skew-symmetric. In particular, in-place methods could destroy the skew-symmetry. The provided function isskewsymmetric(A) allows to verify that A is indeed skew-symmetric.
