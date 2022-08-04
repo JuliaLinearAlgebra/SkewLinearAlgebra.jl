@@ -11,12 +11,12 @@ imaginary part of eigenvalues sorted by sortby.
     !isnothing(sortby) && sort!(vals, by=sortby)
     return vals.*1im
 end
+
 """
     eigvals!(A,irange)
 Returns the eigenvalues of A where A is SkewSymmetric, 
 irange specifies the indices of the eigenvalues to search for.
 """
-
 @views function LA.eigvals!(A::SkewSymmetric{<:BlasReal,<:StridedMatrix,}, irange::UnitRange)
     vals= skeweigvals!(A,irange)
     return vals.*1im
@@ -31,23 +31,23 @@ Returns the eigenvalues of A where A is SkewSymmetric,
     vals=skeweigvals!(A,vl,vh)
     return vals.*1im
 end
+
 """
     eigvals(A,sortby)
 Returns the eigenvalues of A where A is SkewSymmetric, 
 imaginary part of eigenvalues sorted by sortby.
 """
-
 function LA.eigvals(A::SkewSymmetric; sortby::Union{Function,Nothing}=nothing)
     T = eltype(A)
     S = eigtype(T)
     eigvals!(S != T ? convert(AbstractMatrix{S}, A) : copy(A), sortby)
 end
+
 """
     eigvals(A,irange)
 Returns the eigenvalues of A where A is SkewSymmetric, 
 irange specifies the indices of the eigenvalues to search for.
 """
-
 function LA.eigvals(A::SkewSymmetric, irange::UnitRange)
     T = eltype(A)
     S = eigtype(T)
@@ -59,7 +59,6 @@ end
 Returns the eigenvalues of A where A is SkewSymmetric, 
 [vl,vh] defines the range the imaginary part of the eigenvalues of A must be contained in.
 """
-
 function LA.eigvals(A::SkewSymmetric, vl::Real, vh::Real)
     T = eltype(A)
     S = eigtype(T)
@@ -94,31 +93,6 @@ end
     vals = eigvals!(H,vl,vh)
     return -vals
 end
-@views function WYform(A,tau,Q)
-    n = size(A,1)
-    W = zeros(n-1,n-2)
-    Yt = zeros(n-2,n-1)
-    temp = zeros(n-1)
-    
-    for i = 1:n-2
-        t = tau[i]
-        v = A[i+1:n,i]
-        if i == 1
-            W[i:end,i] = -t*v
-            Yt[i,i:end] = v
-        else
-            mul!(temp[1:i-1],Yt[1:i-1,i:end],v)
-            Yt[i,i:end] = v
-            W[i:end,i] = v
-            gemv!('n',1.0,W[:,1:i-1],temp[1:i-1],1.0,W[:,i])
-            W[:,i] .*= -t
-        end
-    end
-    mul!(Q,W,Yt)
-    return
-end
-
-
 @views function skeweigen!(S::SkewSymmetric)
     n = size(S.data,1)
     tau,E = sktrd!(S)
@@ -136,14 +110,10 @@ end
     temp = similar(A,n,n)
     
     Q  = diagm(ones(n))
+    LA.LAPACK.ormqr!('L','N',A[2:n,1:n-2],tau,Q[2:end,2:end])
+    
     Q1 = similar(A,(n+1)÷2,n)
     Q2 = similar(A,n÷2,n)
-    
-    
-    for i=1:n-2
-        t = tau[n-i-1]
-        leftHouseholder!(Q[n-i:n,n-i-1:n], A[n-i:n,n-i-1], s[n-i-1:n], t)
-    end
     @inbounds for j=1:n
         @simd for i=1:2:n-1
             k=(i+1)÷2
@@ -176,23 +146,66 @@ end
 
     
 end
+
 """
     eigen!(A)
 
 Returns [val,Re(Q),Im(Q)], containing the eigenvalues in vals, 
 the real part of the eigenvectors in Re(Q) and the Imaginary part of the eigenvectors in Im(Q)
 """
-
 eigen!(A::SkewSymmetric{<:BlasReal,<:StridedMatrix}) = skeweigen!(A)
+
 """
     eigen(A)
 
 Returns [val,Re(Q),Im(Q)], containing the eigenvalues in vals, 
 the real part of the eigenvectors in Re(Q) and the Imaginary part of the eigenvectors in Im(Q)
 """
-
 function LA.eigen(A::SkewSymmetric)
     T = eltype(A)
     S = eigtype(T)
     return eigen!(S != T ? convert(AbstractMatrix{S}, A) : copy(A))
+end
+
+@views function LA.svdvals!(A::SkewSymmetric)
+    n=size(A,1)
+    vals = skeweigvals!(A)
+    @simd for i=1:n
+        vals[i]=abs(vals[i])
+    end
+    sort!(vals;rev=true)
+    return vals
+end
+
+function LA.svdvals(A::SkewSymmetric)
+    return svdvals!(copy(A))
+end
+        
+@views function LA.svd!(A::SkewSymmetric)
+    n=size(A,1)
+    eig,Qr,Qim=eigen!(A)
+    vals=similar(A,n)
+    U=Qim*1im
+    U+=Qr
+    @simd for i=1:n
+        vals[i]=imag(eig[i])
+    end
+    I=sortperm(vals;by=abs,rev=true)
+    permute!(vals,I)
+    Base.permutecols!!(U,I)
+    V=copy(U)*1im
+    V.*= -1
+    @inbounds for i=1:n
+        if vals[i] < 0
+            vals[i]=-vals[i]
+            @simd for j=1:n
+                V[j,i]=-V[j,i]
+            end
+        end
+    end
+    return LA.SVD(U,vals,adjoint(V))
+end
+            
+function LA.svd(A::SkewSymmetric)
+    return svd!(copy(A))
 end
