@@ -1,5 +1,5 @@
 using LinearAlgebra
-import .SkewLinearAlgebra as SLA
+import SkewLinearAlgebra as SLA
 using Test
 
 @testset "SkewLinearAlgebra.jl" begin
