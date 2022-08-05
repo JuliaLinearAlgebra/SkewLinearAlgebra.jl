@@ -1,22 +1,19 @@
-using LinearAlgebra
+using LinearAlgebra, Random
 import SkewLinearAlgebra as SLA
 using Test
 
+Random.seed!(314159) # use same pseudorandom stream for every test
+
 @testset "SkewLinearAlgebra.jl" begin
     for n in [2,20,153,200]
-        A=randn(n,n)
-        for i=1:n
-            A[i,i]=0
-            for j=1:i-1
-                A[j,i]=-A[i,j]
-            end
-        end
-
-        A=SLA.SkewSymmetric(A)
-        @test SLA.isskewsymmetric(A)==true
+        @show n
+        A=SLA.skewhermitian(randn(n,n))
+        @test SLA.isskewhermitian(A)
+        @test SLA.isskewhermitian(A.data)
         B=2*Matrix(A)
+        @test SLA.isskewhermitian(B)
 
-        @test A==copy(A)
+        @test A==copy(A)::SLA.SkewHermitian
         @test size(A)==size(A.data)
         @test size(A,1)==size(A.data,1)
         @test size(A,2)==size(A.data,2)
@@ -26,12 +23,15 @@ using Test
         @test A*A == Symmetric(A.data*A.data)
         @test A*B == A.data*B
         @test B*A == B*A.data
+        if iseven(n) # for odd n, a skew-Hermitian matrix is singular
+            @test inv(A)::SLA.SkewHermitian ≈ inv(A.data)
+        end
         @test (A*2).data ==A.data*2
         @test (2*A).data ==2*A.data
         @test (A/2).data == A.data/2
         C=A+A
         @test C.data==A.data+A.data
-        B=SLA.SkewSymmetric(B)
+        B=SLA.SkewHermitian(B)
         C=A-B
         @test C.data==-A.data
         B=triu(A)
@@ -56,7 +56,7 @@ using Test
         @test getindex(A,n-1,n)==-3
         @test parent(A)== A.data
 
-        
+
         x=randn(n)
         y=zeros(n)
         mul!(y,A,x,2,0)
@@ -76,14 +76,14 @@ using Test
         @test C==2*A.data*B
         mul!(C,B,A,2,0)
         @test C==2*B*A.data
-        B=SLA.SkewSymmetric(B)
+        B=SLA.SkewHermitian(B)
         mul!(C,B,A,2,0)
         @test C==2*B.data*A.data
         A.data[n,n]=4
-        @test SLA.isskewsymmetric(A)==false
+        @test SLA.isskewhermitian(A.data)==false
         A.data[n,n]=0
         A.data[n,1]=4
-        @test SLA.isskewsymmetric(A)==false
+        @test SLA.isskewhermitian(A.data)==false
         #LU=lu(A)
         #@test LU.L*LU.U≈A.data
         LQ=lq(A)
@@ -96,14 +96,7 @@ using Test
 end
 @testset "hessenberg.jl" begin
     for n in [2,20,153,200]
-        A=randn(n,n)
-        for i=1:n
-            A[i,i]=0
-            for j=1:i-1
-                A[j,i]=-A[i,j]
-            end
-        end
-        A=SLA.SkewSymmetric(A)
+        A=SLA.skewhermitian(randn(n,n))
         B=Matrix(A)
         HA=hessenberg(A)
         HB=hessenberg(B)
@@ -117,7 +110,7 @@ end
     A=zeros(4,4)
     A[2:4,1]=ones(3)
     A[1,2:4]=-ones(3)
-    A=SLA.SkewSymmetric(A)
+    A=SLA.SkewHermitian(A)
     B=Matrix(A)
     HA=hessenberg(A)
     HB=hessenberg(B)
@@ -126,16 +119,9 @@ end
 end
 @testset "eigen.jl" begin
     for n in [2,20,153,200]
-        A=randn(n,n)
-        for i=1:n
-            A[i,i]=0
-            for j=1:i-1
-                A[j,i]=-A[i,j]
-            end
-        end
-        A=SLA.SkewSymmetric(A)
+        A=SLA.skewhermitian(randn(n,n))
         B=Matrix(A)
-        
+
         valA = imag(eigvals(A))
         valB = imag(eigvals(B))
         sort!(valA)
@@ -158,14 +144,7 @@ end
 @testset "exp.jl" begin
 
     for n in [2,20,153,200]
-        A=randn(n,n)
-        for i=1:n
-            A[i,i]=0
-            for j=1:i-1
-                A[j,i]=-A[i,j]
-            end
-        end
-        A=SLA.SkewSymmetric(A)
+        A=SLA.skewhermitian(randn(n,n))
         B=Matrix(A)
         @test exp(B)≈exp(A)
         @test cis(A)≈exp(Hermitian(A.data*1im))

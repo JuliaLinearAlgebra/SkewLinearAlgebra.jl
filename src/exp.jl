@@ -1,10 +1,8 @@
 # This file is a part of Julia. License is MIT: https://julialang.org/license
 
-@views function skewexpm(A::SkewSymmetric)
+function skewexp!(A::SkewHermitian)
     n = size(A,1)
-    if n == 1
-        return exp(A.data)
-    end
+    n == 1 && return fill(exp(A.data[1,1]), 1,1)
     vals,Qr,Qim = skeweigen!(A)
 
     temp2 = similar(A,n,n)
@@ -14,12 +12,11 @@
     Sin=similar(A,n)
 
     @simd for i=1:n
-        @inbounds Cos[i]=cos(imag(vals[i]))
-        @inbounds Sin[i]=sin(imag(vals[i]))
+        @inbounds Sin[i],Cos[i]=sincos(imag(vals[i]))
     end
     C=Diagonal(Cos)
     S=Diagonal(Sin)
-    
+
     mul!(Q1,Qr,C)
     mul!(Q2,Qim,S)
     Q1 .-= Q2
@@ -32,36 +29,27 @@
     return temp2
 end
 
-
-"""
-    exp(A)
-Returns the matrix exponential of A skew-symmetric using the eigenvalue decomposition.
-"""
-@views function Base.exp(A::SkewSymmetric)
-    return skewexpm(copy(A))
+function Base.exp(A::SkewHermitian)
+    return skewexp!(copy(A))
 end
 
-@views function skewcis(A::SkewSymmetric)
+function skewcis!(A::SkewHermitian)
     n = size(A,1)
-    if n == 1
-        return exp(A.data*1im)
-    end
+    n == 1 && return fill(cis(A.data[1,1]), 1,1)
+
     vals,Qr,Qim = skeweigen!(A)
     Q = Qim.*1im
     Q.+=Qr
     temp = similar(Q,n,n)
     temp2 = similar(Q,n,n)
-    eig=similar(A,n)
-    @simd for i=1:n
-        @inbounds eig[i]=exp(-imag(vals[i]))
-    end
+    eig = @. exp(-imag(vals))
     E=Diagonal(eig)
     mul!(temp,Q,E)
     mul!(temp2,temp,adjoint(Q))
     return temp2
 end
 
-@views function skewcos(A::SkewSymmetric)
+@views function skewcos!(A::SkewHermitian)
     n = size(A,1)
     if n == 1
         return exp(A.data*1im)
@@ -71,13 +59,10 @@ end
     temp2 = similar(A,n,n)
     Q1=similar(A,n,n)
     Q2=similar(A,n,n)
-    eig=similar(A,n)
 
-    @simd for i=1:n
-        @inbounds eig[i]=exp(-imag(vals[i]))
-    end
+    eig = @. exp(-imag(vals))
     E=Diagonal(eig)
-    
+
     mul!(Q1,Qr,E)
     mul!(Q2,Qim,E)
     mul!(temp2,Q1,transpose(Qr))
@@ -85,7 +70,7 @@ end
     Q1 .+= temp2
     return Q1
 end
-@views function skewsin(A::SkewSymmetric)
+@views function skewsin!(A::SkewHermitian)
     n = size(A,1)
     if n == 1
         return exp(A.data*1im)
@@ -95,13 +80,10 @@ end
     temp2 = similar(A,n,n)
     Q1=similar(A,n,n)
     Q2=similar(A,n,n)
-    eig=similar(A,n)
 
-    @simd for i=1:n
-        @inbounds eig[i]=exp(-imag(vals[i]))
-    end
+    eig = @. exp(-imag(vals))
     E=Diagonal(eig)
-    
+
     mul!(Q1,Qr,E)
     mul!(Q2,Qim,E)
     mul!(temp2,Q1,transpose(Qim))
@@ -109,37 +91,33 @@ end
     Q1 .-= temp2
     return Q1
 end
-@views function Base.cis(A::SkewSymmetric)
-    return skewcis(copy(A))
-end
-@views function Base.cos(A::SkewSymmetric)
-    return skewcos(copy(A))
-end
-@views function Base.sin(A::SkewSymmetric)
-    return skewsin(copy(A))
-end
+Base.cis(A::SkewHermitian) = skewcis!(copy(A))
+Base.cos(A::SkewHermitian) = skewcos!(copy(A))
+Base.sin(A::SkewHermitian) = skewsin!(copy(A))
 
-function Base.tan(A::SkewSymmetric)
+function Base.tan(A::SkewHermitian)
     E=cis(A)
     S=imag(E)
     C=real(E)
     return C\S
 end
-function Base.sinh(A::SkewSymmetric)
-    S = exp(A)
-    S .-= transpose(S)
-    S .*= 0.5
-    return S
+Base.sinh(A::SkewHermitian) = skewhermitian!(exp(A))
+Base.cosh(A::SkewHermitian) = hermitian!(exp(A))
 
-end
-function Base.cosh(A::SkewSymmetric)
-    C = exp(A)
-    C .+= transpose(C)
-    C .*= 0.5
-    return C
-end
-function Base.tanh(A::SkewSymmetric)
-    E=exp(*(A,2))
+function Base.tanh(A::SkewHermitian)
+    E = skewexp!(2A)
     return (E+LA.I)\(E-LA.I)
-    
+end
+
+# someday this should be in LinearAlgebra: https://github.com/JuliaLang/julia/pull/31836
+function hermitian!(A::AbstractMatrix{<:Number})
+    LA.require_one_based_indexing(A)
+    n = LA.checksquare(A)
+    @inbounds for i in 1:n
+        A[i,i] = real(A[i,i])
+        for j = 1:i-1
+            A[i,j] = A[j,i] = (A[i,j] + A[j,i]')/2
+        end
+    end
+    return LA.Hermitian(A)
 end

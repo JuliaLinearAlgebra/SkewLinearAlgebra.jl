@@ -5,61 +5,51 @@ and types for skew-symmetricmatrices, i.e A=-A^T
 """
 module SkewLinearAlgebra
 
-
-import LinearAlgebra as LA
 using LinearAlgebra
-import Base: \, /, *, ^, +, -, ==, copy,copyto!, size,setindex!,getindex,display,conj,conj!,similar,
-        isreal,cos,sin,cosh,sinh,tanh,cis
-export 
+import LinearAlgebra as LA
+export
     #Types
-    SkewSymmetric,
+    SkewHermitian,
     SkewHessenberg,
     #functions
-    isskewsymmetric,
+    isskewhermitian,
+    skewhermitian,
+    skewhermitian!,
     getQ
 
-struct SkewSymmetric{T<:Real,S<:AbstractMatrix{<:T}} <: AbstractMatrix{T}
+struct SkewHermitian{T<:Number,S<:AbstractMatrix{<:T}} <: AbstractMatrix{T}
     data::S
 
-    function SkewSymmetric{T,S}(data) where {T,S<:AbstractMatrix{<:T}}
+    function SkewHermitian{T,S}(data) where {T,S<:AbstractMatrix{<:T}}
         LA.require_one_based_indexing(data)
-        new{T,S}(data)  
+        new{T,S}(data)
     end
 end
 
 """
-    SkewSymmetric(A)
-Transform matrix A in a Skewsymmetric structure. A is assumed to be correctly 
-build as a skew-symmetric matrix. 'isskewsymmetric(A)' allows to verify skew-symmetry
+    SkewHermitian(A) <: AbstractMatrix
+
+Construct a `SkewHermitian` view of the skew-Hermitian matrix `A` (`A == -A'`),
+which allows one to exploit efficient operations for eigenvalues, exponentiation,
+and more.
+
+Takes "ownership" of the matrix `A`.  See also [`skewhermitian`](@ref), which takes the
+skew-hermitian part of `A`, and [`skewhermitian!`](@ref), which does this in-place,
+along with [`isskewhermitian`](@ref) which checks whether `A == -A'`.
 """
-
-function SkewSymmetric(A::AbstractMatrix)
-    LA.checksquare(A)
-    n=size(A,1)
-    n>1 || throw("Skew-symmetric cannot be of size  1x1")
-    return skewsymmetric_type(typeof(A))(A)
+function SkewHermitian(A::AbstractMatrix)
+    isskewhermitian(A) || throw(ArgumentError("matrix `A` must be skew-Hermitian (equal `-A')"))
+    return SkewHermitian{eltype(A),typeof(A)}(A)
 end
-
-skewsymmetric(A::AbstractMatrix) = SkewSymmetric(A)
-skewsymmetric(A::Number) = throw("Number cannot be skewsymmetric")
 
 """
-    skewsymmetric_type(T::Type)
-The type of the object returned by `skewsymmetric(::T, ::Symbol)`. For matrices, this is an
-appropriately typed `SkewSymmetric`. If `skewsymmetric` is
-implemented for a custom type, so should be `skewsymmetric_type`, and vice versa.
-"""
+    skewhermitian(A)
 
-function skewsymmetric_type(::Type{T}) where {S, T<:AbstractMatrix{S}}
-    return SkewSymmetric{Union{S, promote_op(transpose, S), skewsymmetric_type(S)}, T}
-end
-function skewsymmetric_type(::Type{T}) where {S<:Number, T<:AbstractMatrix{S}}
-    return SkewSymmetric{S, T}
-end
-function skewsymmetric_type(::Type{T}) where {S<:AbstractMatrix, T<:AbstractMatrix{S}}
-    return SkewSymmetric{AbstractMatrix, T}
-end
-skewsymmetric_type(::Type{T}) where {T<:Number} = throw("Number cannot be skewsymmetric")
+Returns the skew-Hermitian part of A, i.e. `(A-A')/2`.  See also
+[`skewhermitian!`](@ref), which does this in-place.
+"""
+skewhermitian(A::AbstractMatrix) = skewhermitian!(Base.copymutable(A))
+skewhermitian(a::Number) = imag(a)
 
 """
     getindex(A,i,j)
@@ -67,206 +57,189 @@ skewsymmetric_type(::Type{T}) where {T<:Number} = throw("Number cannot be skewsy
 Returns the value A(i,j)
 """
 
-@inline function Base.getindex(A::SkewSymmetric, i::Integer, j::Integer)
-    @boundscheck checkbounds(A, i, j)
-    return @inbounds A.data[i,j]
-end 
+Base.@propagate_inbounds Base.getindex(A::SkewHermitian, i::Integer, j::Integer) = A.data[i,j]
 
-"""
-    setindex!(A,v,i,j)
-Set A(i,j)=v and A(j,i)=-v to conserve skew-symmetry
-"""
-
-function Base.setindex!(A::SkewSymmetric, v, i::Integer, j::Integer)
-    i!=j || throw("Cannot modify zero diagonal element")
-    setindex!(A.data, v, i, j)
-    setindex!(A.data, -v, j, i)
+Base.@propagate_inbounds function Base.setindex!(A::SkewHermitian, v, i::Integer, j::Integer)
+    if i == j
+        real(v) == 0 || throw(ArgumentError("diagonal elements must be zero"))
+    else
+        A.data[i,j] = v
+        A.data[j,i] = -v'
+    end
+    return v
 end
 
-Base.similar(A::SkewSymmetric, ::Type{T}) where {T} = SkewSymmetric(LA.similar(parent(A), T))
-Base.similar(A::SkewSymmetric) = SkewSymmetric(similar(parent(A)))
+Base.similar(A::SkewHermitian, ::Type{T}) where {T} = SkewHermitian(LA.similar(parent(A), T) .= 0)
+Base.similar(A::SkewHermitian) = SkewHermitian(similar(parent(A)) .= 0)
 
 # Conversion
-function Matrix(A::SkewSymmetric)
-    B = copy(A.data)
-    return B
-end
-Base.Array(A::SkewSymmetric) = convert(Matrix, A)
+Base.Matrix(A::SkewHermitian) = Matrix(A.data)
+Base.Array(A::SkewHermitian) = Matrix(A)
 
-Base.parent(A::SkewSymmetric) = A.data
-SkewSymmetric{T,S}(A::SkewSymmetric{T,S}) where {T,S<:AbstractMatrix{T}} = A
-SkewSymmetric{T,S}(A::SkewSymmetric) where {T,S<:AbstractMatrix{T}} = SkewSymmetric{T,S}(convert(S,A.data))
-Base.AbstractMatrix{T}(A::SkewSymmetric) where {T} = SkewSymmetric(convert(AbstractMatrix{T}, A.data))
+Base.parent(A::SkewHermitian) = A.data
+SkewHermitian{T,S}(A::SkewHermitian{T,S}) where {T,S} = A
+SkewHermitian{T,S}(A::SkewHermitian) where {T,S<:AbstractMatrix{T}} = SkewHermitian{T,S}(S(A.data))
+Base.AbstractMatrix{T}(A::SkewHermitian) where {T} = SkewHermitian(AbstractMatrix{T}(A.data))
 
-Base.copy(A::SkewSymmetric{T,S}) where {T,S} = (B = copy(A.data); SkewSymmetric{T,typeof(B)}(B))
-
-function copyto!(dest::SkewSymmetric, src::SkewSymmetric)
+Base.copy(A::SkewHermitian) = SkewHermitian(copy(A.data))
+function Base.copyto!(dest::SkewHermitian, src::SkewHermitian)
     copyto!(dest.data, src.data)
     return dest
 end
-Base.size(A::SkewSymmetric,n) = size(A.data,n)
-Base.size(A::SkewSymmetric) = size(A.data)
+function Base.copyto!(dest::SkewHermitian, src::AbstractMatrix)
+    isskewhermitian(src) || throw(ArgumentError("can only copy skew-Hermitian data to SkewHermitian"))
+    copyto!(dest.data, src)
+    return dest
+end
+Base.copyto!(dest::AbstractMatrix, src::SkewHermitian) = copyto!(dest, src.data)
 
+Base.size(A::SkewHermitian,n) = size(A.data,n)
+Base.size(A::SkewHermitian) = size(A.data)
 
 """
-    isskewsymmetric(A)
+    isskewhermitian(A)
 
-Verifies skew-symmetry of a matrix
+Returns whether `A` is skew-Hermitian, i.e. whether `A == -A'`.
 """
-
-function isskewsymmetric(A::SkewSymmetric) 
-    n=size(A,1)
-    for i=1:n
-        getindex(A,i,i) == 0 || return false
-        for j=1:i-1
-            getindex(A,i,j) == -getindex(A,j,i) ||return false
+function isskewhermitian(A::AbstractMatrix{<:Number})
+    axes(A,1) == axes(A,2) || throw(ArgumentError("axes $(axes(A,1)) and $(axex(A,2)) do not match"))
+    @inbounds for i in axes(A,1)
+        for j = firstindex(A, 1):i
+            A[i,j] == -A[j,i]' || return false
         end
     end
     return true
 end
+isskewhermitian(A::SkewHermitian) = true
+isskewhermitian(a::Number) = a == -a'
 
-#Classic operators on a matrix
-Base.isreal(A::SkewSymmetric)=true
-Base.transpose(A::SkewSymmetric) = SkewSymmetric(-A.data)
-Base.adjoint(A::SkewSymmetric{<:Real}) = SkewSymmetric(-A.data)
-Base.adjoint(A::SkewSymmetric) = SkewSymmetric(-A.data)
-Base.real(A::SkewSymmetric{<:Real}) = A
-Base.real(A::SkewSymmetric) = A
-Base.imag(A::SkewSymmetric) = SkewSymmetric(LA.imag(A.data))
+"""
+    skewhermitian(A)
 
-Base.copy(A::SkewSymmetric) =SkewSymmetric(copy(parent(A)))
-Base.display(A::SkewSymmetric) = display(A.data)
-Base.conj(A::SkewSymmetric) = typeof(A)(A.data)
-Base.conj!(A::SkewSymmetric) = typeof(A)(A.data)
-LA.tr(A::SkewSymmetric) = 0
-
-
-LA.tril!(A::SkewSymmetric) = tril!(A.data)
-LA.tril(A::SkewSymmetric)  = tril(A.data)
-LA.triu!(A::SkewSymmetric) = triu!(A.data)
-LA.triu(A::SkewSymmetric)  = triu(A.data)
-LA.tril!(A::SkewSymmetric,k::Integer) = tril!(A.data,k)
-LA.tril(A::SkewSymmetric,k::Integer)  = tril(A.data,k)
-LA.triu!(A::SkewSymmetric,k::Integer) = triu!(A.data,k)
-LA.triu(A::SkewSymmetric,k::Integer)  = triu(A.data,k)
-
-
-function LA.dot(A::SkewSymmetric, B::SkewSymmetric)
-    n = size(A, 2)
-    if n != size(B, 2)
-        throw(DimensionMismatch("A has dimensions $(size(A)) but B has dimensions $(size(B))"))
-    end
-    dotprod = zero(dot(first(A), first(B)))
-    @inbounds for j = 1:n
-        for i = 1:(j - 1)
-            dotprod += 2 *(dot(A.data[i, j], B.data[i, j]))
+Transforms `A` in-place to its skew-Hermitian part `(A-A')/2`,
+and returns a [`SkewHermitian`](@ref) view.
+"""
+function skewhermitian!(A::AbstractMatrix{<:Number})
+    LA.require_one_based_indexing(A)
+    n = LA.checksquare(A)
+    @inbounds for i in 1:n
+        A[i,i] = imag(A[i,i])
+        for j = 1:i-1
+            a = (A[i,j] - A[j,i]')/2
+            A[i,j] = a
+            A[j,i] = -a'
         end
     end
-    
+    return SkewHermitian(A)
+end
+
+#Classic operators on a matrix
+Base.isreal(A::SkewHermitian) = isreal(A.data)
+Base.transpose(A::SkewHermitian) = SkewHermitian(transpose(A.data))
+Base.adjoint(A::SkewHermitian) = SkewHermitian(A.data')
+Base.real(A::SkewHermitian{<:Real}) = A
+Base.real(A::SkewHermitian) = SkewHermitian(real(A.data))
+Base.imag(A::SkewHermitian) = SkewHermitian(imag(A.data))
+
+Base.copy(A::SkewHermitian) = SkewHermitian(copy(A))
+Base.conj(A::SkewHermitian) = SkewHermitian(conj(A.data))
+Base.conj!(A::SkewHermitian) = SkewHermitian(conj!(A.data))
+LA.tr(A::SkewHermitian{<:Real}) = zero(eltype(A))
+LA.tr(A::SkewHermitian) = tr(A.data)
+
+LA.tril!(A::SkewHermitian) = tril!(A.data)
+LA.tril(A::SkewHermitian)  = tril(A.data)
+LA.triu!(A::SkewHermitian) = triu!(A.data)
+LA.triu(A::SkewHermitian)  = triu(A.data)
+LA.tril!(A::SkewHermitian,k::Integer) = tril!(A.data,k)
+LA.tril(A::SkewHermitian,k::Integer)  = tril(A.data,k)
+LA.triu!(A::SkewHermitian,k::Integer) = triu!(A.data,k)
+LA.triu(A::SkewHermitian,k::Integer)  = triu(A.data,k)
+
+function LA.dot(A::SkewHermitian, B::SkewHermitian)
+    n = size(A, 2)
+    if n != size(B, 2)
+        throw(DimensionMismatch("A has size $(size(A)) but B has size $(size(B))"))
+    end
+    dotprod = zero(dot(first(A), first(B)))
+    @inbounds for j = 1:n, i = 1:j-1
+        dotprod += 2 * real(dot(A.data[i, j], B.data[i, j]))
+    end
     return dotprod
 end
 
-Base. -(A::SkewSymmetric) = SkewSymmetric(- A.data)
-
+Base.:-(A::SkewHermitian) = SkewHermitian(-A.data)
 
 for f in (:+, :-)
     @eval begin
-        $f(A::SkewSymmetric, B::SkewSymmetric) = SkewSymmetric($f(A.data, B.data))
+        Base.$f(A::SkewHermitian, B::SkewHermitian) = SkewHermitian($f(A.data, B.data))
    end
 end
 
 ## Matvec
-@inline function LA.mul!(y::StridedVector{T}, A::SkewSymmetric{T,<:StridedMatrix}, x::StridedVector{T},
-            α::Number, β::Number) where {T<:LA.BlasFloat}
-    alpha, beta = promote(α, β, zero(T))
-    if alpha isa Union{Bool,T} && beta isa Union{Bool,T}
-        return LA.BLAS.gemv!('N', alpha, A.data, x, beta, y)
-    else
-        return generic_matvecmul!(y, 'N', A, x, MulAddMul(α, β))
-    end
-end
-## Matmat
-@inline function LA.mul!(C::StridedMatrix{T}, A::SkewSymmetric{T,<:StridedMatrix}, B::StridedMatrix{T},
-            α::Number, β::Number) where {T<:LA.BlasFloat}
-    alpha, beta = promote(α, β, zero(T))
-    if alpha isa Union{Bool,T} && beta isa Union{Bool,T}
-        return LA.BLAS.gemm!('N', 'N', alpha, A.data, B, beta, C)
-    else
-        return generic_matmatmul!(C, 'N', 'N', A, B, MulAddMul(alpha, beta))
-    end
-end
-@inline function LA.mul!(C::StridedMatrix{T}, A::StridedMatrix{T}, B::SkewSymmetric{T,<:StridedMatrix},
-        α::Number, β::Number) where {T<:LA.BlasFloat}
-    alpha, beta = promote(α, β, zero(T))
-    if alpha isa Union{Bool,T} && beta isa Union{Bool,T}
-        return LA.BLAS.gemm!('N', 'N', alpha, B.data, A, beta, C)
-    else
-        return generic_matmatmul!(C, 'N', 'N', A, B, MulAddMul(alpha, beta))
-    end
-end
-@inline function LA.mul!(C::StridedMatrix{T}, A::SkewSymmetric{T,<:StridedMatrix}, B::SkewSymmetric{T,<:StridedMatrix},
-        α::Number, β::Number) where {T<:LA.BlasFloat}
-    alpha, beta = promote(α, β, zero(T))
-    if alpha isa Union{Bool,T} && beta isa Union{Bool,T}
-        return LA.BLAS.gemm!('N', 'N', alpha, A.data, B.data, beta, C)
-    else
-        return generic_matmatmul!(C, 'N', 'N', A, B, MulAddMul(alpha, beta))
-    end
-end
+LA.mul!(y::StridedVecOrMat, A::SkewHermitian, x::StridedVecOrMat, α::Number, β::Number) =
+    LA.mul!(y, A.data, x, α, β)
+LA.mul!(y::StridedVecOrMat, A::SkewHermitian, x::StridedVecOrMat) =
+    LA.mul!(y, A.data, x)
+LA.mul!(y::StridedVecOrMat, A::SkewHermitian, B::SkewHermitian, α::Number, β::Number) =
+    LA.mul!(y, A.data, B.data, α, β)
+LA.mul!(y::StridedVecOrMat, A::SkewHermitian, B::SkewHermitian) =
+    LA.mul!(y, A.data, B.data)
+LA.mul!(y::StridedVecOrMat, A::StridedMatrix, B::SkewHermitian, α::Number, β::Number) =
+    LA.mul!(y, A, B.data, α, β)
+LA.mul!(y::StridedVecOrMat, A::StridedMatrix, B::SkewHermitian) =
+    LA.mul!(y, A, B.data)
 
-
-Base. *(A::SkewSymmetric, B::SkewSymmetric) = LA.Symmetric(Base. *(A.data,  B.data))
-Base. *(A::SkewSymmetric, B::AbstractMatrix) = Base. *(A.data,  B)
-Base. *(A::AbstractMatrix, B::SkewSymmetric) = Base. *(A,  B.data)
-
-function LA.dot(x::AbstractVector, A::SkewSymmetric, y::AbstractVector)
+function LA.dot(x::AbstractVector, A::SkewHermitian, y::AbstractVector)
     LA.require_one_based_indexing(x, y)
     (length(x) == length(y) == size(A, 1)) || throw(DimensionMismatch())
-    data = A.data
-    r = *( zero(eltype(x)),  zero(eltype(A)) , zero(eltype(y)))
+    r = zero(eltype(x)) * zero(eltype(A)) * zero(eltype(y))
     @inbounds for j = 1:length(y)
+        r += dot(x[j], A.data[j,j], y[j]) # zero if A is real
         @simd for i = 1:j-1
-            Aij = data[i,j]
-            r += dot(x[i], Aij, y[j]) + dot(x[j], -Aij, y[i])
+            Aij = A.data[i,j]
+            r += dot(x[i], Aij, y[j]) + dot(x[j], -Aij', y[i])
         end
     end
-    
     return r
 end
+
+# Scaling:
+for op in (:*, :/, :\)
+    if op in (:*, :/)
+        @eval Base.$op(A::SkewHermitian, x::Number) = $op(A.data, x)
+        @eval Base.$op(A::SkewHermitian, x::Real) = SkewHermitian($op(A.data, x))
+    end
+    if op in (:*, :\)
+        @eval Base.$op(x::Number, A::SkewHermitian) = $op(x, A.data)
+        @eval Base.$op(x::Real, A::SkewHermitian) = SkewHermitian($op(x, A.data))
+    end
+end
+function checkreal(x::Number)
+    isreal(x) || throw(ArgumentError("in-place scaling of SkewHermitian requires a real scalar"))
+    return real(a)
+end
+LA.rdiv!(A::SkewHermitian, b::Number) = LA.rdiv!(A.data, checkreal(b))
+LA.ldiv!(b::Number, A::SkewHermitian) = LA.ldiv!(checkreal(b), A.data)
+LA.rmul!(A::SkewHermitian, b::Number) = LA.rmul!(A.data, checkreal(b))
+LA.lmul!(b::Number, A::SkewHermitian) = LA.lmul!(checkreal(b), A.data)
+
+for f in (:det, :logdet, :lu, :lu!, :lq, :lq!, :qr, :qr!)
+    @eval LA.$f(A::SkewHermitian) = LA.$f(A.data)
+end
+@eval LA.inv(A::SkewHermitian) = skewhermitian!(LA.inv(A.data))
+
+LA.kron(A::SkewHermitian,B::StridedMatrix) = kron(A.data,B)
+LA.kron(A::StridedMatrix,B::SkewHermitian) = kron(A,B.data)
+
+# to do: these functions should be specialized for SkewHermitian using eigen/eigvals
+for f in (:schur, :schur!)
+    @eval LA.$f(A::SkewHermitian) = LA.$f(A.data)
+end
+
 include("hessenberg.jl")
 include("eigen.jl")
 include("exp.jl")
-# Scaling with Number
-Base. *(A::SkewSymmetric, x::Number) = SkewSymmetric(A.data*x)
-Base. *(x::Number, A::SkewSymmetric) = SkewSymmetric(x*A.data)
-Base. /(A::SkewSymmetric, x::Number) = SkewSymmetric(A.data/x)
-Base. \(A::SkewSymmetric,b::AbstractVecOrMat) = \(A.data,b)
-
-LA.det(A::SkewSymmetric) = det(A.data)
-LA.logdet(A::SkewSymmetric) = logdet(A.data)
-LA.inv(A::SkewSymmetric)  = inv(A.data)
-LA.inv!(A::SkewSymmetric)  = inv!(A.data)
-
-LA.lu(A::SkewSymmetric)  = lu(A.data)
-LA.lu!(A::SkewSymmetric) = lu!(A.data)
-LA.lq(A::SkewSymmetric)  = lq(A.data)
-LA.lq!(A::SkewSymmetric) = lq!(A.data)
-LA.qr(A::SkewSymmetric)  = qr(A.data)
-LA.qr!(A::SkewSymmetric) = qr!(A.data)
-LA.schur(A::SkewSymmetric)=schur(A.data)
-LA.schur!(A::SkewSymmetric)=schur!(A.data)
-LA.rank(A::SkewSymmetric; atol::Real=0, rtol::Real=atol>0 ? 0 : n*ϵ)=rank(A.data;atol,rtol)
-LA.rank(A::SkewSymmetric, rtol::Real)=rank(A.data,rtol)
-
-LA.rdiv!(A::SkewSymmetric,b::Number) = rdiv!(A.data,b)
-LA.ldiv!(A::SkewSymmetric,b::Number) = ldiv!(A.data,b)
-LA.rmul!(A::SkewSymmetric,b::Number) = rmul!(A.data,b)
-LA.lmul!(A::SkewSymmetric,b::Number) = lmul!(A.data,b)
-
-
-
-LA.kron(A::SkewSymmetric,B::AbstractMatrix)=kron(A.data,B)
-LA.kron(A::AbstractMatrix,B::SkewSymmetric)=kron(A,B.data)
 
 end
 
