@@ -48,7 +48,7 @@ end
 Returns the skew-Hermitian part of A, i.e. `(A-A')/2`.  See also
 [`skewhermitian!`](@ref), which does this in-place.
 """
-skewhermitian(A::AbstractMatrix) = SkewHermitian!(Base.copymutable(A))
+skewhermitian(A::AbstractMatrix) = skewhermitian!(Base.copymutable(A))
 skewhermitian(a::Number) = imag(a)
 
 """

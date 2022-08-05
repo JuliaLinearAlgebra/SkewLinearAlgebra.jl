@@ -4,17 +4,11 @@ using Test
 
 @testset "SkewLinearAlgebra.jl" begin
     for n in [2,20,153,200]
-        A=randn(n,n)
-        for i=1:n
-            A[i,i]=0
-            for j=1:i-1
-                A[j,i]=-A[i,j]
-            end
-        end
-
-        A=SLA.SkewHermitian(A)
-        @test SLA.isskewhermitian(A)==true
+        A=SLA.skewhermitian(randn(n,n))
+        @test SLA.isskewhermitian(A)
+        @test SLA.isskewhermitian(A.data)
         B=2*Matrix(A)
+        @test SLA.isskewhermitian(B)
 
         @test A==copy(A)
         @test size(A)==size(A.data)
@@ -96,14 +90,7 @@ using Test
 end
 @testset "hessenberg.jl" begin
     for n in [2,20,153,200]
-        A=randn(n,n)
-        for i=1:n
-            A[i,i]=0
-            for j=1:i-1
-                A[j,i]=-A[i,j]
-            end
-        end
-        A=SLA.SkewHermitian(A)
+        A=SLA.skewhermitian(randn(n,n))
         B=Matrix(A)
         HA=hessenberg(A)
         HB=hessenberg(B)
@@ -126,14 +113,7 @@ end
 end
 @testset "eigen.jl" begin
     for n in [2,20,153,200]
-        A=randn(n,n)
-        for i=1:n
-            A[i,i]=0
-            for j=1:i-1
-                A[j,i]=-A[i,j]
-            end
-        end
-        A=SLA.SkewHermitian(A)
+        A=SLA.skewhermitian(randn(n,n))
         B=Matrix(A)
 
         valA = imag(eigvals(A))
@@ -158,14 +138,7 @@ end
 @testset "exp.jl" begin
 
     for n in [2,20,153,200]
-        A=randn(n,n)
-        for i=1:n
-            A[i,i]=0
-            for j=1:i-1
-                A[j,i]=-A[i,j]
-            end
-        end
-        A=SLA.SkewHermitian(A)
+        A=SLA.skewhermitian(randn(n,n))
         B=Matrix(A)
         @test exp(B)≈exp(A)
         @test cis(A)≈exp(Hermitian(A.data*1im))
