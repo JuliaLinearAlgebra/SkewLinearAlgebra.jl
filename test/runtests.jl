@@ -12,8 +12,8 @@ using Test
             end
         end
 
-        A=SLA.SkewSymmetric(A)
-        @test SLA.isskewsymmetric(A)==true
+        A=SLA.SkewHermitian(A)
+        @test SLA.isskewhermitian(A)==true
         B=2*Matrix(A)
 
         @test A==copy(A)
@@ -31,7 +31,7 @@ using Test
         @test (A/2).data == A.data/2
         C=A+A
         @test C.data==A.data+A.data
-        B=SLA.SkewSymmetric(B)
+        B=SLA.SkewHermitian(B)
         C=A-B
         @test C.data==-A.data
         B=triu(A)
@@ -56,7 +56,7 @@ using Test
         @test getindex(A,n-1,n)==-3
         @test parent(A)== A.data
 
-        
+
         x=randn(n)
         y=zeros(n)
         mul!(y,A,x,2,0)
@@ -76,14 +76,14 @@ using Test
         @test C==2*A.data*B
         mul!(C,B,A,2,0)
         @test C==2*B*A.data
-        B=SLA.SkewSymmetric(B)
+        B=SLA.SkewHermitian(B)
         mul!(C,B,A,2,0)
         @test C==2*B.data*A.data
         A.data[n,n]=4
-        @test SLA.isskewsymmetric(A)==false
+        @test SLA.isskewhermitian(A.data)==false
         A.data[n,n]=0
         A.data[n,1]=4
-        @test SLA.isskewsymmetric(A)==false
+        @test SLA.isskewhermitian(A.data)==false
         #LU=lu(A)
         #@test LU.L*LU.U≈A.data
         LQ=lq(A)
@@ -103,7 +103,7 @@ end
                 A[j,i]=-A[i,j]
             end
         end
-        A=SLA.SkewSymmetric(A)
+        A=SLA.SkewHermitian(A)
         B=Matrix(A)
         HA=hessenberg(A)
         HB=hessenberg(B)
@@ -117,7 +117,7 @@ end
     A=zeros(4,4)
     A[2:4,1]=ones(3)
     A[1,2:4]=-ones(3)
-    A=SLA.SkewSymmetric(A)
+    A=SLA.SkewHermitian(A)
     B=Matrix(A)
     HA=hessenberg(A)
     HB=hessenberg(B)
@@ -133,9 +133,9 @@ end
                 A[j,i]=-A[i,j]
             end
         end
-        A=SLA.SkewSymmetric(A)
+        A=SLA.SkewHermitian(A)
         B=Matrix(A)
-        
+
         valA = imag(eigvals(A))
         valB = imag(eigvals(B))
         sort!(valA)
@@ -165,7 +165,7 @@ end
                 A[j,i]=-A[i,j]
             end
         end
-        A=SLA.SkewSymmetric(A)
+        A=SLA.SkewHermitian(A)
         B=Matrix(A)
         @test exp(B)≈exp(A)
         @test cis(A)≈exp(Hermitian(A.data*1im))

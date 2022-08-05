@@ -1,54 +1,40 @@
-# This file is a part of Julia. License is MIT: https://julialang.org/license
+# Based on hessenberg.jl in Julia. License is MIT: https://julialang.org/license
 
 """
-    SkewHessenberg 
-Type returned by hessenberg(A) when A is skew-symmetric. 
+    SkewHessenberg
+
+Type returned by hessenberg(A) when A is skew-symmetric.
 Contains the tridiagonal reduction in H, the reflectors in V that is UnitLowerTriangular.
 τ contains the scalars relative to the householder reflector i.e Q_i= I - τ_i v_i v_i^T.
 """
-
-struct SkewHessenberg{SH<:Union{Tridiagonal,UpperHessenberg},S<:UnitLowerTriangular,tau<:AbstractVector}
+struct SkewHessenberg{SH<:Tridiagonal,S<:UnitLowerTriangular,tau<:AbstractVector}
     H::SH # Tridiagonal
     V::S # reflector data in unit lower triangular
     τ::tau # more Q (reflector) data
 end
 
 SkewHessenberg(F::SkewHessenberg) = F
+Base.copy(F::SkewHessenberg) = SkewHessenberg(copy(F.H), copy(F.V), copy(F.τ))
+Base.size(F::SkewHessenberg, d) = size(F.H, d)
+Base.size(F::SkewHessenberg) = size(F.H)
 
-copy(F::SkewHessenberg{<:Any,<:UpperHessenberg}) = SkewHessenberg(copy(F.H),copy(F.V), copy(F.τ))
-copy(F::SkewHessenberg{<:Any,<:Tridiagonal}) = SkewHessenberg(copy(F.H),copy(F.V), copy(F.τ))
-size(F::SkewHessenberg, d) = size(F.H, d)
-size(F::SkewHessenberg) = size(F.H)
-
-"""
-    hessenberg!(A)
-
-Returns the tridiagonal reduction of A skew-symmetric.
-The result is returned as a SkewHessenberg structure.
-"""
-
-@views function LA.hessenberg!(A::SkewSymmetric{<:LA.BlasFloat})
+@views function LA.hessenberg!(A::SkewHermitian)
     tau,E = sktrd!(A)
     n = size(A,1)
     return SkewHessenberg(Tridiagonal(E,zeros(n),-E),UnitLowerTriangular(A.data[2:end,1:end-1]),tau)
 end
 
-"""
-    hessenberg(A)
-
-Returns the tridiagonal reduction of A skew-symmetric.
-The result is returned as a SkewHessenberg structure.
-"""
-
-function LA.hessenberg(A::SkewSymmetric{<:LA.BlasFloat})
-    return hessenberg!(copy(A))
+function Base.show(io::IO, mime::MIME"text/plain", F::SkewHessenberg)
+    summary(io, F)
+    println(io, "\nV factor:")
+    show(io, mime, F.V)
+    println(io, "\nH factor:")
+    show(io, mime, F.H)
 end
 
-function Base.display(F::SkewHessenberg)
-    display(F.H)
-    display(F.V)
-    display(F.τ)
-end
+# fixme: to get the Q factor, F.Q should return a type that
+# implicitly multiplies by reflectors, and you should convert it
+# to a matrix with Matrix(F.Q), eliminating getQ.
 
 """
     getQ(H)
@@ -80,7 +66,7 @@ end
     tau = 2/((norm(v)^2))
     return v,tau
 end
-@inline @views function ger2!(tau::Number , v::StridedVector{T} , s::StridedVector{T}, 
+@inline @views function ger2!(tau::Number , v::StridedVector{T} , s::StridedVector{T},
     A::StridedMatrix{T}) where {T<:LA.BlasFloat}
     tau2 = promote(tau, zero(T))[1]
     if tau2 isa Union{Bool,T}
@@ -151,12 +137,12 @@ end
         end
     end
     """
-    
+
     for j=1:n
         @inbounds axpy!(x[j],A[j+1:n,j],y[j+1:n])
         @inbounds y[j] -= dot(A[j+1:n,j],x[j+1:n])
     end
-    
+
     """
     nb=10
     @inbounds for j=1:n
@@ -177,7 +163,7 @@ end
                 @inbounds y[i] += temp1*A[i,j]
                 @inbounds temp2 += A[i,j]*x[i]
             end
-        end 
+        end
         y[j] -= temp2
     end
     """
@@ -202,14 +188,14 @@ end
             mul!(A[i:n,i],A[i:n,1:i-1],W[i,1:i-1],1,1)
             mul!(A[i:n,i],W[i:n,1:i-1],A[i,1:i-1],-1,1)
         end
-        
+
         #Generate elementary reflector H(i) to annihilate A(i+2:n,i)
-        
+
         v,stau = householder_reflector!(A[i+1:n,i],V[i:n-1],n-i)
         A[i+1,i] -= stau*dot(v,A[i+1:n,i])
         E[i]   = A[i+1,i]
         A[i+1:end,i] = v
-        
+
         mul!(W[i+1:n,i],A[i+1:n,i+1:n], A[i+1:n,i])  #Key point 60% of running time of sktrd!
         #skmv!(A[i+1:n,i+1:n], A[i+1:n,i],W[i+1:n,i],n-i)
         if i>1
@@ -219,14 +205,14 @@ end
             mul!(W[i+1:n,i],W[i+1:n,1:i-1],W[1:i-1,i],-1,1)
         end
         W[i+1:n,i] .*= stau
-        
+
         alpha = -stau*dot(W[i+1:n,i],A[i+1:n,i])/2
         W[i+1:n,i].+=alpha.*A[i+1:n,i]
         tau[i] = stau
-        
-        
+
+
     end)
-    return 
+    return
 end
 function set_nb(n::Integer)
     if n<=12
@@ -239,7 +225,7 @@ function set_nb(n::Integer)
     return 1
 end
 
-@views function sktrd!(S::SkewSymmetric)
+@views function sktrd!(S::SkewHermitian{<:Real})
     #println("begin\n")
     n = size(S.data,1)
 
@@ -257,7 +243,7 @@ end
     V   = similar(A, n-1)
 
     oldi = 0
-    
+
     @inbounds(for i = 1:nb:n-nb-2
         size = n-i+1
 
@@ -274,16 +260,16 @@ end
             @inbounds A[s+j,s+j] = 0
         end
         """
-        
+
         for k = 1:n-s
             A[s+k,s+k] = 0
             @simd for j = k+1:n-s
                 A[s+j,s+k] += update[j,k]-update[k,j]
                 A[s+k,s+j] = - A[s+j,s+k]
             end
-            
+
         end
-        
+
         """
         N=n-nb-i+1
         @inbounds (for j=1:N
@@ -297,9 +283,9 @@ end
                     A[s+t,k1] += A[s+t,k2]*temp1-W[nb+t,l]*temp2
                 end
             end
-            
+
             @simd for t=j+1:N
-                A[k1,s+t]=-A[s+t,k1] 
+                A[k1,s+t]=-A[s+t,k1]
             end
         end)
         """
@@ -316,6 +302,6 @@ end
     E[end] = A[end,end-1]
 
     return tau, E
-    
+
 end
 
