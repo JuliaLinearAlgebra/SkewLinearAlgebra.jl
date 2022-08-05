@@ -6,7 +6,7 @@ This package provides specialized functions for dense real skew-symmetric matric
 It provides the type [`SkewHermitian`](@ref) and the classical linear operations on such
 matrices. The package fits in the framework given by the LinearAlgebra package.
 
-In particular, the package provides de following functions for $A::$ [`SkewHermitian`](@ref) :
+In particular, the package provides the following functions for $A::$ [`SkewHermitian`](@ref) :
 
 -Tridiagonal reduction: [`hessenberg`](@ref)\
 -Eigensolvers: [`eigen`](@ref), [`eigvals`](@ref),[`eigmax`](@ref),[`eigmin`](@ref)\
@@ -148,7 +148,7 @@ julia> Qim
  -0.299303  -0.640561   -0.640561   -0.299303
 
  ```
- The function [`eigvals`](@ref) provides de eigenvalues of $A$. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
+ The function [`eigvals`](@ref) provides the eigenvalues of $A$. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
  ```
  julia> eigvals(A)
 4-element Vector{ComplexF64}:
