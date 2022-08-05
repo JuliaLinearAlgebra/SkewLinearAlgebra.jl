@@ -42,7 +42,7 @@ function skewcis!(A::SkewHermitian)
     Q.+=Eig.realvectors
     temp = similar(Q,n,n)
     temp2 = similar(Q,n,n)
-    eig = @. exp(-imag(E.values))
+    eig = @. exp(-imag(Eig.values))
     E=Diagonal(eig)
     mul!(temp,Q,E)
     mul!(temp2,temp,adjoint(Q))

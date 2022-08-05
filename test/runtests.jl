@@ -89,8 +89,8 @@ Random.seed!(314159) # use same pseudorandom stream for every test
         @test LQ.L*LQ.Q≈A.data
         QR=qr(A)
         @test QR.Q*QR.R≈A.data
-        F=schur(A)
-        @test A.data ≈ F.vectors * F.Schur * F.vectors'
+        #F=schur(A)
+        #@test A.data ≈ F.vectors * F.Schur * F.vectors'
     end
 end
 @testset "hessenberg.jl" begin
