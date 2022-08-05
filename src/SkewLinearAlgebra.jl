@@ -232,10 +232,14 @@ end
 LA.kron(A::SkewHermitian,B::StridedMatrix) = kron(A.data,B)
 LA.kron(A::StridedMatrix,B::SkewHermitian) = kron(A,B.data)
 
-# to do: these functions should be specialized for SkewHermitian using eigen/eigvals
-for f in (:schur, :schur!)
-    @eval LA.$f(A::SkewHermitian) = LA.$f(A.data)
+@views function LA.schur!(A::SkewHermitian)
+    F=eigen!(A)
+    Q = F.imagvectors.*1im
+    Q.+=F.realvectors
+    return Schur(typeof(Q)(Diagonal(F.values)), Q, F.values)
+    
 end
+LA.schur(A::SkewHermitian)= LA.schur!(copy(A))
 
 include("hessenberg.jl")
 include("eigen.jl")
