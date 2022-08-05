@@ -1,5 +1,7 @@
 # SkewLinearAlgebra
 
+WARNING: Package still in development!
+
 This package proposes specialized functions for dense real skew-symmetric matrices i.e $A=-A^T$.
 It provides the structure [`SkewSymmetric`](@ref) and the classical linear operations on such 
 matrices. The package fits in the framework given by the LinearAlgebra package.
