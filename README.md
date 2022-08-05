@@ -156,6 +156,40 @@ julia> eigvals(A,1:3)
   0.0 + 0.7541188264752989im
  -0.0 - 0.7541188264752758im
  ```
+ ## SVD
+ 
+ Specialized SVD using the eigenvalue decomposition is implemented for [`SkewSymmetric`](@ref) type.
+ These functions can be used using the LinearAlgebra syntax.
+ ```
+ julia> svd(A)
+SVD{ComplexF64, Float64, Matrix{ComplexF64}}
+U factor:
+4×4 Matrix{ComplexF64}:
+    0.49111+0.0im          -0.49111+0.0im          0.508735+0.0im         -0.508735+0.0im
+   0.488014-0.176712im    -0.488014-0.176712im    -0.471107+0.0931315im    0.471107+0.0931315im
+   0.143534+0.615785im    -0.143534+0.615785im    -0.138561-0.284619im     0.138561-0.284619im
+ 0.00717668-0.299303im  -0.00717668-0.299303im  -0.00692804-0.640561im   0.00692804-0.640561im
+singular values:
+4-element Vector{Float64}:
+ 11.93445871397423
+ 11.934458713974193
+  0.7541188264752989
+  0.7541188264752758
+Vt factor:
+4×4 Matrix{ComplexF64}:
+ 0.0-0.49111im     0.176712-0.488014im  -0.615785-0.143534im   0.299303-0.00717668im
+ 0.0-0.49111im    -0.176712-0.488014im   0.615785-0.143534im  -0.299303-0.00717668im
+ 0.0-0.508735im  -0.0931315+0.471107im   0.284619+0.138561im   0.640561+0.00692804im
+ 0.0-0.508735im   0.0931315+0.471107im  -0.284619+0.138561im  -0.640561+0.00692804im
+ 
+ julia> svdvals(A)
+4-element Vector{Float64}:
+ 11.93445871397423
+ 11.934458713974225
+  0.7541188264752877
+  0.7541188264752853
+ 
+ ```
  ## Trigonometric functions
  
  The package implements special versions of the trigonometric functions using the eigenvalue decomposition. The provided functions are [`exp`](@ref), [`cis`](@ref),[`cos`](@ref),[`sin`](@ref),[`tan`](@ref),[`sinh`](@ref),[`cosh`](@ref),[`tanh`](@ref).
