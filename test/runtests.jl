@@ -127,7 +127,10 @@ end
         sort!(valA)
         sort!(valB)
         @test valA ≈ valB
-        valA, Qr, Qim = eigen(A)
+        Eig=eigen(A)
+        valA=Eig.values
+        Qr=Eig.realvectors
+        Qim=Eig.imagvectors
         valB,Q = eigen(B)
         Q2 = Qr + Qim.*1im
         @test real(Q2*diagm(valA)*adjoint(Q2))≈A.data
