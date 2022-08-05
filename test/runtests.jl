@@ -56,7 +56,6 @@ Random.seed!(314159) # use same pseudorandom stream for every test
         @test getindex(A,n-1,n)==-3
         @test parent(A)== A.data
 
-
         x=randn(n)
         y=zeros(n)
         mul!(y,A,x,2,0)
