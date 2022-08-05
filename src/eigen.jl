@@ -175,10 +175,24 @@ end
     mul!(temp,Qr,Q1) #temp is Qr
     mul!(Qdiag,Qim,Q2) #Qdiag is Qim
 
-    return vals,temp,Qdiag
+    return SkewEigen(vals,temp,Qdiag)
 end
 
-# FIXME: return an Eigen structure, not a tuple
+"""
+    SkewEigen
+Type returned by eigen(A::SkewHermitian). It contains the eigenvalues and the eigenvectors. 
+The eigenvectors are separated between real and imaginary part.
+"""
+struct SkewEigen{val<:AbstractVector,Qr<:AbstractMatrix,Qim<:AbstractMatrix}
+    values::val
+    realvectors::Qr
+    imagvectors::Qim
+end
+
+SkewEigen(F::SkewEigen) = F
+Base.copy(F::SkewEigen) = SkewEigen(copy(F.values), copy(F.realvectors), copy(F.imagvectors))
+Base.size(F::SkewEigen) = size(F.values)
+
 LA.eigen!(A::SkewHermitian) = skeweigen!(A)
 
 LA.eigen(A::SkewHermitian) =
@@ -193,10 +207,10 @@ end
 
 @views function LA.svd!(A::SkewHermitian)
     n=size(A,1)
-    eig,Qr,Qim=eigen!(A)
-    U=Qim*1im
-    U+=Qr
-    vals = imag.(eig)
+    E=eigen!(A)
+    U=E.imagvectors*1im
+    U+=E.realvectors
+    vals = imag.(E.values)
     I=sortperm(vals;by=abs,rev=true)
     permute!(vals,I)
     Base.permutecols!!(U,I)
