@@ -3,7 +3,7 @@
 function skewexp!(A::SkewHermitian)
     n = size(A,1)
     n == 1 && return fill(exp(A.data[1,1]), 1,1)
-    vals,Qr,Qim = skeweigen!(A)
+    E = skeweigen!(A)
 
     temp2 = similar(A,n,n)
     Q1=similar(A,n,n)
@@ -12,19 +12,19 @@ function skewexp!(A::SkewHermitian)
     Sin=similar(A,n)
 
     @simd for i=1:n
-        @inbounds Sin[i],Cos[i]=sincos(imag(vals[i]))
+        @inbounds Sin[i],Cos[i]=sincos(imag(E.values[i]))
     end
     C=Diagonal(Cos)
     S=Diagonal(Sin)
 
-    mul!(Q1,Qr,C)
-    mul!(Q2,Qim,S)
+    mul!(Q1,E.realvectors,C)
+    mul!(Q2,E.imagvectors,S)
     Q1 .-= Q2
-    mul!(temp2,Q1,transpose(Qr))
-    mul!(Q1,Qr,S)
-    mul!(Q2,Qim,C)
+    mul!(temp2,Q1,transpose(E.realvectors))
+    mul!(Q1,E.realvectors,S)
+    mul!(Q2,E.imagvectors,C)
     Q1 .+= Q2
-    mul!(Q2,Q1,transpose(Qim))
+    mul!(Q2,Q1,transpose(E.imagvectors))
     temp2 .+= Q2
     return temp2
 end
@@ -37,12 +37,12 @@ function skewcis!(A::SkewHermitian)
     n = size(A,1)
     n == 1 && return fill(cis(A.data[1,1]), 1,1)
 
-    vals,Qr,Qim = skeweigen!(A)
-    Q = Qim.*1im
-    Q.+=Qr
+    Eig = skeweigen!(A)
+    Q = Eig.imagvectors.*1im
+    Q.+=Eig.realvectors
     temp = similar(Q,n,n)
     temp2 = similar(Q,n,n)
-    eig = @. exp(-imag(vals))
+    eig = @. exp(-imag(E.values))
     E=Diagonal(eig)
     mul!(temp,Q,E)
     mul!(temp2,temp,adjoint(Q))
@@ -54,19 +54,19 @@ end
     if n == 1
         return exp(A.data*1im)
     end
-    vals,Qr,Qim = skeweigen!(A)
+    Eig = skeweigen!(A)
 
     temp2 = similar(A,n,n)
     Q1=similar(A,n,n)
     Q2=similar(A,n,n)
 
-    eig = @. exp(-imag(vals))
+    eig = @. exp(-imag(Eig.values))
     E=Diagonal(eig)
 
-    mul!(Q1,Qr,E)
-    mul!(Q2,Qim,E)
-    mul!(temp2,Q1,transpose(Qr))
-    mul!(Q1,Q2,transpose(Qim))
+    mul!(Q1,Eig.realvectors,E)
+    mul!(Q2,Eig.imagvectors,E)
+    mul!(temp2,Q1,transpose(Eig.realvectors))
+    mul!(Q1,Q2,transpose(Eig.imagvectors))
     Q1 .+= temp2
     return Q1
 end
@@ -75,19 +75,19 @@ end
     if n == 1
         return exp(A.data*1im)
     end
-    vals,Qr,Qim = skeweigen!(A)
+    Eig = skeweigen!(A)
 
     temp2 = similar(A,n,n)
     Q1=similar(A,n,n)
     Q2=similar(A,n,n)
 
-    eig = @. exp(-imag(vals))
+    eig = @. exp(-imag(Eig.values))
     E=Diagonal(eig)
 
-    mul!(Q1,Qr,E)
-    mul!(Q2,Qim,E)
-    mul!(temp2,Q1,transpose(Qim))
-    mul!(Q1,Q2,transpose(Qr))
+    mul!(Q1,Eig.realvectors,E)
+    mul!(Q2,Eig.imagvectors,E)
+    mul!(temp2,Q1,transpose(Eig.imagvectors))
+    mul!(Q1,Q2,transpose(Eig.realvectors))
     Q1 .-= temp2
     return Q1
 end
@@ -121,3 +121,4 @@ function hermitian!(A::AbstractMatrix{<:Number})
     end
     return LA.Hermitian(A)
 end
+
