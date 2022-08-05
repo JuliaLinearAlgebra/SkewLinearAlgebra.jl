@@ -6,7 +6,6 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 
 @testset "SkewLinearAlgebra.jl" begin
     for n in [2,20,153,200]
-        @show n
         A=SLA.skewhermitian(randn(n,n))
         @test SLA.isskewhermitian(A)
         @test SLA.isskewhermitian(A.data)
@@ -20,7 +19,8 @@ Random.seed!(314159) # use same pseudorandom stream for every test
         @test Matrix(A)==A.data
         @test tr(A)==0
         @test (-A).data==-(A.data)
-        @test A*A == Symmetric(A.data*A.data)
+        A2 = A.data*A.data
+        @test A*A == A2 ≈ Symmetric(A2)
         @test A*B == A.data*B
         @test B*A == B*A.data
         if iseven(n) # for odd n, a skew-Hermitian matrix is singular

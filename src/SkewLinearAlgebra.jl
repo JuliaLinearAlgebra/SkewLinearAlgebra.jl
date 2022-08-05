@@ -69,7 +69,7 @@ Base.@propagate_inbounds function Base.setindex!(A::SkewHermitian, v, i::Integer
     return v
 end
 
-Base.similar(A::SkewHermitian, ::Type{T}) where {T} = SkewHermitian(LA.similar(parent(A), T) .= 0)
+Base.similar(A::SkewHermitian, ::Type{T}) where {T} = SkewHermitian(similar(parent(A), T) .= 0)
 Base.similar(A::SkewHermitian) = SkewHermitian(similar(parent(A)) .= 0)
 
 # Conversion
