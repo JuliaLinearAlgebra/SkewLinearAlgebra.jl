@@ -2,8 +2,8 @@
 
 WARNING: Package still in development!
 
-This package proposes specialized functions for dense real skew-symmetric matrices i.e $A=-A^T$.
-It provides the structure [`SkewHermitian`](@ref) and the classical linear operations on such
+This package provides specialized functions for dense real skew-symmetric matrices i.e $A=-A^T$.
+It provides the type [`SkewHermitian`](@ref) and the classical linear operations on such
 matrices. The package fits in the framework given by the LinearAlgebra package.
 
 In particular, the package provides de following functions for $A::$ [`SkewHermitian`](@ref) :
@@ -13,24 +13,32 @@ In particular, the package provides de following functions for $A::$ [`SkewHermi
 -SVD: [`svd`](@ref), [`svdvals`](@ref)\
 -Trigonometric functions:[`exp`](@ref), [`cis`](@ref),[`cos`](@ref),[`sin`](@ref),[`tan`](@ref),[`sinh`](@ref),[`cosh`](@ref),[`tanh`](@ref)
 
-The SkewHermitian type uses the complete matrix representation as data. It doesn't verify automatically that the given matrix input is skew-symmetric. In particular, in-place methods could destroy the skew-symmetry. The provided function [`isskewhermitian(A)`](@ref) allows to verify that A is indeed skew-symmetric.
+The `SkewHermitian(A)` wraps an existing matrix `A`, which *must* already be skew-Hermitian,
+in the `SkewHermitian` type, which supports fast specialized operations noted above.  You
+can use the function `isskewhermitian(A)` to check whether `A` is skew-Hermitian (`A == -A'`).
+
+Alternatively, you can use the funcition `skewhermitian(A)` to take the skew-Hermitian *part*
+of `A`, given by `(A - A')/2`, and wrap it in a `SkewHermitian` view.  Alternatively, the
+function `skewhermitian!(A)` does the same operation in-place on `A`.
+
 Here is a basic example to initialize a [`SkewHermitian`](@ref)
-```
+```jl
 julia> A = [0 2 -7 4; -2 0 -8 3; 7 8 0 1;-4 -3 -1 0]
 3×3 Matrix{Int64}:
   0  2 -7  4
  -2  0 -8  3
   7  8  0  1
   -4 -3 -1 0
+
+julia> isskewhermitian(A)
+true
+
 julia> A = SkewHermitian(A)
-4×4 Matrix{Int64}:
+4×4 SkewHermitian{Int64, Matrix{Int64}}:
   0   2  -7  4
  -2   0  -8  3
   7   8   0  1
  -4  -3  -1  0
-
-julia> isskewhermitian(A)
-true
 
 julia> tr(A)
 0
@@ -39,11 +47,11 @@ julia> det(A)
 81.0
 
 julia> inv(A)
-4×4 Matrix{Float64}:
- -0.0        0.111111  -0.333333     -0.888889
- -0.111111   0.0        0.444444      0.777778
-  0.333333  -0.444444   2.77556e-17   0.222222
-  0.888889  -0.777778  -0.222222      0.0
+4×4 SkewHermitian{Float64, Matrix{Float64}}:
+  0.0        0.111111  -0.333333  -0.888889
+ -0.111111   0.0        0.444444   0.777778
+  0.333333  -0.444444   0.0        0.222222
+  0.888889  -0.777778  -0.222222   0.0
 
 julia> x=[1;2;3;4]
 4-element Vector{Int64}:

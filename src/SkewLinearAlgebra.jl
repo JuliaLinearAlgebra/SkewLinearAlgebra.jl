@@ -224,9 +224,10 @@ LA.ldiv!(b::Number, A::SkewHermitian) = LA.ldiv!(checkreal(b), A.data)
 LA.rmul!(A::SkewHermitian, b::Number) = LA.rmul!(A.data, checkreal(b))
 LA.lmul!(b::Number, A::SkewHermitian) = LA.lmul!(checkreal(b), A.data)
 
-for f in (:det, :logdet, :inv, :inv!, :lu, :lu!, :lq, :lq!, :qr, :qr!)
+for f in (:det, :logdet, :lu, :lu!, :lq, :lq!, :qr, :qr!)
     @eval LA.$f(A::SkewHermitian) = LA.$f(A.data)
 end
+@eval LA.inv(A::SkewHermitian) = skewhermitian!(LA.inv(A.data))
 
 LA.kron(A::SkewHermitian,B::StridedMatrix) = kron(A.data,B)
 LA.kron(A::StridedMatrix,B::SkewHermitian) = kron(A,B.data)

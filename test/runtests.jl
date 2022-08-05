@@ -1,16 +1,19 @@
-using LinearAlgebra
+using LinearAlgebra, Random
 import SkewLinearAlgebra as SLA
 using Test
 
+Random.seed!(314159) # use same pseudorandom stream for every test
+
 @testset "SkewLinearAlgebra.jl" begin
     for n in [2,20,153,200]
+        @show n
         A=SLA.skewhermitian(randn(n,n))
         @test SLA.isskewhermitian(A)
         @test SLA.isskewhermitian(A.data)
         B=2*Matrix(A)
         @test SLA.isskewhermitian(B)
 
-        @test A==copy(A)
+        @test A==copy(A)::SLA.SkewHermitian
         @test size(A)==size(A.data)
         @test size(A,1)==size(A.data,1)
         @test size(A,2)==size(A.data,2)
@@ -20,6 +23,9 @@ using Test
         @test A*A == Symmetric(A.data*A.data)
         @test A*B == A.data*B
         @test B*A == B*A.data
+        if iseven(n) # for odd n, a skew-Hermitian matrix is singular
+            @test inv(A)::SLA.SkewHermitian ≈ inv(A.data)
+        end
         @test (A*2).data ==A.data*2
         @test (2*A).data ==2*A.data
         @test (A/2).data == A.data/2
