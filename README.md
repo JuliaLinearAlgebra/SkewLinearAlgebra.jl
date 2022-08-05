@@ -2,16 +2,24 @@
 
 WARNING: Package still in development!
 
-This package provides specialized functions for dense real skew-symmetric matrices i.e $A=-A^T$.
-It provides the type [`SkewHermitian`](@ref) and the classical linear operations on such
-matrices. The package fits in the framework given by the LinearAlgebra package.
+This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$.
+It provides the matrix type `SkewHermitian` and implements the usual linear operations on such
+matrices by extending functions from Julia's `LinearAlgebra` standard library, including optimized
+algorithms that exploit this special matrix structure.
 
-In particular, the package provides the following functions for $A::$ [`SkewHermitian`](@ref) :
+In particular, the package provides the following optimized functions for `SkewHermitian` matrices:
 
--Tridiagonal reduction: [`hessenberg`](@ref)\
--Eigensolvers: [`eigen`](@ref), [`eigvals`](@ref),[`eigmax`](@ref),[`eigmin`](@ref)\
--SVD: [`svd`](@ref), [`svdvals`](@ref)\
--Trigonometric functions:[`exp`](@ref), [`cis`](@ref),[`cos`](@ref),[`sin`](@ref),[`tan`](@ref),[`sinh`](@ref),[`cosh`](@ref),[`tanh`](@ref)
+- Tridiagonal reduction: `hessenberg`
+- Eigensolvers: `eigen`, `eigvals`
+- SVD: `svd`, `svdvals`
+- Trigonometric functions:`exp`, `cis`,`cos`,`sin`,`tan`,`sinh`,`cosh`,`tanh`
+
+(Currently, we only provide specialized algorithms for real skew-Hermitian/skew-symmetric matrices,
+but methods for complex skew-Hermitian matrices may be added in the future.  Note, however, that
+a complex skew-Hermitian matrix can be converted into an ordinary Hermitian matrix at negligible
+cost simply by multipling it by $i$, whereas for real skew-Hermitian matrices this would force
+you to use complex arithmetic.  Hence, the benefits of specialized algorithms are greatest for
+real skew-Hermitian matrices.)
 
 The `SkewHermitian(A)` wraps an existing matrix `A`, which *must* already be skew-Hermitian,
 in the `SkewHermitian` type, which supports fast specialized operations noted above.  You
@@ -21,7 +29,7 @@ Alternatively, you can use the funcition `skewhermitian(A)` to take the skew-Her
 of `A`, given by `(A - A')/2`, and wrap it in a `SkewHermitian` view.  Alternatively, the
 function `skewhermitian!(A)` does the same operation in-place on `A`.
 
-Here is a basic example to initialize a [`SkewHermitian`](@ref)
+Here is a basic example to initialize a `SkewHermitian`
 ```jl
 julia> A = [0 2 -7 4; -2 0 -8 3; 7 8 0 1;-4 -3 -1 0]
 3×3 Matrix{Int64}:
@@ -66,11 +74,18 @@ julia> A\x
   4.333333333333334
   0.3333333333333336
  -1.3333333333333333
-  ```
+```
 
   The functions from the LinearAlgebra package can be used in the same fashion:
-  ```
+```jl
 julia> hessenberg(A)
+SkewHessenberg{Tridiagonal{Float64, Vector{Float64}}, UnitLowerTriangular{Float64, SubArray{Float64, 2, Matrix{Float64}, Tuple{UnitRange{Int64}, UnitRange{Int64}}, false}}, Vector{Float64}}
+V factor:
+3×3 UnitLowerTriangular{Float64, SubArray{Float64, 2, Matrix{Float64}, Tuple{UnitRange{Int64}, UnitRange{Int64}}, false}}:
+  1.0         ⋅         ⋅
+ -0.679175   1.0        ⋅
+  0.3881    -0.185238  1.0
+H factor:
 4×4 Tridiagonal{Float64, Vector{Float64}}:
  0.0      -8.30662    ⋅        ⋅
  8.30662   0.0      -8.53382   ⋅
@@ -84,29 +99,26 @@ julia> hessenberg(A)
  -0.0 - 0.7541188264752877im
  -0.0 - 11.934458713974225im
 
- julia> eigmax(A)
--0.0 - 11.934458713974223im
+```
 
-  ```
-  \usepackage{amsymb}\
  ## Hessenberg/tridiagonal reduction
-The hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$ is an orthonormal matrix.
-The [`hessenberg`](@ref) function returns a structure of type [`SkewHessenberg`](@ref) containing the [`Tridiagonal`](@ref) reduction $H\in \mathbb{R}^{n\times n}$, the householder reflectors $v_i$ in a  [`UnitLowerTriangular`](@ref) $V\in \mathbb{R}^{n-1\times n-1}$  and the $n-2$ scalars $\tau_i$ associated to the reflectors. A function [`getQ`](@ref) is provided to retrieve the orthogonal transformation Q.
+The Hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$ is an orthonormal matrix.
+The `hessenberg` function returns a structure of type `SkewHessenberg` containing the `Tridiagonal` reduction $H\in \mathbb{R}^{n\times n}$, the householder reflectors $v_i$ in a  `UnitLowerTriangular` $V\in \mathbb{R}^{n-1\times n-1}$  and the $n-2$ scalars $\tau_i$ associated to the reflectors. A function `getQ` is provided to retrieve the orthogonal transformation Q.
 
-  ```
-  julia> H=hessenberg(A)
+```jl
+julia> hessenberg(A)
+SkewHessenberg{Tridiagonal{Float64, Vector{Float64}}, UnitLowerTriangular{Float64, SubArray{Float64, 2, Matrix{Float64}, Tuple{UnitRange{Int64}, UnitRange{Int64}}, false}}, Vector{Float64}}
+V factor:
+3×3 UnitLowerTriangular{Float64, SubArray{Float64, 2, Matrix{Float64}, Tuple{UnitRange{Int64}, UnitRange{Int64}}, false}}:
+  1.0         ⋅         ⋅
+ -0.679175   1.0        ⋅
+  0.3881    -0.185238  1.0
+H factor:
 4×4 Tridiagonal{Float64, Vector{Float64}}:
  0.0      -8.30662    ⋅        ⋅
  8.30662   0.0      -8.53382   ⋅
   ⋅        8.53382   0.0      1.08347
   ⋅         ⋅       -1.08347  0.0
-3×3 UnitLowerTriangular{Float64, SubArray{Float64, 2, Matrix{Float64}, Tuple{UnitRange{Int64}, UnitRange{Int64}}, false}}:
-  1.0         ⋅         ⋅
- -0.679175   1.0        ⋅
-  0.3881    -0.185238  1.0
-2-element Vector{Float64}:
- 1.2407717061715382
- 1.9336503566410876
 
  julia> Q=getQ(H)
 4×4 Matrix{Float64}:
@@ -115,15 +127,14 @@ The [`hessenberg`](@ref) function returns a structure of type [`SkewHessenberg`]
  0.0   0.842701  -0.282138    0.458534
  0.0  -0.481543  -0.0141069   0.876309
 
- ```
-\usepackage{hyperref}
+```
 
  ## Eigenvalues and eigenvectors
 
- The package also provides eigensolvers for  [`SkewHermitian`](@ref) matrices. The method to solve the eigenvalue problem is issued from: \url{C.Penke,A.Marek,C.Vorwerk,C.Draxl,P.Benner, \textit{ High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem}, 2020.}
+ The package also provides eigensolvers for  `SkewHermitian` matrices. The method to solve the eigenvalue problem is based on the algorithm described in Penke et al, "[High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem](https://arxiv.org/abs/1912.04062)" (2020).
 
-  The function [`eigen`](@ref) returns the eigenvalues plus the real part of the eigenvectors and the imaginary part separeted.
- ```
+The function `eigen` returns the eigenvalues plus the real part of the eigenvectors and the imaginary part separeted.
+```jl
   julia> val,Qr,Qim=eigen(A)
 
   julia> val
@@ -147,9 +158,9 @@ julia> Qim
   0.615785  -0.284619   -0.284619    0.615785
  -0.299303  -0.640561   -0.640561   -0.299303
 
- ```
- The function [`eigvals`](@ref) provides the eigenvalues of $A$. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
- ```
+```
+ The function `eigvals` provides the eigenvalues of $A$. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
+```jl
  julia> eigvals(A)
 4-element Vector{ComplexF64}:
   0.0 + 11.93445871397423im
@@ -167,13 +178,13 @@ julia> eigvals(A,1:3)
   0.0 + 11.93445871397423im
   0.0 + 0.7541188264752989im
  -0.0 - 0.7541188264752758im
- ```
+```
  ## SVD
 
- Specialized SVD using the eigenvalue decomposition is implemented for [`SkewSymmetric`](@ref) type.
- These functions can be used using the LinearAlgebra syntax.
+ A specialized SVD using the eigenvalue decomposition is implemented for `SkewSymmetric` type.
+ These functions can be called using the `LinearAlgebra` syntax.
 
- ```
+```jl
  julia> svd(A)
 SVD{ComplexF64, Float64, Matrix{ComplexF64}}
 U factor:
@@ -201,12 +212,12 @@ Vt factor:
  11.934458713974225
   0.7541188264752877
   0.7541188264752853
+```
 
- ```
  ## Trigonometric functions
 
- The package implements special versions of the trigonometric functions using the eigenvalue decomposition. The provided functions are [`exp`](@ref), [`cis`](@ref),[`cos`](@ref),[`sin`](@ref),[`tan`](@ref),[`sinh`](@ref),[`cosh`](@ref),[`tanh`](@ref).
- ```
+ The package implements special versions of the trigonometric functions using the eigenvalue decomposition. The provided functions are `exp`, `cis`,`cos`,`sin`,`tan`,`sinh`,`cosh`,`tanh`.
+```jl
  julia> exp(A)
 4×4 Matrix{Float64}:
  -0.317791  -0.816528    -0.268647   0.400149
@@ -234,8 +245,7 @@ julia> cosh(A)
  -0.756913   0.140338  0.334511  -0.186256
   0.154821   0.334511  0.40033    0.633165
   0.340045  -0.186256  0.633165  -0.547275
-
- ```
+```jl
 
 
 

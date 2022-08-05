@@ -17,6 +17,11 @@ end
     return complex.(0, vals)
 end
 
+LA.eigvals(A::SkewHermitian, irange::UnitRange) =
+    LA.eigvals!(copyeigtype(A), irange)
+LA.eigvals(A::SkewHermitian, vl::Real,vh::Real) =
+    LA.eigvals!(copyeigtype(A), vl,vh)
+
 # no need to define LA.eigen(...) since the generic methods should work
 
 @views function skeweigvals!(S::SkewHermitian)
@@ -180,7 +185,7 @@ end
 
 """
     SkewEigen
-Type returned by eigen(A::SkewHermitian). It contains the eigenvalues and the eigenvectors. 
+Type returned by eigen(A::SkewHermitian). It contains the eigenvalues and the eigenvectors.
 The eigenvectors are separated between real and imaginary part.
 """
 struct SkewEigen{val<:AbstractVector,Qr<:AbstractMatrix,Qim<:AbstractMatrix}
@@ -195,8 +200,9 @@ Base.size(F::SkewEigen) = size(F.values)
 
 LA.eigen!(A::SkewHermitian) = skeweigen!(A)
 
-LA.eigen(A::SkewHermitian) =
-    LA.eigen!(copyto!(similar(A, LA.eigtype(eltype(A))), A))
+copyeigtype(A) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
+
+LA.eigen(A::SkewHermitian) = LA.eigen!(copyeigtype(A))
 
 @views function LA.svdvals!(A::SkewHermitian)
     n=size(A,1)
@@ -226,4 +232,4 @@ end
     return LA.SVD(U,vals,adjoint(V))
 end
 
-LA.svd(A::SkewHermitian) = svd!(copy(A))
+LA.svd(A::SkewHermitian) = svd!(copyeigtype(A))
