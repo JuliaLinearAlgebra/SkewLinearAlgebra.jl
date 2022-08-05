@@ -106,9 +106,11 @@ The [`hessenberg`](@ref) function returns a structure of type [`SkewHessenberg`]
  0.0  -0.481543  -0.0141069   0.876309
  
  ```
+\usepackage{hyperref}
+
  ## Eigenvalues and eigenvectors
  
- The package also provides eigensolvers for  [`SkewSymmetric`](@ref) matrices:
+ The package also provides eigensolvers for  [`SkewSymmetric`](@ref) matrices. The method to solve the eigenvalue problem is issued from: \url{C.Penke,A.Marek,C.Vorwerk,C.Draxl,P.Benner, \textit{ High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem}, 2020.}
  
   The function [`eigen`](@ref) returns the eigenvalues plus the real part of the eigenvectors and the imaginary part separeted.
  ```
@@ -160,6 +162,7 @@ julia> eigvals(A,1:3)
  
  Specialized SVD using the eigenvalue decomposition is implemented for [`SkewSymmetric`](@ref) type.
  These functions can be used using the LinearAlgebra syntax.
+ 
  ```
  julia> svd(A)
 SVD{ComplexF64, Float64, Matrix{ComplexF64}}
