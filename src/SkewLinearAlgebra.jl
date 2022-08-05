@@ -141,7 +141,6 @@ Base.real(A::SkewHermitian{<:Real}) = A
 Base.real(A::SkewHermitian) = SkewHermitian(real(A.data))
 Base.imag(A::SkewHermitian) = SkewHermitian(imag(A.data))
 
-Base.copy(A::SkewHermitian) = SkewHermitian(copy(A))
 Base.conj(A::SkewHermitian) = SkewHermitian(conj(A.data))
 Base.conj!(A::SkewHermitian) = SkewHermitian(conj!(A.data))
 LA.tr(A::SkewHermitian{<:Real}) = zero(eltype(A))

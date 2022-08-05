@@ -4,6 +4,25 @@ using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
 
+@testset "README.md" begin # test from the README examples
+    A = [0 2 -7 4; -2 0 -8 3; 7 8 0 1;-4 -3 -1 0]
+    @test SLA.isskewhermitian(A)
+    A = SLA.SkewHermitian(A)
+    @test tr(A) == 0
+    @test det(A) ≈ 81
+    @test SLA.isskewhermitian(inv(A))
+    @test inv(A) ≈ [0 1 -3 -8; -1 0 4 7; 3 -4 0 2; 8 -7 -2 0]/9
+    @test A \ [1,2,3,4] ≈ [-13,13,1,-4]/3
+    v = [8.306623862918073, 8.53382018538718, -1.083472677771923]
+    @test hessenberg(A).H ≈ Tridiagonal(v,[0,0,0,0.],-v)
+    iλ₁,iλ₂ = 11.93445871397423, 0.7541188264752862
+    @test eigvals(A) ≈ [iλ₁,iλ₂,-iλ₂,-iλ₁]*im
+    @test SLA.getQ(hessenberg(A)) ≈ [1.0 0.0 0.0 0.0; 0.0 -0.2407717061715382 -0.9592700375676934 -0.14774972261267352; 0.0 0.8427009716003843 -0.2821382463434394 0.4585336219014009; 0.0 -0.48154341234307674 -0.014106912317171805 0.8763086996337883]
+    @test eigvals(A, 0,15) ≈ [iλ₁,iλ₂]*im
+    @test eigvals(A, 1:3) ≈ [iλ₁,iλ₂,-iλ₂]*im
+    @test svdvals(A) ≈ [iλ₁,iλ₁,iλ₂,iλ₂]
+end
+
 @testset "SkewLinearAlgebra.jl" begin
     for n in [2,20,153,200]
         A=SLA.skewhermitian(randn(n,n))

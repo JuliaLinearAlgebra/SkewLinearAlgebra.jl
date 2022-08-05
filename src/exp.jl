@@ -30,7 +30,7 @@ function skewexp!(A::SkewHermitian)
 end
 
 function Base.exp(A::SkewHermitian)
-    return skewexp!(copy(A))
+    return skewexp!(copyeigtype(A))
 end
 
 function skewcis!(A::SkewHermitian)
@@ -91,9 +91,9 @@ end
     Q1 .-= temp2
     return Q1
 end
-Base.cis(A::SkewHermitian) = skewcis!(copy(A))
-Base.cos(A::SkewHermitian) = skewcos!(copy(A))
-Base.sin(A::SkewHermitian) = skewsin!(copy(A))
+Base.cis(A::SkewHermitian) = skewcis!(copyeigtype(A))
+Base.cos(A::SkewHermitian) = skewcos!(copyeigtype(A))
+Base.sin(A::SkewHermitian) = skewsin!(copyeigtype(A))
 
 function Base.tan(A::SkewHermitian)
     E=cis(A)
