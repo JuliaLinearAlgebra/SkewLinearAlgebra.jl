@@ -44,12 +44,8 @@ Returns Q.
 """
 @views function getQ(H::SkewHessenberg)
     n = size(H.H,1)
-    Q = diagm(ones(n))
-    s = similar(Q,n)
-    for i = 1:n-2
-        t = H.τ[n-i-1]
-        leftHouseholder!(Q[n-i:n,n-i-1:n],Array(H.V[n-i-1:n-1,n-i-1]),s[n-i-1:n],t)
-    end
+    Q  = diagm(ones(n))
+    LA.LAPACK.ormqr!('L','N',Matrix(H.V),tau,Q[2:end,2:end])
     return Q
 end
 

@@ -131,7 +131,7 @@ end
     end
 end
 
-@views function skeweigen!(S::SkewHermitian)
+@views function skeweigen!(S::SkewHermitian, mode::Int=0)
     n = size(S.data,1)
     tau,E = sktrd!(S)
     A = S.data
@@ -179,8 +179,13 @@ end
     end
     mul!(temp,Qr,Q1) #temp is Qr
     mul!(Qdiag,Qim,Q2) #Qdiag is Qim
-
-    return SkewEigen(vals,temp,Qdiag)
+    if mode==0
+        Q=Qdiag*1im
+        Q.+=temp
+        return Eigen(vals,Q)
+    else
+        return SkewEigen(vals,temp,Qdiag)
+    end
 end
 
 """
@@ -214,8 +219,7 @@ end
 @views function LA.svd!(A::SkewHermitian)
     n=size(A,1)
     E=eigen!(A)
-    U=E.imagvectors*1im
-    U+=E.realvectors
+    U=E.vectors
     vals = imag.(E.values)
     I=sortperm(vals;by=abs,rev=true)
     permute!(vals,I)

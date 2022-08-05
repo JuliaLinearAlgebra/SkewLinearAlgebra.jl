@@ -3,7 +3,7 @@
 function skewexp!(A::SkewHermitian)
     n = size(A,1)
     n == 1 && return fill(exp(A.data[1,1]), 1,1)
-    E = skeweigen!(A)
+    E = skeweigen!(A,1)
 
     temp2 = similar(A,n,n)
     Q1=similar(A,n,n)
@@ -38,8 +38,7 @@ function skewcis!(A::SkewHermitian)
     n == 1 && return fill(cis(A.data[1,1]), 1,1)
 
     Eig = skeweigen!(A)
-    Q = Eig.imagvectors.*1im
-    Q.+=Eig.realvectors
+    Q = Eig.vectors
     temp = similar(Q,n,n)
     temp2 = similar(Q,n,n)
     eig = @. exp(-imag(Eig.values))
@@ -54,7 +53,7 @@ end
     if n == 1
         return exp(A.data*1im)
     end
-    Eig = skeweigen!(A)
+    Eig = skeweigen!(A,1)
 
     temp2 = similar(A,n,n)
     Q1=similar(A,n,n)
@@ -75,7 +74,7 @@ end
     if n == 1
         return exp(A.data*1im)
     end
-    Eig = skeweigen!(A)
+    Eig = skeweigen!(A,1)
 
     temp2 = similar(A,n,n)
     Q1=similar(A,n,n)
