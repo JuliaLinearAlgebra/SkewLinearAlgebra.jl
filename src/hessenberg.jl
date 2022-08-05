@@ -45,7 +45,7 @@ Returns Q.
 @views function getQ(H::SkewHessenberg)
     n = size(H.H,1)
     Q  = diagm(ones(n))
-    LA.LAPACK.ormqr!('L','N',Matrix(H.V),tau,Q[2:end,2:end])
+    LA.LAPACK.ormqr!('L','N',Matrix(H.V)[:,1:end-1],tau,Q[2:end,2:end])
     return Q
 end
 

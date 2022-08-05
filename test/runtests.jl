@@ -147,10 +147,8 @@ end
         @test valA ≈ valB
         Eig=eigen(A)
         valA=Eig.values
-        Qr=Eig.realvectors
-        Qim=Eig.imagvectors
+        Q2=Eig.vectors
         valB,Q = eigen(B)
-        Q2 = Qr + Qim.*1im
         @test real(Q2*diagm(valA)*adjoint(Q2))≈A.data
         valA=imag(valA)
         valB=imag(valB)
