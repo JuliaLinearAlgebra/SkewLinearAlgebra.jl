@@ -1,53 +1,18 @@
 # Based on hessenberg.jl in Julia. License is MIT: https://julialang.org/license
 
-"""
-    SkewHessenberg
-
-Type returned by hessenberg(A) when A is skew-symmetric.
-Contains the tridiagonal reduction in H, the reflectors in V that is UnitLowerTriangular.
-τ contains the scalars relative to the householder reflector i.e Q_i= I - τ_i v_i v_i^T.
-"""
-struct SkewHessenberg{SH<:Tridiagonal,S<:UnitLowerTriangular,tau<:AbstractVector}
-    H::SH # Tridiagonal
-    V::S # reflector data in unit lower triangular
-    τ::tau # more Q (reflector) data
-end
-
-SkewHessenberg(F::SkewHessenberg) = F
-Base.copy(F::SkewHessenberg) = SkewHessenberg(copy(F.H), copy(F.V), copy(F.τ))
-Base.size(F::SkewHessenberg, d) = size(F.H, d)
-Base.size(F::SkewHessenberg) = size(F.H)
+LA.Hessenberg(factors::AbstractMatrix, τ::AbstractVector, H::LA.Tridiagonal, uplo::AbstractChar='L'; μ::Number=false) =
+    Hessenberg{typeof(zero(eltype(factors))+μ),typeof(H),typeof(factors),typeof(τ),typeof(μ)}(H, uplo, factors, τ, μ)
+LA.HessenbergQ(F::Hessenberg{<:Any,<:LA.Tridiagonal,S,W}) where {S,W} = LA.HessenbergQ{eltype(F.factors),S,W,true}(F.uplo, F.factors, F.τ)
 
 @views function LA.hessenberg!(A::SkewHermitian)
     tau,E = sktrd!(A)
     n = size(A,1)
-    return SkewHessenberg(Tridiagonal(E,zeros(n),-E),UnitLowerTriangular(A.data[2:end,1:end-1]),tau)
+    tau2=similar(tau,n-1)
+    tau2[1:n-2].=tau
+    tau2[n-1]=0  
+    return Hessenberg(A.data,tau2,LA.Tridiagonal(E,zeros(n),-E),'L')
 end
 
-function Base.show(io::IO, mime::MIME"text/plain", F::SkewHessenberg)
-    summary(io, F)
-    println(io, "\nV factor:")
-    show(io, mime, F.V)
-    println(io, "\nH factor:")
-    show(io, mime, F.H)
-end
-
-# fixme: to get the Q factor, F.Q should return a type that
-# implicitly multiplies by reflectors, and you should convert it
-# to a matrix with Matrix(F.Q), eliminating getQ.
-
-"""
-    getQ(H)
-
-Allows to reconstruct orthogonal matrix Q from reflectors V.
-Returns Q.
-"""
-@views function getQ(H::SkewHessenberg)
-    n = size(H.H,1)
-    Q  = diagm(ones(n))
-    LA.LAPACK.ormqr!('L','N',Matrix(H.V)[:,1:end-1],tau,Q[2:end,2:end])
-    return Q
-end
 
 @views function householder_reflector!(x,v,n)
     div=1/(x[1]+sign(x[1])*norm(x))
