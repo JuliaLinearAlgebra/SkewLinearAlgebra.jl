@@ -42,7 +42,7 @@ function skewcis!(A::SkewHermitian)
     temp = similar(Q,n,n)
     temp2 = similar(Q,n,n)
     eig = @. exp(-imag(Eig.values))
-    E=Diagonal(eig)
+    E = Diagonal(eig)
     mul!(temp,Q,E)
     mul!(temp2,temp,adjoint(Q))
     return temp2
@@ -56,11 +56,11 @@ end
     Eig = skeweigen!(A,1)
 
     temp2 = similar(A,n,n)
-    Q1=similar(A,n,n)
-    Q2=similar(A,n,n)
+    Q1 = similar(A,n,n)
+    Q2 = similar(A,n,n)
 
     eig = @. exp(-imag(Eig.values))
-    E=Diagonal(eig)
+    E = Diagonal(eig)
 
     mul!(Q1,Eig.realvectors,E)
     mul!(Q2,Eig.imagvectors,E)
@@ -77,11 +77,11 @@ end
     Eig = skeweigen!(A,1)
 
     temp2 = similar(A,n,n)
-    Q1=similar(A,n,n)
-    Q2=similar(A,n,n)
+    Q1 = similar(A,n,n)
+    Q2 = similar(A,n,n)
 
     eig = @. exp(-imag(Eig.values))
-    E=Diagonal(eig)
+    E = Diagonal(eig)
 
     mul!(Q1,Eig.realvectors,E)
     mul!(Q2,Eig.imagvectors,E)

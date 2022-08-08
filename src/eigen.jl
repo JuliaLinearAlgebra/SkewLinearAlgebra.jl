@@ -148,6 +148,7 @@ end
     temp = similar(A,n,n)
 
     Q  = diagm(ones(n))
+
     LA.LAPACK.ormqr!('L','N',A[2:n,1:n-2],tau,Q[2:end,2:end])
 
     Q1 = similar(A,(n+1)÷2,n)
@@ -190,7 +191,7 @@ end
 
 """
     SkewEigen
-Type returned by eigen(A::SkewHermitian). It contains the eigenvalues and the eigenvectors.
+Type returned by eigen(A::SkewHermitian,mode=1). It contains the eigenvalues and the eigenvectors.
 The eigenvectors are separated between real and imaginary part.
 """
 struct SkewEigen{val<:AbstractVector,Qr<:AbstractMatrix,Qim<:AbstractMatrix}
