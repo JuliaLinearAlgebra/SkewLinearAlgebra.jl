@@ -1,18 +1,18 @@
-
-@views function skewchol!(A::SkewHermitian)
-    B=A.data
-    tol=1e-15
-    m=size(B,1)
-    J2=[0 1;-1 0]
-    ii=0; jj=0; kk=0
-    P=Array(1:m)
-    temp=similar(B,m)
-    tempM=similar(B,2,m-2)
-    for j=1:m÷2
-        j2=2*j
-        M=maximum(B[j2-1:m,j2-1:m])
-        for i1=j2-1:m
-            for i2=j2-1:m
+import .SkewLinearAlgebra as SLA
+@views function skewchol!(A::SLA.SkewHermitian)
+    B = A.data
+    tol = 1e-15
+    m = size(B,1)
+    J2 = [0 1;-1 0]
+    ii = 0; jj = 0; kk = 0
+    P = Array(1:m)
+    temp = similar(B,m)
+    tempM = similar(B,2,m-2)
+    for j = 1:m÷2
+        j2 = 2*j
+        M = maximum(B[j2-1:m,j2-1:m])
+        for i1 = j2-1:m
+            for i2 = j2-1:m
                 if B[i1,i2] == M
                     ii = i1
                     jj = i2
@@ -23,12 +23,12 @@
             rank = j2-2
             return P
         end
-        if jj==j2-1
+        if jj == j2-1
             kk=ii
         else
-            kk=jj
+            kk = jj
         end
-        if ii!=j2-1
+        if ii != j2-1
 
             I = Array(1:m)
             I[ii] = j2-1
@@ -43,11 +43,11 @@
             B[ii,:] .= B[j2-1,:]
             B[j2-1,:] .= temp
         end
-        if kk!= j2
+        if kk != j2
 
-            I=Array(1:m)
-            I[kk]=j2
-            I[j2]=kk
+            I = Array(1:m)
+            I[kk] = j2
+            I[j2] = kk
             
             temp3 = P[kk]
             P[kk] = P[j2]
@@ -59,7 +59,7 @@
             B[j2,:] .= temp
         end
         
-        l=m-j2
+        l = m-j2
         r = sqrt(B[j2-1,j2])
         B[j2-1,j2-1] = r
         B[j2,j2] = r
@@ -81,9 +81,9 @@ end
     y1 = similar(A.data,n)
     y2 = similar(A.data,n)
     R = UpperTriangular(A.data)
-    vec=zeros(n-1)
-    for i=1:2:n-1
-        vec[i]=1
+    vec = zeros(n-1)
+    for i = 1:2:n-1
+        vec[i] = 1
     end
     Jt = Tridiagonal(vec,zeros(n),-vec)
     Base.permute!(b,P)
@@ -93,6 +93,11 @@ end
     Base.permute!(y1,P)
     return y1
 end
+
+A=SLA.skewhermitian(A)
+P=skewchol!(A)
+R=triu(A)
+dipslay(transpose(R)*)
 
 """
 Q^TR^TJRQx=b

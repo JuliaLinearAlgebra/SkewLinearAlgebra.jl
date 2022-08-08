@@ -27,7 +27,7 @@ LA.eigvals(A::SkewHermitian, vl::Real,vh::Real) =
 @views function skeweigvals!(S::SkewHermitian)
     n = size(S.data,1)
     E = sktrd!(S)[2]
-    H = SymTridiagonal(zeros(n),E)
+    H = SymTridiagonal(zeros(eltype(E),n),E)
     vals = eigvals!(H)
     return vals .= .-vals
 
@@ -36,7 +36,7 @@ end
 @views function skeweigvals!(S::SkewHermitian,irange::UnitRange)
     n = size(S.data,1)
     E = sktrd!(S)[2]
-    H = SymTridiagonal(zeros(n),E)
+    H = SymTridiagonal(zeros(eltype(E),n),E)
     vals = eigvals!(H,irange)
     return vals .= .-vals
 
@@ -45,15 +45,15 @@ end
 @views function skeweigvals!(S::SkewHermitian,vl::Real,vh::Real)
     n = size(S.data,1)
     E = sktrd!(S)[2]
-    H = SymTridiagonal(zeros(n),E)
+    H = SymTridiagonal(zeros(eltype(E),n),E)
     vals = eigvals!(H,vl,vh)
     return vals .= .-vals
 end
 @views function WYform(A,tau,Q)
     n = size(A,1)
-    W = zeros(n-1,n-2)
-    Yt = zeros(n-2,n-1)
-    temp = zeros(n-1)
+    W = zeros(eltype(A.data),n-1,n-2)
+    Yt = zeros(eltype(A.data),n-2,n-1)
+    temp = zeros(eltype(A.data),n-1)
 
     for i = 1:n-2
         t = tau[i]
@@ -133,10 +133,16 @@ end
 
 @views function skeweigen!(S::SkewHermitian)
     n = size(S.data,1)
+
     tau,E = sktrd!(S)
+    tau2 = similar(tau,n-1)
+    tau2[1:n-2].=tau
+    tau2[n-1 ] = 0  
+    T=LA.Tridiagonal(E,zeros(eltype(A.data),n),-E)
+    #H1 = Hessenberg(S.data,tau2,LA.Tridiagonal(E,zeros(eltype(S.data),n),-E),'L')
+    H1 = Hessenberg{typeof(zero(eltype(S.data))),typeof(T),typeof(S.data),typeof(tau2),typeof(false)}(T, 'L', S.data, tau2, false)
     A = S.data
-    s = similar(A,n)
-    H = SymTridiagonal(zeros(n),E)
+    H = SymTridiagonal(zeros(eltype(E),n),E)
     trisol = eigen!(H)
 
     vals  = trisol.values*1im
@@ -147,9 +153,9 @@ end
     Qim  = similar(A,n,n÷2)
     temp = similar(A,n,n)
 
-    Q  = diagm(ones(n))
-
-    LA.LAPACK.ormqr!('L','N',A[2:n,1:n-2],tau,Q[2:end,2:end])
+    Q=Matrix(H1.Q)
+    #Q  = diagm(ones(n))
+    #LA.LAPACK.ormqr!('L','N',A[2:n,1:n-2],tau,Q[2:end,2:end])
 
     Q1 = similar(A,(n+1)÷2,n)
     Q2 = similar(A,n÷2,n)

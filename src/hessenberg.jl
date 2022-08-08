@@ -1,10 +1,6 @@
 # Based on hessenberg.jl in Julia. License is MIT: https://julialang.org/license
 
-LA.Hessenberg(factors::AbstractMatrix, τ::AbstractVector, H::LA.Tridiagonal, uplo::AbstractChar='L'; μ::Number=false) =
-    Hessenberg{typeof(zero(eltype(factors))+μ),typeof(H),typeof(factors),typeof(τ),typeof(μ)}(H, uplo, factors, τ, μ)
 LA.HessenbergQ(F::Hessenberg{<:Any,<:LA.Tridiagonal,S,W}) where {S,W} = LA.HessenbergQ{eltype(F.factors),S,W,true}(F.uplo, F.factors, F.τ)
-LA.rmul!(F::Hessenberg{<:Any,<:Tridiagonal{T}}, x::T) where {T<:Number} = Hessenberg(F.factors, F.τ, LA.Tridiagonal(F.H.dv*x, F.H.ev*x), F.uplo; μ=F.μ*x)
-LA.lmul!(x::T, F::Hessenberg{<:Any,<:Tridiagonal{T}}) where {T<:Number} = Hessenberg(F.factors, F.τ, LA.Tridiagonal(x*F.H.dv, x*F.H.ev), F.uplo; μ=x*F.μ)
 
 @views function LA.hessenberg!(A::SkewHermitian)
     tau,E = sktrd!(A)
@@ -12,18 +8,15 @@ LA.lmul!(x::T, F::Hessenberg{<:Any,<:Tridiagonal{T}}) where {T<:Number} = Hessen
     tau2=similar(tau,n-1)
     tau2[1:n-2].=tau
     tau2[n-1]=0  
-    return Hessenberg(A.data,tau2,LA.Tridiagonal(E,zeros(n),-E),'L')
+    T=LA.Tridiagonal(E,zeros(eltype(A.data),n),-E)
+    return  Hessenberg{typeof(zero(eltype(A.data))),typeof(T),typeof(A.data),typeof(tau2),typeof(false)}(T, 'L', A.data, tau2, false)
+    #return Hessenberg(A.data,tau2,LA.Tridiagonal(E,zeros(eltype(A.data),n),-E),'L')
 end
 
 
 @views function householder_reflector!(x,v,n)
     div=1/(x[1]+sign(x[1])*norm(x))
     v[1] = 1
-    """
-    @simd for j=2:n
-        @inbounds v[j] = x[j]*div
-    end
-    """
     @inbounds v[2:end]=x[2:end]
     v[2:end].*=div
     tau = 2/((norm(v)^2))
@@ -189,11 +182,10 @@ function set_nb(n::Integer)
 end
 
 @views function sktrd!(S::SkewHermitian{<:Real})
-    #println("begin\n")
     n = size(S.data,1)
 
     if n == 1
-        return 0, S.data
+        return Hessenberg(Matrix(S.data),Vector{eltype(S.data)}(undef,0),LA.UpperHessenberg(S.data),'L')
     end
 
     nb  = set_nb(n)
