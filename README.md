@@ -79,16 +79,17 @@ julia> A\x
   The functions from the LinearAlgebra package can be used in the same fashion:
 ```jl
 julia> hessenberg(A)
-SkewHessenberg{Tridiagonal{Float64, Vector{Float64}}, UnitLowerTriangular{Float64, SubArray{Float64, 2, Matrix{Float64}, Tuple{UnitRange{Int64}, UnitRange{Int64}}, false}}, Vector{Float64}}
-V factor:
-3×3 UnitLowerTriangular{Float64, SubArray{Float64, 2, Matrix{Float64}, Tuple{UnitRange{Int64}, UnitRange{Int64}}, false}}:
-  1.0         ⋅         ⋅
- -0.679175   1.0        ⋅
-  0.3881    -0.185238  1.0
+Hessenberg{Float64, Tridiagonal{Float64, Vector{Float64}}, Matrix{Float64}, Vector{Float64}, Bool}
+Q factor:
+4×4 LinearAlgebra.HessenbergQ{Float64, Matrix{Float64}, Vector{Float64}, true}:
+ 1.0   0.0        0.0         0.0
+ 0.0  -0.240772  -0.95927    -0.14775
+ 0.0   0.842701  -0.282138    0.458534
+ 0.0  -0.481543  -0.0141069   0.876309
 H factor:
 4×4 Tridiagonal{Float64, Vector{Float64}}:
- 0.0      -8.30662    ⋅        ⋅
- 8.30662   0.0      -8.53382   ⋅
+ 0.0      -8.30662    ⋅        ⋅ 
+ 8.30662   0.0      -8.53382   ⋅ 
   ⋅        8.53382   0.0      1.08347
   ⋅         ⋅       -1.08347  0.0
 
@@ -103,30 +104,26 @@ H factor:
 
  ## Hessenberg/tridiagonal reduction
 The Hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$ is an orthonormal matrix.
-The `hessenberg` function returns a structure of type `SkewHessenberg` containing the `Tridiagonal` reduction $H\in \mathbb{R}^{n\times n}$, the householder reflectors $v_i$ in a  `UnitLowerTriangular` $V\in \mathbb{R}^{n-1\times n-1}$  and the $n-2$ scalars $\tau_i$ associated to the reflectors. A function `getQ` is provided to retrieve the orthogonal transformation Q.
+The `hessenberg` function computes the Hessenberg decomposition of `A` and return a `Hessenberg` object. If `F` is the
+factorization object, the unitary matrix can be accessed with `F.Q` (of type `LinearAlgebra.HessenbergQ`)
+and the Hessenberg matrix with `F.H` (of type `Tridiagonal`), either of
+which may be converted to a regular matrix with `Matrix(F.H)` or `Matrix(F.Q)`.
 
 ```jl
 julia> hessenberg(A)
-SkewHessenberg{Tridiagonal{Float64, Vector{Float64}}, UnitLowerTriangular{Float64, SubArray{Float64, 2, Matrix{Float64}, Tuple{UnitRange{Int64}, UnitRange{Int64}}, false}}, Vector{Float64}}
-V factor:
-3×3 UnitLowerTriangular{Float64, SubArray{Float64, 2, Matrix{Float64}, Tuple{UnitRange{Int64}, UnitRange{Int64}}, false}}:
-  1.0         ⋅         ⋅
- -0.679175   1.0        ⋅
-  0.3881    -0.185238  1.0
-H factor:
-4×4 Tridiagonal{Float64, Vector{Float64}}:
- 0.0      -8.30662    ⋅        ⋅
- 8.30662   0.0      -8.53382   ⋅
-  ⋅        8.53382   0.0      1.08347
-  ⋅         ⋅       -1.08347  0.0
-
- julia> Q=getQ(H)
-4×4 Matrix{Float64}:
+Hessenberg{Float64, Tridiagonal{Float64, Vector{Float64}}, Matrix{Float64}, Vector{Float64}, Bool}
+Q factor:
+4×4 LinearAlgebra.HessenbergQ{Float64, Matrix{Float64}, Vector{Float64}, true}:
  1.0   0.0        0.0         0.0
  0.0  -0.240772  -0.95927    -0.14775
  0.0   0.842701  -0.282138    0.458534
  0.0  -0.481543  -0.0141069   0.876309
-
+H factor:
+4×4 Tridiagonal{Float64, Vector{Float64}}:
+ 0.0      -8.30662    ⋅        ⋅ 
+ 8.30662   0.0      -8.53382   ⋅ 
+  ⋅        8.53382   0.0      1.08347
+  ⋅         ⋅       -1.08347  0.0
 ```
 
  ## Eigenvalues and eigenvectors
