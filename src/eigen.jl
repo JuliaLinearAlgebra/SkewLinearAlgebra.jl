@@ -131,7 +131,7 @@ end
     end
 end
 
-@views function skeweigen!(S::SkewHermitian, mode::Int=0)
+@views function skeweigen!(S::SkewHermitian)
     n = size(S.data,1)
     tau,E = sktrd!(S)
     A = S.data
@@ -180,31 +180,15 @@ end
     end
     mul!(temp,Qr,Q1) #temp is Qr
     mul!(Qdiag,Qim,Q2) #Qdiag is Qim
-    if mode==0
-        Q=Qdiag*1im
-        Q.+=temp
-        return Eigen(vals,Q)
-    else
-        return SkewEigen(vals,temp,Qdiag)
-    end
+    
+    return vals,temp,Qdiag
 end
 
-"""
-    SkewEigen
-Type returned by eigen(A::SkewHermitian,mode=1). It contains the eigenvalues and the eigenvectors.
-The eigenvectors are separated between real and imaginary part.
-"""
-struct SkewEigen{val<:AbstractVector,Qr<:AbstractMatrix,Qim<:AbstractMatrix}
-    values::val
-    realvectors::Qr
-    imagvectors::Qim
+
+@views function LA.eigen!(A::SkewHermitian)
+     vals,Qr,Qim = skeweigen!(A)
+     return Eigen(vals,complex.(Qr,Qim))
 end
-
-SkewEigen(F::SkewEigen) = F
-Base.copy(F::SkewEigen) = SkewEigen(copy(F.values), copy(F.realvectors), copy(F.imagvectors))
-Base.size(F::SkewEigen) = size(F.values)
-
-LA.eigen!(A::SkewHermitian) = skeweigen!(A)
 
 copyeigtype(A) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
 
