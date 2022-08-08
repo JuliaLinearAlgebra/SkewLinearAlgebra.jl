@@ -233,9 +233,7 @@ LA.kron(A::StridedMatrix,B::SkewHermitian) = kron(A,B.data)
 
 @views function LA.schur!(A::SkewHermitian)
     F=eigen!(A)
-    Q = F.imagvectors.*1im
-    Q.+=F.realvectors
-    return Schur(typeof(Q)(Diagonal(F.values)), Q, F.values)
+    return Schur(typeof(F.vectors)(Diagonal(F.values)), F.vectors, F.values)
     
 end
 LA.schur(A::SkewHermitian)= LA.schur!(copy(A))

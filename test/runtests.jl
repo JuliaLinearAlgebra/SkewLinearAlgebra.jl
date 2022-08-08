@@ -17,7 +17,7 @@ Random.seed!(314159) # use same pseudorandom stream for every test
     @test hessenberg(A).H ≈ Tridiagonal(v,[0,0,0,0.],-v)
     iλ₁,iλ₂ = 11.93445871397423, 0.7541188264752862
     @test eigvals(A) ≈ [iλ₁,iλ₂,-iλ₂,-iλ₁]*im
-    #@test SLA.getQ(hessenberg(A)) ≈ [1.0 0.0 0.0 0.0; 0.0 -0.2407717061715382 -0.9592700375676934 -0.14774972261267352; 0.0 0.8427009716003843 -0.2821382463434394 0.4585336219014009; 0.0 -0.48154341234307674 -0.014106912317171805 0.8763086996337883]
+    @test Matrix(hessenberg(A).Q) ≈ [1.0 0.0 0.0 0.0; 0.0 -0.2407717061715382 -0.9592700375676934 -0.14774972261267352; 0.0 0.8427009716003843 -0.2821382463434394 0.4585336219014009; 0.0 -0.48154341234307674 -0.014106912317171805 0.8763086996337883]
     @test eigvals(A, 0,15) ≈ [iλ₁,iλ₂]*im
     @test eigvals(A, 1:3) ≈ [iλ₁,iλ₂,-iλ₂]*im
     @test svdvals(A) ≈ [iλ₁,iλ₁,iλ₂,iλ₂]
@@ -108,8 +108,8 @@ end
         @test LQ.L*LQ.Q≈A.data
         QR=qr(A)
         @test QR.Q*QR.R≈A.data
-        #F=schur(A)
-        #@test A.data ≈ F.vectors * F.Schur * F.vectors'
+        F=schur(A)
+        @test A.data ≈ F.vectors * F.Schur * F.vectors'
     end
 end
 @testset "hessenberg.jl" begin
@@ -119,10 +119,7 @@ end
         HA=hessenberg(A)
         HB=hessenberg(B)
         @test Matrix(HA.H)≈Matrix(HB.H)
-        if n>1
-            #Q=SLA.getQ(HA)
-            #@test Q≈HB.Q
-        end
+        @test Matrix(HA.Q)≈Matrix(HB.Q)
     end
     """
     A=zeros(4,4)
