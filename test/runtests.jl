@@ -108,6 +108,7 @@ end
         @test LQ.L*LQ.Q≈A.data
         QR=qr(A)
         @test QR.Q*QR.R≈A.data
+        A=SLA.skewhermitian(randn(n,n))
         F=schur(A)
         @test A.data ≈ F.vectors * F.Schur * F.vectors'
     end
