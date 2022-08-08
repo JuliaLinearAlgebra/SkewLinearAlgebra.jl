@@ -10,12 +10,10 @@ import LinearAlgebra as LA
 export
     #Types
     SkewHermitian,
-    SkewHessenberg,
     #functions
     isskewhermitian,
     skewhermitian,
-    skewhermitian!,
-    getQ
+    skewhermitian!
 
 struct SkewHermitian{T<:Number,S<:AbstractMatrix{<:T}} <: AbstractMatrix{T}
     data::S
