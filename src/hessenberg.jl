@@ -3,6 +3,8 @@
 LA.Hessenberg(factors::AbstractMatrix, τ::AbstractVector, H::LA.Tridiagonal, uplo::AbstractChar='L'; μ::Number=false) =
     Hessenberg{typeof(zero(eltype(factors))+μ),typeof(H),typeof(factors),typeof(τ),typeof(μ)}(H, uplo, factors, τ, μ)
 LA.HessenbergQ(F::Hessenberg{<:Any,<:LA.Tridiagonal,S,W}) where {S,W} = LA.HessenbergQ{eltype(F.factors),S,W,true}(F.uplo, F.factors, F.τ)
+LA.rmul!(F::Hessenberg{<:Any,<:Tridiagonal{T}}, x::T) where {T<:Number} = Hessenberg(F.factors, F.τ, LA.Tridiagonal(F.H.dv*x, F.H.ev*x), F.uplo; μ=F.μ*x)
+LA.lmul!(x::T, F::Hessenberg{<:Any,<:Tridiagonal{T}}) where {T<:Number} = Hessenberg(F.factors, F.τ, LA.Tridiagonal(x*F.H.dv, x*F.H.ev), F.uplo; μ=x*F.μ)
 
 @views function LA.hessenberg!(A::SkewHermitian)
     tau,E = sktrd!(A)
