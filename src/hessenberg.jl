@@ -15,11 +15,21 @@ end
 
 
 @views function householder_reflector!(x,v,n)
-    div=1/(x[1]+sign(x[1])*norm(x))
-    v[1] = 1
-    @inbounds v[2:end]=x[2:end]
-    v[2:end].*=div
-    tau = 2/((norm(v)^2))
+    nm=norm(x)
+    if nm > 1e-15
+        if x[1]>0
+            div = 1/(x[1]+nm)
+        else
+            div = 1/(x[1]-nm)
+        end
+        v[1] = 1
+        @inbounds v[2:end]=x[2:end]
+        v[2:end].*=div
+        tau = 2/((norm(v)^2))
+    else
+        tau = convert(eltype(x),0)
+        v = zeros(eltype(x),n)
+    end
     return v,tau
 end
 @inline @views function ger2!(tau::Number , v::StridedVector{T} , s::StridedVector{T},
