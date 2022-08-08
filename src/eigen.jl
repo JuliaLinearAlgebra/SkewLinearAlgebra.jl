@@ -138,7 +138,7 @@ end
     tau2 = similar(tau,n-1)
     tau2[1:n-2].=tau
     tau2[n-1 ] = 0  
-    T=LA.Tridiagonal(E,zeros(eltype(A.data),n),-E)
+    T=LA.Tridiagonal(E,zeros(eltype(S.data),n),-E)
     #H1 = Hessenberg(S.data,tau2,LA.Tridiagonal(E,zeros(eltype(S.data),n),-E),'L')
     H1 = Hessenberg{typeof(zero(eltype(S.data))),typeof(T),typeof(S.data),typeof(tau2),typeof(false)}(T, 'L', S.data, tau2, false)
     A = S.data
