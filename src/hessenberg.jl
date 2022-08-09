@@ -10,7 +10,6 @@ LA.HessenbergQ(F::Hessenberg{<:Any,<:LA.Tridiagonal,S,W}) where {S,W} = LA.Hesse
     tau2[n-1]=0  
     T=LA.Tridiagonal(E,zeros(eltype(A.data),n),-E)
     return  Hessenberg{typeof(zero(eltype(A.data))),typeof(T),typeof(A.data),typeof(tau2),typeof(false)}(T, 'L', A.data, tau2, false)
-    #return Hessenberg(A.data,tau2,LA.Tridiagonal(E,zeros(eltype(A.data),n),-E),'L')
 end
 
 
@@ -85,65 +84,13 @@ end
     @simd for j=1:n
         @inbounds y[j]=0
     end
-    """
-    nb=60
-    oldk=0
-    for j=1:n
-        temp = x[j]
-        for k=j+1:nb:n-nb
-            k2=k+nb-1
-            @inbounds axpy!(temp,A[k:k2,j],y[k:k2])
-            @inbounds y[j] -= dot(A[k:k2,j],x[k:k2])
-            oldk=k
-        end
-        oldk+=nb
-        if oldk<n
-            @inbounds axpy!(temp,A[oldk:n,j],y[oldk:n])
-            @inbounds y[j] -= dot(A[oldk:n,j],x[oldk:n])
-        end
-    end
-    """
 
     for j=1:n
         @inbounds axpy!(x[j],A[j+1:n,j],y[j+1:n])
         @inbounds y[j] -= dot(A[j+1:n,j],x[j+1:n])
     end
 
-    """
-    nb=10
-    @inbounds for j=1:n
-        temp1=x[j]
-        temp2=0
-        oldi=0
-        for i=j+1:nb:n-nb
-            @simd for k=0:nb-1
-                i2=i+k
-                @inbounds y[i2] += temp1*A[i2,j]
-                @inbounds temp2 += A[i2,j]*x[i2]
-            end
-            old=i
-        end
-        oldi+=nb
-        if oldi<n
-            @simd for i=oldi:n
-                @inbounds y[i] += temp1*A[i,j]
-                @inbounds temp2 += A[i,j]*x[i]
-            end
-        end
-        y[j] -= temp2
-    end
-    """
-end
-@views function gemv2!(A::AbstractMatrix,x::AbstractVector,y::AbstractVector,n::Integer)
-    @simd for j=1:n
-        @inbounds y[j]=0
-    end
-    @inbounds(for j=1:n
-        temp1=x[j]
-        @simd for i=1:n
-            y[i] += temp1*A[i,j]
-        end
-    end)
+    
 end
 @views function latrd!(A::AbstractMatrix,E::AbstractVector,W::AbstractMatrix,V::AbstractVector,tau::AbstractVector,n::Number,nb::Number)
 
@@ -216,16 +163,7 @@ end
         mul!(update[1:n-nb-i+1,1:n-nb-i+1],A[i+nb:n,i:i+nb-1],transpose(W[nb+1:size,:]))
 
         s = i+nb-1
-        """
-        for j = 1:n-s
-            @simd for k = 1:j-1
-                @inbounds A[s+j,s+k] += update[j,k]-update[k,j]
-                @inbounds A[s+k,s+j] = - A[s+j,s+k]
-            end
-            @inbounds A[s+j,s+j] = 0
-        end
-        """
-
+        
         for k = 1:n-s
             A[s+k,s+k] = 0
             @simd for j = k+1:n-s
@@ -234,30 +172,6 @@ end
             end
 
         end
-
-        """
-        N=n-nb-i+1
-        @inbounds (for j=1:N
-            k1=s+j
-            A[s+j,s+j]=0
-            for l=1:nb
-                k2=i-1+l
-                temp1 = W[nb+j,l]
-                temp2 = A[k1,k2]
-                @simd for t=j+1:N
-                    A[s+t,k1] += A[s+t,k2]*temp1-W[nb+t,l]*temp2
-                end
-            end
-
-            @simd for t=j+1:N
-                A[k1,s+t]=-A[s+t,k1]
-            end
-        end)
-        """
-        """
-        A[s+1:n,s+1:n].+= update[1:n-s,1:n-s]
-        A[s+1:n,s+1:n].-= transpose(update[1:n-s,1:n-s])
-        """
         oldi = i
     end)
     oldi += nb
