@@ -111,6 +111,11 @@ end
         A = SLA.skewhermitian(randn(n,n))
         F = schur(A)
         @test A.data ≈ F.vectors * F.Schur * F.vectors'
+
+        Ac = SLA.skewhermitian!(randn(ComplexF64, n, n))
+        for f in (real, imag)
+            @test f(Ac) == f(Matrix(Ac))
+        end
     end
 end
 @testset "hessenberg.jl" begin
@@ -209,7 +214,7 @@ end
         @test real(Svd.U*Diagonal(Svd.S)*Svd.Vt) ≈ B
         @test svdvals(A)≈svdvals(B)
 
-        Ac = rand(ComplexF64, n,n)
+        Ac = SLA.SkewHermTridiagonal(randn(ComplexF64, n))
         for f in (real, imag)
             @test f(Ac) == f(Matrix(Ac))
         end
