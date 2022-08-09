@@ -111,6 +111,11 @@ end
         A = SLA.skewhermitian(randn(n,n))
         F = schur(A)
         @test A.data ≈ F.vectors * F.Schur * F.vectors'
+
+        Ac = SLA.skewhermitian!(randn(ComplexF64, n, n))
+        for f in (real, imag)
+            @test f(Ac) == f(Matrix(Ac))
+        end
     end
 end
 @testset "hessenberg.jl" begin
@@ -122,7 +127,7 @@ end
         @test Matrix(HA.H) ≈ Matrix(HB.H)
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
-    
+
     A=zeros(4,4)
     A[2:4,1]=ones(3)
     A[1,2:4]=-ones(3)
@@ -131,7 +136,7 @@ end
     HA=hessenberg(A)
     HB=hessenberg(B)
     @test Matrix(HA.H)≈Matrix(HB.H)
-    
+
 end
 @testset "eigen.jl" begin
     for n in [2,20,153,200]
@@ -175,7 +180,7 @@ end
 end
 
 
-@testset "tridiag.jl" begin 
+@testset "tridiag.jl" begin
     for n in [2,20,151,200]
         C=SLA.skewhermitian(randn(n,n))
         A=SLA.SkewHermTridiagonal(C)
@@ -209,6 +214,10 @@ end
         @test real(Svd.U*Diagonal(Svd.S)*Svd.Vt) ≈ B
         @test svdvals(A)≈svdvals(B)
 
+        Ac = SLA.SkewHermTridiagonal(randn(ComplexF64, n))
+        for f in (real, imag)
+            @test f(Ac) == f(Matrix(Ac))
+        end
     end
 end
 

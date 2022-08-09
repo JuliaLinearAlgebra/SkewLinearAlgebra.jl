@@ -77,7 +77,7 @@ SkewHermTridiagonal(S::SkewHermTridiagonal) = S
 
 AbstractMatrix{T}(S::SkewHermTridiagonal) where {T} =
     SkewHermTridiagonal(convert(AbstractVector{T}, S.ev)::AbstractVector{T})
-    
+
 function Base.Matrix{T}(M::SkewHermTridiagonal) where T
     n = size(M, 1)
     Mf = zeros(T, n, n)
@@ -112,8 +112,12 @@ Base.copyto!(dest::SkewHermTridiagonal, src::SkewHermTridiagonal) =
     (copyto!(dest.ev, src.ev); dest)
 
 #Elementary operations
-for func in (:conj, :copy, :real, :imag)
+for func in (:conj, :copy, :real)
     @eval Base.$func(M::SkewHermTridiagonal) = SkewHermTridiagonal(($func)(M.ev))
+end
+function Base.imag(M::SkewHermTridiagonal)
+    ev = imag(M.ev)
+    return LA.SymTridiagonal(similar(ev, length(ev)+1) .= 0, ev)
 end
 
 Base.transpose(S::SkewHermTridiagonal) = -S
@@ -263,7 +267,7 @@ end
             Qdiag[i+1,j] = trisol.vectors[i+1,j]*c*1im
             c *= (-1)
         end
-        
+
     end
     if n%2==1
         Qdiag[n,:]=trisol.vectors[n,:]*c
@@ -322,7 +326,7 @@ LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
 @inline function Base.getindex(A::SkewHermTridiagonal{T}, i::Integer, j::Integer) where T
     @boundscheck checkbounds(A, i, j)
     if i == j + 1
-        return @inbounds A.ev[j] 
+        return @inbounds A.ev[j]
     elseif i + 1 == j
         return @inbounds -A.ev[i]'
     else
