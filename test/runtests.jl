@@ -122,7 +122,7 @@ end
         @test Matrix(HA.H) ≈ Matrix(HB.H)
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
-    """
+    
     A=zeros(4,4)
     A[2:4,1]=ones(3)
     A[1,2:4]=-ones(3)
@@ -131,7 +131,7 @@ end
     HA=hessenberg(A)
     HB=hessenberg(B)
     @test Matrix(HA.H)≈Matrix(HB.H)
-    """
+    
 end
 @testset "eigen.jl" begin
     for n in [2,20,153,200]
@@ -174,3 +174,25 @@ end
     end
 end
 
+@testset "tridiag.jl" begin 
+    for n in [2,20,151,200]
+        A=SLA.SkewHermTridiagonal(randn(n-1))
+        B=Matrix(A)
+        @test size(A,1)==n
+        EA=eigen(A)
+        EB=eigen(B)
+        Q = EA.vectors
+        @test real(Q*diagm(EA.values)*adjoint(Q)) ≈ B
+        #display(real(Q*diagm(EA.values)*adjoint(Q)))
+        #display(B)
+        valA = imag(EA.values)
+        valB = imag(EB.values)
+        sort!(valA)
+        sort!(valB)
+        @test valA ≈ valB
+        Svd = svd(A)
+        @test real(Svd.U*Diagonal(Svd.S)*Svd.Vt) ≈ B
+        @test svdvals(A)≈svdvals(B)
+
+    end
+end
