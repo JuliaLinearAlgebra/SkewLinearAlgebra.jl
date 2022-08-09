@@ -61,7 +61,7 @@ julia> SkewHermTridiagonal(A)
 """
 function SkewHermTridiagonal(A::AbstractMatrix)
     if diag(A, 1) == - adjoint.(diag(A, -1))
-        SkewHermTridiagonal(diag(A, 1))
+        SkewHermTridiagonal(diag(A, -1))
     else
         throw(ArgumentError("matrix is not skew-hermitian; cannot convert to SkewHermTridiagonal"))
     end
@@ -92,6 +92,7 @@ Base.Matrix(M::SkewHermTridiagonal{T}) where {T} = Matrix{promote_type(T, typeof
 Base.Array(M::SkewHermTridiagonal) = Matrix(M)
 
 Base.size(A::SkewHermTridiagonal) = (length(A.ev)+1,length(A.ev)+1)
+
 function Base.size(A::SkewHermTridiagonal, d::Integer)
     if d < 1
         throw(ArgumentError("dimension must be ≥ 1, got $d"))
@@ -118,48 +119,13 @@ end
 Base.transpose(S::SkewHermTridiagonal) = -S
 Base.adjoint(S::SkewHermTridiagonal{<:Real}) = -S
 Base.adjoint(S::SkewHermTridiagonal) = -conj.(S)
-#=
-permutedims(S::SkewHermTridiagonal) = S
-function permutedims(S::SkewHermTridiagonal, perm)
-    Base.checkdims_perm(S, S, perm)
-    NTuple{2}(perm) == (2, 1) ? permutedims(S) : S
-end
-=#
+
 Base.copy(S::SkewHermTridiagonal)=SkewHermTridiagonal(copy(S.ev))
 Base.copy(S::LA.Adjoint{<:Any,<:SkewHermTridiagonal}) = SkewHermTridiagonal(map(x -> copy.(adjoint.(x)), (S.parent.ev))...)
 
-#isskewhermitian(S::SkewHermTridiagonal) = true
+isskewhermitian(S::SkewHermTridiagonal) = true
 
-function diag(M::SkewHermTridiagonal{T}, n::Integer=0) where T<:Number
-    # every branch call similar(..., ::Int) to make sure the
-    # same vector type is returned independent of n
-    absn = abs(n)
-    if absn == 0
-        return zeros(eltype(M.ev),length(M.ev)+1)
-    elseif absn == 1
-        return copyto!(similar(M.ev, length(M.ev)), M.ev)
-    elseif absn <= size(M,1)
-        return fill!(similar(M.ev, size(M,1)-absn), zero(T))
-    else
-        throw(ArgumentError(string("requested diagonal, $n, must be at least $(-size(M, 1)) ",
-            "and at most $(size(M, 2)) for an $(size(M, 1))-by-$(size(M, 2)) matrix")))
-    end
-end
-function diag(M::SkewHermTridiagonal, n::Integer=0)
-    # every branch call similar(..., ::Int) to make sure the
-    # same vector type is returned independent of n
-    absn = abs(n)
-    if absn == 0
-        return zeros(eltype(M.ev),length(M.ev)+1)
-    elseif absn == 1
-        return copyto!(similar(M.ev, length(M.ev)), M.ev)
-    elseif absn <= size(M,1)
-        return fill!(similar(M.ev, size(M,1)-absn), zero(T))
-    else
-        throw(ArgumentError(string("requested diagonal, $n, must be at least $(-size(M, 1)) ",
-            "and at most $(size(M, 2)) for an $(size(M, 1))-by-$(size(M, 2)) matrix")))
-    end
-end
+
 Base.:+(A::SkewHermTridiagonal, B::SkewHermTridiagonal) = SkewHermTridiagonal(A.ev+B.ev)
 Base.:-(A::SkewHermTridiagonal, B::SkewHermTridiagonal) = SkewHermTridiagonal(A.ev-B.ev)
 Base.:-(A::SkewHermTridiagonal) = SkewHermTridiagonal(-A.ev)
@@ -167,12 +133,12 @@ Base.:*(A::SkewHermTridiagonal, B::Number) = SkewHermTridiagonal(A.ev*B)
 Base.:*(B::Number, A::SkewHermTridiagonal) = SkewHermTridiagonal(B*A.ev)
 Base.:/(A::SkewHermTridiagonal, B::Number) = SkewHermTridiagonal(A.ev/B)
 Base.:\(B::Number, A::SkewHermTridiagonal) = SkewHermTridiagonal(B\A.ev)
-#Base.:==(A::SkewHermTridiagonal, B::SkewHermTridiagonal) = (A.ev==B.ev)
+# ==(A::SkewHermTridiagonal, B::SkewHermTridiagonal) = (A.ev==B.ev)
 
 @inline LA.mul!(A::StridedVecOrMat, B::SkewHermTridiagonal, C::StridedVecOrMat,
              alpha::Number, beta::Number) =
     _mul!(A, B, C, LA.MulAddMul(alpha, beta))
-####To review ########################
+
 @inline function _mul!(C::StridedVecOrMat, S::SkewHermTridiagonal, B::StridedVecOrMat,
                           _add::LA.MulAddMul)
     m, n = size(B, 1), size(B, 2)
@@ -186,7 +152,7 @@ Base.:\(B::Number, A::SkewHermTridiagonal) = SkewHermTridiagonal(B\A.ev)
     if m == 0
         return C
     elseif iszero(_add.alpha)
-        return _rmul_or_fill!(C, _add.beta)
+        return LA._rmul_or_fill!(C, _add.beta)
     end
 
     β = S.ev
@@ -199,9 +165,9 @@ Base.:\(B::Number, A::SkewHermTridiagonal) = SkewHermTridiagonal(B\A.ev)
             for i = 1:m - 1
                 x₋, x₀, x₊ = x₀, x₊, B[i + 1, j]
                 β₋, β₀ = β₀, β[i]
-                _modify!(_add, β₋*x₋ + β₀*x₊, C, (i, j))
+                LA._modify!(_add, β₋*x₋ -adjoint(β₀)*x₊, C, (i, j))
             end
-            _modify!(_add, β₀*x₀ , C, (m, j))
+            LA._modify!(_add, β[m-1]*x₀ , C, (m, j))
         end
     end
 
@@ -220,14 +186,14 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
     ev = S.ev
     x₀ = x[1]
     x₊ = x[2]
-    sub = transpose(ev[1])
-    r = dot(adjoint(dv[1])*x₀ + adjoint(sub)*x₊, y[1])
+    sub = ev[1]
+    r = dot( adjoint(sub)*x₊, y[1])
     @inbounds for j in 2:nx-1
         x₋, x₀, x₊ = x₀, x₊, x[j+1]
-        sup, sub = transpose(sub), transpose(ev[j])
-        r += dot(adjoint(sup)*x₋ + adjoint(dv[j])*x₀ + adjoint(sub)*x₊, y[j])
+        sup, sub = -adjoint(sub), ev[j]
+        r += dot(adjoint(sup)*x₋ + adjoint(sub)*x₊, y[j])
     end
-    r += dot(adjoint(transpose(sub))*x₀ + adjoint(dv[nx])*x₊, y[nx])
+    r += dot(adjoint(-adjoint(sub))*x₀, y[nx])
     return r
 end
 
@@ -345,60 +311,6 @@ end
 
 LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
 
-# tril and triu
-
-function LA.istriu(M::SkewHermTridiagonal, k::Integer=0)
-    if k <= -1
-        return true
-    elseif k == 0
-        return iszero(M.ev)
-    else # k >= 1
-        return iszero(M.ev)
-    end
-end
-LA.istril(M::SkewHermTridiagonal, k::Integer) = istriu(M, -k)
-Base.iszero(M::SkewHermTridiagonal) =  iszero(M.ev)
-Base.isone(M::SkewHermTridiagonal) =  false
-LA.isdiag(M::SkewHermTridiagonal) =  iszero(M.ev)
-
-
-function LA.tril!(M::SkewHermTridiagonal{T}, k::Integer=0) where T
-    n = length(M.ev)+1
-    if !(-n - 1 <= k <= n - 1)
-        throw(ArgumentError(string("the requested diagonal, $k, must be at least ",
-            "$(-n - 1) and at most $(n - 1) in an $n-by-$n matrix")))
-    elseif k < -1
-        fill!(M.ev, zero(T))
-        return Tridiagonal(M.ev,zeros(eltype(M.ev),n),copy(M.ev))
-    elseif k == -1
-        fill!(M.dv, zero(T))
-        return Tridiagonal(M.ev,zeros(eltype(M.ev),n),zero(M.ev))
-    elseif k == 0
-        return Tridiagonal(M.ev,zeros(eltype(M.ev),n),zero(M.ev))
-    elseif k >= 1
-        return Tridiagonal(M.ev,zeros(eltype(M.ev),n),copy(adjoint.(M.ev)))
-    end
-end
-#=
-function Base.triu!(M::SkewHermTridiagonal{T}, k::Integer=0) where T
-    n = length(M.dv)
-    if !(-n + 1 <= k <= n + 1)
-        throw(ArgumentError(string("the requested diagonal, $k, must be at least ",
-            "$(-n + 1) and at most $(n + 1) in an $n-by-$n matrix")))
-    elseif k > 1
-        fill!(M.ev, zero(T))
-        fill!(M.dv, zero(T))
-        return Tridiagonal(M.ev,M.dv,copy(M.ev))
-    elseif k == 1
-        fill!(M.dv, zero(T))
-        return Tridiagonal(zero(M.ev),M.dv,M.ev)
-    elseif k == 0
-        return Tridiagonal(M.ev,zeros(eltype(M.ev),n),zero(M.ev))
-    elseif k <= -1
-        return Tridiagonal(M.ev,M.dv,copy(M.ev))
-    end
-end
-=#
 ###################
 # Generic methods #
 ###################
@@ -430,38 +342,5 @@ end
     return x
 end
 
-#=
-function Base._sum(A::SkewHermTridiagonal, dims::Integer)
-    res = Base.reducedim_initarray(A, dims, zero(eltype(A)))
-    n = length(A.dv)
-    if n == 0
-        return res
-    elseif n == 1
-        res[1] = A.dv[1]
-        return res
-    end
-    @inbounds begin
-        if dims == 1
-            res[1] = transpose(A.ev[1]) + symmetric(A.dv[1], :U)
-            for i = 2:n-1
-                res[i] = transpose(A.ev[i]) + symmetric(A.dv[i], :U) + A.ev[i-1]
-            end
-            res[n] = symmetric(A.dv[n], :U) + A.ev[n-1]
-        elseif dims == 2
-            res[1] = symmetric(A.dv[1], :U) + A.ev[1]
-            for i = 2:n-1
-                res[i] = transpose(A.ev[i-1]) + symmetric(A.dv[i], :U) + A.ev[i]
-            end
-            res[n] = transpose(A.ev[n-1]) + symmetric(A.dv[n], :U)
-        elseif dims >= 3
-            for i = 1:n-1
-                res[i,i+1] = A.ev[i]
-                res[i,i]   = symmetric(A.dv[i], :U)
-                res[i+1,i] = transpose(A.ev[i])
-            end
-            res[n,n] = symmetric(A.dv[n], :U)
-        end
-    end
-    res
-end
-=#
+
+
