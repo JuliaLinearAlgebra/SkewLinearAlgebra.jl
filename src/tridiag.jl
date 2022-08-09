@@ -112,8 +112,12 @@ Base.copyto!(dest::SkewHermTridiagonal, src::SkewHermTridiagonal) =
     (copyto!(dest.ev, src.ev); dest)
 
 #Elementary operations
-for func in (:conj, :copy, :real, :imag)
+for func in (:conj, :copy, :real)
     @eval Base.$func(M::SkewHermTridiagonal) = SkewHermTridiagonal(($func)(M.ev))
+end
+function Base.imag(M::SkewHermTridiagonal)
+    ev = imag(M.ev)
+    return LA.SymTridiagonal(similar(ev, length(ev)+1) .= 0, ev)
 end
 
 Base.transpose(S::SkewHermTridiagonal) = -S
