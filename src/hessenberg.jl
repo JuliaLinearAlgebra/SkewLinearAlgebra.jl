@@ -219,16 +219,6 @@ end
     end)
     return
 end
-function set_nb(n::Integer)
-    if n<=12
-        return max(n-4,1)
-    elseif n<=100
-        return 10
-    else
-        return 60
-    end
-    return 1
-end
 
 @views function csktrd!(S::SkewHermitian{<:Real})
     n = size(S.data,1)
