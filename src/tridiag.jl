@@ -77,7 +77,7 @@ SkewHermTridiagonal(S::SkewHermTridiagonal) = S
 
 AbstractMatrix{T}(S::SkewHermTridiagonal) where {T} =
     SkewHermTridiagonal(convert(AbstractVector{T}, S.ev)::AbstractVector{T})
-    
+
 function Base.Matrix{T}(M::SkewHermTridiagonal) where T
     n = size(M, 1)
     Mf = zeros(T, n, n)
@@ -118,9 +118,7 @@ end
 
 Base.transpose(S::SkewHermTridiagonal) = -S
 Base.adjoint(S::SkewHermTridiagonal{<:Real}) = -S
-Base.adjoint(S::SkewHermTridiagonal) = -conj.(S)
-
-Base.copy(S::SkewHermTridiagonal)=SkewHermTridiagonal(copy(S.ev))
+Base.adjoint(S::SkewHermTridiagonal) = .-conj.(S)
 Base.copy(S::LA.Adjoint{<:Any,<:SkewHermTridiagonal}) = SkewHermTridiagonal(map(x -> copy.(adjoint.(x)), (S.parent.ev))...)
 
 isskewhermitian(S::SkewHermTridiagonal) = true
@@ -263,7 +261,7 @@ end
             Qdiag[i+1,j] = trisol.vectors[i+1,j]*c*1im
             c *= (-1)
         end
-        
+
     end
     if n%2==1
         Qdiag[n,:]=trisol.vectors[n,:]*c
@@ -276,8 +274,6 @@ end
 @views function LA.eigen!(A::SkewHermTridiagonal)
      return skewtrieigen!(A)
 end
-
-copyeigtype(A) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
 
 LA.eigen(A::SkewHermTridiagonal) = LA.eigen!(copyeigtype(A))
 
@@ -319,10 +315,15 @@ LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
 #det(A::SkewHermTridiagonal; shift::Number=false) = det_usmani(A.ev, A.dv, A.ev, shift)
 #logabsdet(A::SkewHermTridiagonal; shift::Number=false) = logabsdet(ldlt(A; shift=shift))
 
+# show a "⋅" for structural zeros when printing
+function Base.replace_in_print_matrix(A::SkewHermTridiagonal, i::Integer, j::Integer, s::AbstractString)
+    i==j-1||i==j||i==j+1 ? s : Base.replace_with_centered_mark(s)
+end
+
 @inline function Base.getindex(A::SkewHermTridiagonal{T}, i::Integer, j::Integer) where T
     @boundscheck checkbounds(A, i, j)
     if i == j + 1
-        return @inbounds A.ev[j] 
+        return @inbounds A.ev[j]
     elseif i + 1 == j
         return @inbounds -A.ev[i]'
     else

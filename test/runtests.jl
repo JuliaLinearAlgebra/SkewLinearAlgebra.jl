@@ -122,7 +122,7 @@ end
         @test Matrix(HA.H) ≈ Matrix(HB.H)
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
-    
+
     A=zeros(4,4)
     A[2:4,1]=ones(3)
     A[1,2:4]=-ones(3)
@@ -131,7 +131,7 @@ end
     HA=hessenberg(A)
     HB=hessenberg(B)
     @test Matrix(HA.H)≈Matrix(HB.H)
-    
+
 end
 @testset "eigen.jl" begin
     for n in [2,20,153,200]
@@ -175,7 +175,7 @@ end
 end
 
 
-@testset "tridiag.jl" begin 
+@testset "tridiag.jl" begin
     for n in [2,20,151,200]
         C=SLA.skewhermitian(randn(n,n))
         A=SLA.SkewHermTridiagonal(C)
@@ -209,6 +209,9 @@ end
         @test real(Svd.U*Diagonal(Svd.S)*Svd.Vt) ≈ B
         @test svdvals(A)≈svdvals(B)
 
+        B = SLA.SkewHermTridiagonal([3,4,5])
+        @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
+        @test repr("text/plain", B) == "4×4 SkewHermTridiagonal{Int64, Vector{Int64}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
     end
 end
 
