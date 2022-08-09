@@ -59,7 +59,7 @@ julia> SkewHermTridiagonal(A)
 """
 function SkewHermTridiagonal(A::AbstractMatrix)
     if diag(A, 1) == - adjoint.(diag(A, -1))
-        SkewHermTridiagonal(diag(A, 1))
+        SkewHermTridiagonal(diag(A, -1))
     else
         throw(ArgumentError("matrix is not skew-hermitian; cannot convert to SkewHermTridiagonal"))
     end
@@ -126,7 +126,7 @@ Base.copy(S::LA.Adjoint{<:Any,<:SkewHermTridiagonal}) = SkewHermTridiagonal(map(
 
 #isskewhermitian(S::SkewHermTridiagonal) = true
 
-function diag(M::SkewHermTridiagonal{T}, n::Integer=0) where T<:Number
+function LA.diag(M::SkewHermTridiagonal{T}, n::Integer=0) where T<:Number
     # every branch call similar(..., ::Int) to make sure the
     # same vector type is returned independent of n
     absn = abs(n)
@@ -141,7 +141,7 @@ function diag(M::SkewHermTridiagonal{T}, n::Integer=0) where T<:Number
             "and at most $(size(M, 2)) for an $(size(M, 1))-by-$(size(M, 2)) matrix")))
     end
 end
-function diag(M::SkewHermTridiagonal, n::Integer=0)
+function LA.diag(M::SkewHermTridiagonal, n::Integer=0)
     # every branch call similar(..., ::Int) to make sure the
     # same vector type is returned independent of n
     absn = abs(n)

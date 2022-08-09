@@ -1,5 +1,5 @@
 using LinearAlgebra, Random
-import SkewLinearAlgebra as SLA
+import .SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
@@ -176,6 +176,9 @@ end
 
 @testset "tridiag.jl" begin 
     for n in [2,20,151,200]
+        C=SLA.skewhermitian(randn(n,n))
+        A=SLA.SkewHermTridiagonal(C)
+        @test Matrix(A)≈Matrix(C)
         A=SLA.SkewHermTridiagonal(randn(n-1))
         B=Matrix(A)
         @test size(A,1)==n
