@@ -10,6 +10,7 @@ import LinearAlgebra as LA
 export
     #Types
     SkewHermitian,
+    SkewHermTridiagonal,
     #functions
     isskewhermitian,
     skewhermitian,
@@ -239,6 +240,7 @@ LA.schur(A::SkewHermitian)= LA.schur!(copy(A))
 include("hessenberg.jl")
 include("eigen.jl")
 include("exp.jl")
+include("tridiag.jl")
 
 end
 
