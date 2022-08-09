@@ -165,7 +165,7 @@ Base.:/(A::SkewHermTridiagonal, B::Number) = SkewHermTridiagonal(A.ev/B)
 Base.:\(B::Number, A::SkewHermTridiagonal) = SkewHermTridiagonal(B\A.ev)
 #Base.:==(A::SkewHermTridiagonal, B::SkewHermTridiagonal) = (A.ev==B.ev)
 
-@inline mul!(A::StridedVecOrMat, B::SkewHermTridiagonal, C::StridedVecOrMat,
+@inline LA.mul!(A::StridedVecOrMat, B::SkewHermTridiagonal, C::StridedVecOrMat,
              alpha::Number, beta::Number) =
     _mul!(A, B, C, LA.MulAddMul(alpha, beta))
 ####To review ########################
@@ -204,7 +204,7 @@ Base.:\(B::Number, A::SkewHermTridiagonal) = SkewHermTridiagonal(B\A.ev)
     return C
 end
 
-function dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
+function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
     require_one_based_indexing(x, y)
     nx, ny = length(x), length(y)
     (nx == size(S, 1) == ny) || throw(DimensionMismatch())
@@ -294,7 +294,7 @@ end
     if n%2==1
         Qdiag[n,:].=trisol.vectors[i,j]*c
     end
-    return Eigen(vals)
+    return Eigen(vals,Qdiag)
 end
 
 
