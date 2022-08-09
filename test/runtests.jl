@@ -173,3 +173,4 @@ end
         @test tanh(B) ≈ tanh(A)
     end
 end
+
