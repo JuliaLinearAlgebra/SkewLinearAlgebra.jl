@@ -181,14 +181,24 @@ end
         A=SLA.SkewHermTridiagonal(C)
         @test Tridiagonal(Matrix(A))≈Tridiagonal(Matrix(C))
         A=SLA.SkewHermTridiagonal(randn(n-1))
+        C=randn(n,n)
+        D1=randn(n,n)
+        D2=copy(D1)
+        mul!(D1,A,C,2,1)
+        @test D1≈D2+2*Matrix(A)*C
+        mul!(D1,A,C,2,0)
+        @test D1≈2*Matrix(A)*C
+        @test Matrix(A+A)==Matrix(2*A)
+        @test Matrix(A-2*A)==Matrix(-A)
+        x=randn(n)
+        y=randn(n)
+        @test dot(x,A,y)≈dot(x,Matrix(A),y)
         B=Matrix(A)
         @test size(A,1)==n
         EA=eigen(A)
         EB=eigen(B)
         Q = EA.vectors
         @test real(Q*diagm(EA.values)*adjoint(Q)) ≈ B
-        #display(real(Q*diagm(EA.values)*adjoint(Q)))
-        #display(B)
         valA = imag(EA.values)
         valB = imag(EB.values)
         sort!(valA)
