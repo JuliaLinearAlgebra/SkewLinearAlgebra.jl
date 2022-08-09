@@ -122,9 +122,7 @@ end
 
 Base.transpose(S::SkewHermTridiagonal) = -S
 Base.adjoint(S::SkewHermTridiagonal{<:Real}) = -S
-Base.adjoint(S::SkewHermTridiagonal) = -conj.(S)
-
-Base.copy(S::SkewHermTridiagonal)=SkewHermTridiagonal(copy(S.ev))
+Base.adjoint(S::SkewHermTridiagonal) = .-conj.(S)
 Base.copy(S::LA.Adjoint{<:Any,<:SkewHermTridiagonal}) = SkewHermTridiagonal(map(x -> copy.(adjoint.(x)), (S.parent.ev))...)
 
 isskewhermitian(S::SkewHermTridiagonal) = true
@@ -281,8 +279,6 @@ end
      return skewtrieigen!(A)
 end
 
-copyeigtype(A) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
-
 LA.eigen(A::SkewHermTridiagonal) = LA.eigen!(copyeigtype(A))
 
 LA.eigvecs(A::SkewHermTridiagonal) = eigen(A).vectors
@@ -322,6 +318,11 @@ LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
 # det with optional diagonal shift for use with shifted Hessenberg factorizations
 #det(A::SkewHermTridiagonal; shift::Number=false) = det_usmani(A.ev, A.dv, A.ev, shift)
 #logabsdet(A::SkewHermTridiagonal; shift::Number=false) = logabsdet(ldlt(A; shift=shift))
+
+# show a "⋅" for structural zeros when printing
+function Base.replace_in_print_matrix(A::SkewHermTridiagonal, i::Integer, j::Integer, s::AbstractString)
+    i==j-1||i==j||i==j+1 ? s : Base.replace_with_centered_mark(s)
+end
 
 @inline function Base.getindex(A::SkewHermTridiagonal{T}, i::Integer, j::Integer) where T
     @boundscheck checkbounds(A, i, j)
