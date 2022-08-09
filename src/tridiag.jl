@@ -7,7 +7,9 @@
 struct SkewHermTridiagonal{T, V<:AbstractVector{T}} <: AbstractMatrix{T}
     ev::V                        # subdiagonal
     function SkewHermTridiagonal{T, V}(ev) where {T, V<:AbstractVector{T}}
-        require_one_based_indexing(ev)
+
+        LA.require_one_based_indexing(ev)
+
         new{T, V}(ev)
     end
 end
@@ -100,7 +102,9 @@ function Base.size(A::SkewHermTridiagonal, d::Integer)
     end
 end
 
-Base.similar(S::SkewHermTridiagonal, ::Type{T}) where {T} = SkewHermTridiagonal(similar(S.dv, T), similar(S.ev, T))
+
+Base.similar(S::SkewHermTridiagonal, ::Type{T}) where {T} = SkewHermTridiagonal(similar(S.ev, T))
+
 Base.similar(S::SkewHermTridiagonal, ::Type{T}, dims::Union{Dims{1},Dims{2}}) where {T} = zeros(T, dims...)
 
 Base.copyto!(dest::SkewHermTridiagonal, src::SkewHermTridiagonal) =
@@ -205,7 +209,9 @@ Base.:\(B::Number, A::SkewHermTridiagonal) = SkewHermTridiagonal(B\A.ev)
 end
 
 function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
-    require_one_based_indexing(x, y)
+
+    LA.require_one_based_indexing(x, y)
+
     nx, ny = length(x), length(y)
     (nx == size(S, 1) == ny) || throw(DimensionMismatch())
     if iszero(nx)
@@ -274,25 +280,28 @@ end
 end
 
 @views function skewtrieigen!(S::SkewHermTridiagonal)
-    n = size(S.data,1)
+
     n = size(S,1)
     H = SymTridiagonal(zeros(eltype(S.ev),n),S.ev)
     trisol = eigen!(H)
 
     vals  = trisol.values*1im
     vals .*= -1
-    Qdiag = zeros(eltype(trisol.vectors),n,n)*1im
+
+    Qdiag = similar(trisol.vectors,n,n)*1im
     c = 1
     @inbounds for j=1:n
+        c = 1
         @simd for i=1:2:n-1
-            k=(i+1)÷2
-            Qdiag[i,j].=trisol.vectors[i,j]*c
-            Qdiag[i+1,j].=trisol.vectors[i+1,j]*c*1im
+            Qdiag[i,j]  = trisol.vectors[i,j]*c
+            Qdiag[i+1,j] = trisol.vectors[i+1,j]*c*1im
+            c *= (-1)
         end
-        c *= (-1)
+        
     end
     if n%2==1
-        Qdiag[n,:].=trisol.vectors[i,j]*c
+        Qdiag[n,:]=trisol.vectors[n,:]*c
+
     end
     return Eigen(vals,Qdiag)
 end
