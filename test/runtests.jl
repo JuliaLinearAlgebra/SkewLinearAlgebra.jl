@@ -182,7 +182,7 @@ end
 
 
 @testset "tridiag.jl" begin 
-    for n in [2,20,157,200]
+    for n in [2,20,200]
         C=SLA.skewhermitian(randn(n,n))
         A=SLA.SkewHermTridiagonal(C)
         @test Tridiagonal(Matrix(A))≈Tridiagonal(Matrix(C))
