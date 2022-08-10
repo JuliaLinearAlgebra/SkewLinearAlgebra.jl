@@ -1,9 +1,9 @@
 using LinearAlgebra, Random
-import .SkewLinearAlgebra as SLA
+import SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
-#=
+
 @testset "README.md" begin # test from the README examples
     A = [0 2 -7 4; -2 0 -8 3; 7 8 0 1;-4 -3 -1 0]
     @test SLA.isskewhermitian(A)
@@ -179,7 +179,7 @@ end
     end
 end
 
-=#
+
 
 @testset "tridiag.jl" begin 
     for n in [2,20,157,200]
