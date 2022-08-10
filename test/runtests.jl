@@ -232,8 +232,8 @@ end
 
 
         B = SLA.SkewHermTridiagonal([3,4,5])
-        @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
-        @test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
+        #@test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
+        #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
 
         Ac = SLA.SkewHermTridiagonal(randn(ComplexF64, n))
         for f in (real, imag)
