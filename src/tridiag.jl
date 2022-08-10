@@ -154,15 +154,7 @@ Base.copy(S::SkewHermTridiagonal)=SkewHermTridiagonal(copy(S.ev),copy(S.dvim))
 Base.copy(S::LA.Adjoint{<:Any,<:SkewHermTridiagonal}) = SkewHermTridiagonal(map(x -> copy.(adjoint.(x)), (S.parent.ev,S.parent.dvim))...)
 
 isskewhermitian(S::SkewHermTridiagonal) = true
-#TYPE PIRACY
-Base.:+(A::Nothing,B::Nothing)=nothing
-Base.:-(A::Nothing,B::Nothing)=nothing
-Base.:-(A::Nothing)=nothing
-Base.:+(A::Any,B::Nothing)=nothing
-Base.:*(A::Nothing,B::Number)=nothing
-Base.:*(A::Number,B::Nothing)=nothing
-Base.:/(A::Nothing,B::Number)=nothing
-Base.:\(A::Number,B::Nothing)=nothing
+
 
 function Base.:+(A::SkewHermTridiagonal, B::SkewHermTridiagonal) 
     if A.dvim !== nothing && B.dvim !== nothing
