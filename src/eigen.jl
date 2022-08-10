@@ -115,7 +115,7 @@ end
      return Eigen(vals,complex.(Qr,Qim))
 end
 
-copyeigtype(A) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
+copyeigtype(A::SkewHermitian) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
 
 LA.eigen(A::SkewHermitian) = LA.eigen!(copyeigtype(A))
 
@@ -125,6 +125,7 @@ LA.eigen(A::SkewHermitian) = LA.eigen!(copyeigtype(A))
     vals .= abs.(vals)
     return sort!(vals; rev=true)
 end
+LA.svdvals(A::SkewHermitian) = svdvals!(copyeigtype(A))
 
 @views function LA.svd!(A::SkewHermitian)
     n=size(A,1)

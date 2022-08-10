@@ -176,12 +176,13 @@ end
 
 
 @testset "tridiag.jl" begin 
-    for n in [2,20,151,200]
+    for n in [2,20,155,200]
         C=SLA.skewhermitian(randn(n,n))
         A=SLA.SkewHermTridiagonal(C)
         @test Tridiagonal(Matrix(A))≈Tridiagonal(Matrix(C))
-
+        
         A=SLA.SkewHermTridiagonal(randn(n-1))
+        
         C=randn(n,n)
         D1=randn(n,n)
         D2=copy(D1)
@@ -205,10 +206,32 @@ end
         sort!(valA)
         sort!(valB)
         @test valA ≈ valB
+        A=SLA.SkewHermTridiagonal(randn(n-1))
+        B=Matrix(A)
         Svd = svd(A)
         @test real(Svd.U*Diagonal(Svd.S)*Svd.Vt) ≈ B
+        A=SLA.SkewHermTridiagonal(randn(n-1))
+        B=Matrix(A)
         @test svdvals(A)≈svdvals(B)
+        A=randn(n,n)+1im*randn(n,n)
+        A=(A-A')/2
+        A=SLA.SkewHermTridiagonal(A)
+        C=randn(n,n)+1im*randn(n,n)
+        D1=randn(n,n)+1im*randn(n,n)
+        D2=copy(D1)
+        mul!(D1,A,C,2,1)
+        @test D1≈D2+2*Matrix(A)*C
+        @test dot(x,A,y)≈dot(x,Matrix(A),y)
 
     end
 end
-
+#=
+n=7
+A=randn(n,n)+1im*randn(n,n)
+A=(A-A')/2
+A=SLA.SkewHermitian(A)
+#display(A)
+display(hessenberg(Matrix(A)))
+E=SLA.complexsktrd!(A)[2]
+display(E)
+=#
