@@ -111,6 +111,11 @@ end
         A = SLA.skewhermitian(randn(n,n))
         F = schur(A)
         @test A.data ≈ F.vectors * F.Schur * F.vectors'
+
+        Ac = SLA.skewhermitian!(randn(ComplexF64, n, n))
+        for f in (real, imag)
+            @test f(Ac) == f(Matrix(Ac))
+        end
     end
 end
 @testset "hessenberg.jl" begin
@@ -122,7 +127,7 @@ end
         @test Matrix(HA.H) ≈ Matrix(HB.H)
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
-    
+
     A=zeros(4,4)
     A[2:4,1]=ones(3)
     A[1,2:4]=-ones(3)
@@ -131,7 +136,7 @@ end
     HA=hessenberg(A)
     HB=hessenberg(B)
     @test Matrix(HA.H)≈Matrix(HB.H)
-    
+
 end
 @testset "eigen.jl" begin
     for n in [2,20,153,200]
@@ -175,6 +180,7 @@ end
 end
 
 
+
 @testset "tridiag.jl" begin 
     for n in [2,20,155,200]
         C=SLA.skewhermitian(randn(n,n))
@@ -183,6 +189,7 @@ end
         
         A=SLA.SkewHermTridiagonal(randn(n-1))
         
+
         C=randn(n,n)
         D1=randn(n,n)
         D2=copy(D1)
@@ -222,6 +229,16 @@ end
         mul!(D1,A,C,2,1)
         @test D1≈D2+2*Matrix(A)*C
         @test dot(x,A,y)≈dot(x,Matrix(A),y)
+
+
+        B = SLA.SkewHermTridiagonal([3,4,5])
+        @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
+        @test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
+
+        Ac = SLA.SkewHermTridiagonal(randn(ComplexF64, n))
+        for f in (real, imag)
+            @test f(Ac) == f(Matrix(Ac))
+        end
 
     end
 end

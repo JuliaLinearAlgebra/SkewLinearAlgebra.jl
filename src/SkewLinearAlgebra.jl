@@ -118,11 +118,11 @@ isskewhermitian(a::Number) = a == -a'
 Transforms `A` in-place to its skew-Hermitian part `(A-A')/2`,
 and returns a [`SkewHermitian`](@ref) view.
 """
-function skewhermitian!(A::AbstractMatrix{<:Number})
+function skewhermitian!(A::AbstractMatrix{T}) where {T<:Number}
     LA.require_one_based_indexing(A)
     n = LA.checksquare(A)
     @inbounds for i in 1:n
-        A[i,i] = imag(A[i,i])
+        A[i,i] = T isa Real ? zero(T) : complex(zero(real(T)),imag(A[i,i]))
         for j = 1:i-1
             a = (A[i,j] - A[j,i]')/2
             A[i,j] = a
@@ -138,7 +138,7 @@ Base.transpose(A::SkewHermitian) = SkewHermitian(transpose(A.data))
 Base.adjoint(A::SkewHermitian) = SkewHermitian(A.data')
 Base.real(A::SkewHermitian{<:Real}) = A
 Base.real(A::SkewHermitian) = SkewHermitian(real(A.data))
-Base.imag(A::SkewHermitian) = SkewHermitian(imag(A.data))
+Base.imag(A::SkewHermitian) = LA.Hermitian(imag(A.data))
 
 Base.conj(A::SkewHermitian) = SkewHermitian(conj(A.data))
 Base.conj!(A::SkewHermitian) = SkewHermitian(conj!(A.data))
@@ -233,7 +233,7 @@ LA.kron(A::StridedMatrix,B::SkewHermitian) = kron(A,B.data)
 @views function LA.schur!(A::SkewHermitian)
     F=eigen!(A)
     return Schur(typeof(F.vectors)(Diagonal(F.values)), F.vectors, F.values)
-    
+
 end
 LA.schur(A::SkewHermitian)= LA.schur!(copy(A))
 

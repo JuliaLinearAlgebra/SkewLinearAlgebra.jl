@@ -65,12 +65,14 @@ julia> SkewHermTridiagonal(A)
 ```
 """
 function SkewHermTridiagonal(A::AbstractMatrix)
+
     if iszero(real(diag(A))) && !iszero(imag(diag(A)))
         if diag(A, 1) == - adjoint.(diag(A, -1))
             SkewHermTridiagonal(diag(A, -1),imag(diag(A)))
         else
             throw(ArgumentError("matrix is not skew-hermitian; cannot convert to SkewHermTridiagonal"))
         end
+
     else
         if diag(A, 1) == - adjoint.(diag(A, -1))
             SkewHermTridiagonal(diag(A, -1))
@@ -91,8 +93,10 @@ SkewHermTridiagonal{T}(S::SkewHermTridiagonal) where {T} =
 SkewHermTridiagonal(S::SkewHermTridiagonal) = S
 
 AbstractMatrix{T}(S::SkewHermTridiagonal) where {T} =
+
     SkewHermTridiagonal(convert(AbstractVector{T}, S.ev)::AbstractVector{T},convert(AbstractVector{<:Real}, S.dvim)::AbstractVector{<:Real})
     
+
 function Base.Matrix{T}(M::SkewHermTridiagonal) where T
     n = size(M, 1)
     Mf = zeros(T, n, n)
@@ -140,6 +144,7 @@ function Base.copyto!(dest::SkewHermTridiagonal, src::SkewHermTridiagonal)
 end
 
 #Elementary operations
+
 for func in (:conj, :copy)
     @eval Base.$func(M::SkewHermTridiagonal) = SkewHermTridiagonal(($func)(M.ev),($func)(M.dvim))
 end
@@ -214,6 +219,7 @@ function Base.:\(B::Number,A::SkewHermTridiagonal)
         return SkewHermTridiagonal(B\A.ev)
     end
 end
+
 # ==(A::SkewHermTridiagonal, B::SkewHermTridiagonal) = (A.ev==B.ev)
 
 @inline LA.mul!(A::StridedVecOrMat, B::SkewHermTridiagonal, C::StridedVecOrMat,
@@ -237,6 +243,7 @@ end
     end
     α =S.dvim
     β = S.ev
+
     if α === nothing
         @inbounds begin
             for j = 1:n
@@ -266,6 +273,7 @@ end
                 end
                 LA._modify!(_add, β[m-1]*x₀+α[m]*x₊*1im , C, (m, j))
             end
+
         end
     end
 
@@ -286,6 +294,7 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
     x₀ = x[1]
     x₊ = x[2]
     sub = ev[1]
+
     if dv !== nothing
         r = dot( adjoint(sub)*x₊+complex(zero(dv[1]),-dv[1])*x₀, y[1])
         @inbounds for j in 2:nx-1
@@ -303,6 +312,7 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
         end
         r += dot(adjoint(-adjoint(sub))*x₀, y[nx])
     end
+
     return r
 end
 
@@ -372,7 +382,7 @@ end
             Qdiag[i+1,j] = trisol.vectors[i+1,j]*c*1im
             c *= (-1)
         end
-        
+
     end
     if n%2==1
         Qdiag[n,:]=trisol.vectors[n,:]*c
@@ -386,6 +396,7 @@ end
      return skewtrieigen!(A)
 end
 
+
 function copyeigtype(A::SkewHermTridiagonal)  
     temp=similar(A,LA.eigtype(eltype(A.ev)))
     copyto!(temp ,A)
@@ -396,6 +407,7 @@ end
 LA.eigen(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V,Vim<:Nothing}=LA.eigen!(A)
 
 LA.eigvecs(A::SkewHermTridiagonal{T,V,Vim})  where {T<:Real,V,Vim<:Nothing}= eigen(A).vectors
+
 
 @views function LA.svdvals!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V,Vim<:Nothing}
     n=size(A,1)
@@ -425,7 +437,9 @@ LA.svdvals(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V,Vim<:Nothing}=svdva
     return LA.SVD(U,vals,adjoint(V2))
 end
 
+
 LA.svd(A::SkewHermTridiagonal{T,V,Vim})  where {T<:Real,V,Vim<:Nothing}= svd!(A)
+
 
 ###################
 # Generic methods #
@@ -435,7 +449,9 @@ LA.svd(A::SkewHermTridiagonal{T,V,Vim})  where {T<:Real,V,Vim<:Nothing}= svd!(A)
 #det(A::SkewHermTridiagonal; shift::Number=false) = det_usmani(A.ev, A.dv, A.ev, shift)
 #logabsdet(A::SkewHermTridiagonal; shift::Number=false) = logabsdet(ldlt(A; shift=shift))
 
+
 Base.@propagate_inbounds function Base.getindex(A::SkewHermTridiagonal{T}, i::Integer, j::Integer) where T
+
     @boundscheck checkbounds(A, i, j)
     if i == j + 1
         return @inbounds A.ev[j]
