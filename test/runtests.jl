@@ -1,9 +1,9 @@
 using LinearAlgebra, Random
-import SkewLinearAlgebra as SLA
+import .SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
-
+#=
 @testset "README.md" begin # test from the README examples
     A = [0 2 -7 4; -2 0 -8 3; 7 8 0 1;-4 -3 -1 0]
     @test SLA.isskewhermitian(A)
@@ -179,10 +179,10 @@ end
     end
 end
 
-
+=#
 
 @testset "tridiag.jl" begin 
-    for n in [2,20,155,200]
+    for n in [2,20,157,200]
         C=SLA.skewhermitian(randn(n,n))
         A=SLA.SkewHermTridiagonal(C)
         @test Tridiagonal(Matrix(A))≈Tridiagonal(Matrix(C))
@@ -232,7 +232,7 @@ end
 
 
         B = SLA.SkewHermTridiagonal([3,4,5])
-        #@test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
+        @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
         #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
 
         Ac = SLA.SkewHermTridiagonal(randn(ComplexF64, n))

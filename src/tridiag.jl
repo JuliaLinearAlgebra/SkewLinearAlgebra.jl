@@ -43,6 +43,7 @@ SkewHermTridiagonal{T}(ev::AbstractVector) where {T<:Real} =
     SkewHermTridiagonal(convert(AbstractVector{T}, ev)::AbstractVector{T})
 
 # complex skew-hermitian case
+SkewHermTridiagonal(ev::AbstractVector{Complex{T}}) where T = SkewHermTridiagonal{Complex{T}, typeof(ev), Nothing}(ev, nothing)
 SkewHermTridiagonal(ev::AbstractVector{Complex{T}}, dvim::AbstractVector{T}) where T = SkewHermTridiagonal{Complex{T}, typeof(ev), typeof(dvim)}(ev, dvim)
 SkewHermTridiagonal{Complex{T}}(ev::AbstractVector, dvim::AbstractVector) where T =
     SkewHermTridiagonal(convert(AbstractVector{Complex{T}}, ev)::AbstractVector{Complex{T}}, convert(AbstractVector{T}, dvim)::AbstractVector{T})
@@ -148,7 +149,14 @@ end
 for func in (:conj, :copy)
     @eval Base.$func(M::SkewHermTridiagonal) = SkewHermTridiagonal(($func)(M.ev),($func)(M.dvim))
 end
-Base.imag(M::SkewHermTridiagonal) = LA.SymTridiagonal(imag.(M.dvim),imag.(M.ev))
+function Base.imag(M::SkewHermTridiagonal) 
+    if M.dvim !== nothing
+        LA.SymTridiagonal(imag.(M.dvim),imag.(M.ev))
+    else
+        n=size(M,1)
+        LA.SymTridiagonal(zeros(eltype(imag(M.ev[1])),n),imag.(M.ev))
+    end
+end
 Base.real(M::SkewHermTridiagonal) = SkewHermTridiagonal(real.(M.ev))
 
 Base.transpose(S::SkewHermTridiagonal) = -S
