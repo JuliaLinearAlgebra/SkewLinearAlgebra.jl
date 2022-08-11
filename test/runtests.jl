@@ -182,7 +182,7 @@ end
 
 
 @testset "tridiag.jl" begin 
-    for n in [2,20,200]
+    for n in [2,20,153,200]
         C=SLA.skewhermitian(randn(n,n))
         A=SLA.SkewHermTridiagonal(C)
         @test Tridiagonal(Matrix(A))≈Tridiagonal(Matrix(C))
@@ -203,8 +203,10 @@ end
         y=randn(n)
         @test dot(x,A,y)≈dot(x,Matrix(A),y)
         B=Matrix(A)
-        #=
+        
         @test size(A,1)==n
+        A=SLA.SkewHermTridiagonal(randn(n-1))
+        B=Matrix(A)
         EA=eigen(A)
         EB=eigen(B)
         Q = EA.vectors
@@ -221,7 +223,7 @@ end
         A=SLA.SkewHermTridiagonal(randn(n-1))
         B=Matrix(A)
         @test svdvals(A)≈svdvals(B)
-        =#
+        
         A=randn(n,n)+1im*randn(n,n)
         A=(A-A')/2
         A=SLA.SkewHermTridiagonal(A)
@@ -251,7 +253,6 @@ end
         B = Matrix(A)
         HA = hessenberg(A)
         HB = hessenberg(B)
-        #display(HA)
         @test Matrix(HA.H) ≈ Matrix(HB.H)
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
