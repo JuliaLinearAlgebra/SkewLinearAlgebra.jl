@@ -1,5 +1,5 @@
 using LinearAlgebra, Random
-import SkewLinearAlgebra as SLA
+import .SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
@@ -258,14 +258,17 @@ end
     end
 end
 
-#=
+
+"""
 using BenchmarkTools
 n=1000
 A = SLA.skewhermitian(randn(n,n)+1im*randn(n,n))
 B = Hermitian(A.data*1im)
-#@btime hessenberg(B)
+C=Matrix(A)
+@btime hessenberg(B)
 @btime hessenberg(A)
-=#
-
+@btime hessenberg(C)
+a=1
+"""
 
 
