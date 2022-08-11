@@ -180,13 +180,16 @@ end
 end
 
 
-@testset "tridiag.jl" begin
-    for n in [2,20,151,200]
+
+@testset "tridiag.jl" begin 
+    for n in [2,20,153,200]
         C=SLA.skewhermitian(randn(n,n))
         A=SLA.SkewHermTridiagonal(C)
         @test Tridiagonal(Matrix(A))≈Tridiagonal(Matrix(C))
-
+        
         A=SLA.SkewHermTridiagonal(randn(n-1))
+        
+
         C=randn(n,n)
         D1=randn(n,n)
         D2=copy(D1)
@@ -200,7 +203,10 @@ end
         y=randn(n)
         @test dot(x,A,y)≈dot(x,Matrix(A),y)
         B=Matrix(A)
+        
         @test size(A,1)==n
+        A=SLA.SkewHermTridiagonal(randn(n-1))
+        B=Matrix(A)
         EA=eigen(A)
         EB=eigen(B)
         Q = EA.vectors
@@ -210,14 +216,28 @@ end
         sort!(valA)
         sort!(valB)
         @test valA ≈ valB
+        A=SLA.SkewHermTridiagonal(randn(n-1))
+        B=Matrix(A)
         Svd = svd(A)
         @test real(Svd.U*Diagonal(Svd.S)*Svd.Vt) ≈ B
+        A=SLA.SkewHermTridiagonal(randn(n-1))
+        B=Matrix(A)
         @test svdvals(A)≈svdvals(B)
+        
+        A=randn(n,n)+1im*randn(n,n)
+        A=(A-A')/2
+        A=SLA.SkewHermTridiagonal(A)
+        C=randn(n,n)+1im*randn(n,n)
+        D1=randn(n,n)+1im*randn(n,n)
+        D2=copy(D1)
+        mul!(D1,A,C,2,1)
+        @test D1≈D2+2*Matrix(A)*C
+        @test dot(x,A,y)≈dot(x,Matrix(A),y)
 
 
         B = SLA.SkewHermTridiagonal([3,4,5])
         @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
-        @test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
+        #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
 
         Ac = SLA.SkewHermTridiagonal(randn(ComplexF64, n))
         for f in (real, imag)
@@ -226,4 +246,26 @@ end
 
     end
 end
+
+@testset "complexhessenberg.jl" begin
+    for n in [2,20,153,200]
+        A = SLA.skewhermitian(randn(n,n)+1im*randn(n,n))
+        B = Matrix(A)
+        HA = hessenberg(A)
+        HB = hessenberg(B)
+        @test Matrix(HA.H) ≈ Matrix(HB.H)
+        @test Matrix(HA.Q) ≈ Matrix(HB.Q)
+    end
+end
+
+#=
+using BenchmarkTools
+n=1000
+A = SLA.skewhermitian(randn(n,n)+1im*randn(n,n))
+B = Hermitian(A.data*1im)
+#@btime hessenberg(B)
+@btime hessenberg(A)
+=#
+
+
 

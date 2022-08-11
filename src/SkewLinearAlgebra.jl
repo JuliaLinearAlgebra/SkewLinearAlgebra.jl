@@ -241,6 +241,7 @@ include("hessenberg.jl")
 include("eigen.jl")
 include("exp.jl")
 include("tridiag.jl")
+include("complexhessenberg.jl")
 
 end
 
