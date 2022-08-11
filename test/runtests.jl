@@ -257,6 +257,23 @@ end
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
 end
+@testset "pfaffian.jl" begin
+    for n in [2,4,6]
+        A=rand(1:10,n,n)
+        for i=1:n
+            A[i,i]=0
+            for j=i+1:n
+                A[i,j]=-A[j,i]
+            end
+        end
+        pf = SLA.exactpfaffian!(copy(A))
+        @test pf*pf ≈ det(A)
+        A=SLA.skewhermitian(randn(n,n))
+        pf= SLA.realpfaffian(A)
+        @test pf*pf ≈ det(A.data)
+    end
+
+end
 
 #=
 

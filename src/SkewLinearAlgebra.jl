@@ -242,6 +242,7 @@ include("eigen.jl")
 include("exp.jl")
 include("tridiag.jl")
 include("complexhessenberg.jl")
+include("pfaffian.jl")
 
 end
 
