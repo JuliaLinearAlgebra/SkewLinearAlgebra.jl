@@ -7,6 +7,7 @@
 end
 LA.hessenberg(A::SkewHermitian{<:Complex})=hessenberg!(copy(A))
 
+
 @views function complex_householder_reflector!(x,n)
     
     if n>1
@@ -45,11 +46,12 @@ LA.hessenberg(A::SkewHermitian{<:Complex})=hessenberg!(copy(A))
     end
     
     return tau, alpha
+
 end
 @views function cger2!(tau::Number , v::StridedVector{T} , s::StridedVector{T},
     A::StridedMatrix{T}) where {T<:LA.BlasFloat}
     tau2 = promote(tau, zero(T))[1]
-    
+
     if tau2 isa Union{Bool,T}
         return LA.BLAS.ger!(tau2, v, s, A)
     else
@@ -78,6 +80,7 @@ end
         stau,alpha = complex_householder_reflector!(A[i+1:end,i],n-i)
         @views v=A[i+1:end,i]
         E[i] = alpha
+
         complexleftHouseholder!(A[i+1:end,i+1:end],v,atmp[i+1:end],stau)
         
         s = mul!(atmp[i+1:end], A[i+1:end,i+1:end], v)
@@ -96,6 +99,7 @@ end
 
 
 
+
 @views function complexlatrd!(A::AbstractMatrix,E::AbstractVector,W::AbstractMatrix,tau::AbstractVector,tempconj::AbstractVector,n::Number,nb::Number)
 
     @inbounds(for i=1:nb
@@ -108,14 +112,17 @@ end
                 tempconj[j] = conj.(A[i,j])
             end
             mul!(A[i:n,i],W[i:n,1:i-1],tempconj[1:i-1],-1,1)
+
             
             
         end
 
         #Generate elementary reflector H(i) to annihilate A(i+2:n,i)
 
+
         stau,alpha = complex_householder_reflector!(A[i+1:n,i],n-i)
         E[i]   = real(alpha)
+
         
         mul!(W[i+1:n,i],A[i+1:n,i+1:n], A[i+1:n,i],1,0)  
         if i>1
@@ -141,7 +148,9 @@ function set_nb2(n::Integer)
     elseif n<=100
         return 10
     else
+
         return 60
+
     end
     return 1
 end
@@ -161,14 +170,18 @@ end
     tau = similar(A,n-1)
     W   = similar(A, n, nb)
     update = similar(A, n-nb, n-nb)
+
     tempconj=similar(A,nb)
+
 
     oldi = 0
 
     @inbounds(for i = 1:nb:n-nb-1
         size = n-i+1
 
+
         complexlatrd!(A[i:n,i:n],E[i:i+nb-1],W,tau[i:i+nb-1],tempconj,size,nb)
+
         mul!(update[1:n-nb-i+1,1:n-nb-i+1],A[i+nb:n,i:i+nb-1],adjoint(W[nb+1:size,:]))
 
         s = i+nb-1
