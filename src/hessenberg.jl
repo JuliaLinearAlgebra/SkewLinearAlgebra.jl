@@ -10,6 +10,7 @@ LA.HessenbergQ(F::Hessenberg{<:Any,<:Any,S,W}) where {S,W} = LA.HessenbergQ{elty
     T=SkewHermTridiagonal(E)
     return  Hessenberg{typeof(zero(eltype(A.data))),typeof(T),typeof(A.data),typeof(tau2),typeof(false)}(T, 'L', A.data, tau2, false)
 end
+#LA.hessenberg(A::SkewHermitian{<:Real})=hessenberg!(copy(A))
 
 
 @views function householder_reflector!(x,v,n)
@@ -22,7 +23,7 @@ end
         end
         v[1] = 1
         @inbounds v[2:end]=x[2:end]
-        v[2:end].*=div
+        v[2:end].*= div
         tau = 2/((norm(v)^2))
     else
         tau = convert(eltype(x),0)
