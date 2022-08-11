@@ -259,12 +259,18 @@ end
 end
 
 #=
+
 using BenchmarkTools
 n=1000
 A = SLA.skewhermitian(randn(n,n)+1im*randn(n,n))
 B = Hermitian(A.data*1im)
-#@btime hessenberg(B)
+
+C=Matrix(A)
+@btime hessenberg(B)
 @btime hessenberg(A)
+@btime hessenberg(C)
+a=1
+
 =#
 
 
