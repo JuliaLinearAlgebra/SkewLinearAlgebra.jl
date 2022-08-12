@@ -266,9 +266,8 @@ end
         @test SLA.pfaffian(A) ≈ SLA.pfaffian(Abig)  == SLA.pfaffian(SLA.SkewHermitian(Abig))
         if VERSION ≥ v"1.7" # for exact det of BigInt matrices
             @test SLA.pfaffian(Abig)^2 == det(Abig)
-        else
-            @test Float64(SLA.pfaffian(Abig)^2) ≈ det(Float64.(A))
         end
+        @test Float64(SLA.pfaffian(Abig)^2) ≈ iseven(n) ? det(Float64.(A)) : 0.0
     end
 
 end
