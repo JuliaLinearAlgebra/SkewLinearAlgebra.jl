@@ -267,7 +267,7 @@ end
         if VERSION ≥ v"1.7" # for exact det of BigInt matrices
             @test SLA.pfaffian(Abig)^2 == det(Abig)
         end
-        @test Float64(SLA.pfaffian(Abig)^2) ≈ iseven(n) ? det(Float64.(A)) : 0.0
+        @test Float64(SLA.pfaffian(Abig)^2) ≈ (iseven(n) ? det(Float64.(A)) : 0.0)
     end
 
 end
