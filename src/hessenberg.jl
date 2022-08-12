@@ -1,5 +1,5 @@
 # Based on hessenberg.jl in Julia. License is MIT: https://julialang.org/license
-LA.HessenbergQ(F::Hessenberg{<:Any,<:Any,S,W}) where {S,W} = LA.HessenbergQ{eltype(F.factors),S,W,true}(F.uplo, F.factors, F.τ)
+LA.HessenbergQ(F::Hessenberg{<:Any,<:SkewHermTridiagonal,S,W}) where {S,W} = LA.HessenbergQ{eltype(F.factors),S,W,true}(F.uplo, F.factors, F.τ)
 
 @views function LA.hessenberg!(A::SkewHermitian{<:Real})
     tau,E = sktrd!(A)

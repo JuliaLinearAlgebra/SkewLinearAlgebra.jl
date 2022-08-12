@@ -405,9 +405,13 @@ end
      return skewtrieigen!(A)
 end
 
-copyeigtype(A::SkewHermTridiagonal) = copyto!(similar(A,LA.eigtype(eltype(A.ev))), A)
+function copyeigtype(A::SkewHermTridiagonal) 
+    B=similar(A , LA.eigtype( eltype(A.ev) ))
+    copyto!(B, A)
+    return B
+end
 
-LA.eigen(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V,Vim<:Nothing}=LA.eigen!(A)
+LA.eigen(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V,Vim<:Nothing}=LA.eigen!(copyeigtype(A))
 
 LA.eigvecs(A::SkewHermTridiagonal{T,V,Vim})  where {T<:Real,V,Vim<:Nothing}= eigen(A).vectors
 
@@ -441,7 +445,7 @@ LA.svdvals(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V,Vim<:Nothing}=svdva
 end
 
 
-LA.svd(A::SkewHermTridiagonal{T,V,Vim})  where {T<:Real,V,Vim<:Nothing}= svd!(A)
+LA.svd(A::SkewHermTridiagonal{T,V,Vim})  where {T<:Real,V,Vim<:Nothing}= svd!(copyeigtype(A))
 
 
 ###################
