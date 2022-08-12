@@ -20,7 +20,7 @@ LA.hessenberg(A::SkewHermitian)=hessenberg!(copyeigtype(A))
     xnorm = (n > 1 ? norm(x[2:end]) : zero(real(x[1])))
     alpha = x[1]
 
-    if xnorm != 0 || n==1
+    if !iszero(xnorm) || n==1
         
         beta=(real(alpha) > 0 ? -1 : +1)*hypot(abs(alpha),xnorm)
         tau = 1-alpha/beta#complex((beta-alphar)/beta,-alphaim/beta)
