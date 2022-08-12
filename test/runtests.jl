@@ -264,7 +264,7 @@ end
         A=SLA.skewhermitian(rand(-10:10,n,n)*2)
         Abig = BigInt.(A.data)
         @test SLA.pfaffian(A) ≈ SLA.pfaffian(Abig)  == SLA.pfaffian(SLA.SkewHermitian(Abig))
-        @test SLA.pfaffian(Abig)^2 == det(Abig)
+        @test SLA.pfaffian(Abig)^2 ≈ det(Abig) #ideally compare with == if recent Julia version
     end
 
 end
