@@ -14,14 +14,16 @@ export
     #functions
     isskewhermitian,
     skewhermitian,
-    skewhermitian!
+    skewhermitian!,
+    pfaffian,
+    pfaffian!
 
 include("skewhermitian.jl")
 include("tridiag.jl")
 include("hessenberg.jl")
 include("eigen.jl")
 include("exp.jl")
-
+include("pfaffian.jl")
 end
 
 
