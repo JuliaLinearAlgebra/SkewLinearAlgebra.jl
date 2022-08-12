@@ -134,7 +134,8 @@ function Base.size(A::SkewHermTridiagonal, d::Integer)
 end
 
 
-Base.similar(S::SkewHermTridiagonal, ::Type{T}) where {T} = SkewHermTridiagonal(similar(S.ev, T),similar(S.dvim,T))
+Base.similar(S::SkewHermTridiagonal{<:Complex}, ::Type{T}) where {T<:Complex} = SkewHermTridiagonal(similar(S.ev, T), similar(S.dvim,T))
+Base.similar(S::SkewHermTridiagonal{<:Real}, ::Type{T}) where {T<:Real} = SkewHermTridiagonal(similar(S.ev, T))
 
 Base.similar(S::SkewHermTridiagonal, ::Type{T}, dims::Union{Dims{1},Dims{2}}) where {T} = zeros(T, dims...)
 function Base.copyto!(dest::SkewHermTridiagonal, src::SkewHermTridiagonal)
@@ -404,14 +405,8 @@ end
      return skewtrieigen!(A)
 end
 
+copyeigtype(A::SkewHermTridiagonal) = copyto!(similar(A,LA.eigtype(eltype(A.ev))), A)
 
-function copyeigtype(A::SkewHermTridiagonal)  
-    temp=similar(A,LA.eigtype(eltype(A.ev)))
-    copyto!(temp ,A)
-    display(temp)
-    return temp
-end
-#fix copyeigtype
 LA.eigen(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V,Vim<:Nothing}=LA.eigen!(A)
 
 LA.eigvecs(A::SkewHermTridiagonal{T,V,Vim})  where {T<:Real,V,Vim<:Nothing}= eigen(A).vectors
