@@ -264,7 +264,11 @@ end
         A=SLA.skewhermitian(rand(-10:10,n,n)*2)
         Abig = BigInt.(A.data)
         @test SLA.pfaffian(A) ≈ SLA.pfaffian(Abig)  == SLA.pfaffian(SLA.SkewHermitian(Abig))
-        @test SLA.pfaffian(Abig)^2 ≈ det(Abig) #ideally compare with == if recent Julia version
+        if VERSION ≥ v"1.7" # for exact det of BigInt matrices
+            @test SLA.pfaffian(Abig)^2 == det(Abig)
+        else
+            @test Float64(SLA.pfaffian(Abig)^2) ≈ det(Float64.(A))
+        end
     end
 
 end
