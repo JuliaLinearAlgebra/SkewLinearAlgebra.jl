@@ -24,25 +24,23 @@ LA.eigvals(A::SkewHermitian, vl::Real,vh::Real) =
 
 # no need to define LA.eigen(...) since the generic methods should work
 
-@views function skeweigvals!(S::SkewHermitian)
+@views function skeweigvals!(S::SkewHermitian{<:Real})
     n = size(S.data,1)
     E = sktrd!(S)[2]
     H = SymTridiagonal(zeros(eltype(E),n),E)
     vals = eigvals!(H)
     return vals .= .-vals
-
 end
 
-@views function skeweigvals!(S::SkewHermitian,irange::UnitRange)
+@views function skeweigvals!(S::SkewHermitian{<:Real},irange::UnitRange)
     n = size(S.data,1)
     E = sktrd!(S)[2]
     H = SymTridiagonal(zeros(eltype(E),n),E)
     vals = eigvals!(H,irange)
     return vals .= .-vals
-
 end
 
-@views function skeweigvals!(S::SkewHermitian,vl::Real,vh::Real)
+@views function skeweigvals!(S::SkewHermitian{<:Real},vl::Real,vh::Real)
     n = size(S.data,1)
     E = sktrd!(S)[2]
     H = SymTridiagonal(zeros(eltype(E),n),E)
@@ -50,7 +48,7 @@ end
     return vals .= .-vals
 end
 
-@views function skeweigen!(S::SkewHermitian)
+@views function skeweigen!(S::SkewHermitian{<:Real})
     n = size(S.data,1)
 
     tau,E = sktrd!(S)
