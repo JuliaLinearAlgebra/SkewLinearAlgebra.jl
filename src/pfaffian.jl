@@ -2,8 +2,8 @@
 if isdefined(LA,:exactdiv)
     const exactdiv = LA.exactdiv
 else
-    exactdiv(a,b) = a/ b
-    excatdiv(a::Integer, b::Integer) = div(a, b)
+    exactdiv(a,b) = a / b
+    exactdiv(a::Integer, b::Integer) = div(a, b)
 end
 
 # in-place O(n³) algorithm to compute the exact Pfaffian of
