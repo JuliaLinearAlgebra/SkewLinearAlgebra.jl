@@ -26,7 +26,7 @@ LA.eigvals(A::SkewHermitian, vl::Real,vh::Real) =
 
 @views function skeweigvals!(S::SkewHermitian{<:Real})
     n = size(S.data,1)
-    E = sktrd!(S)[2]
+    E = skewblockedhess!(S)[2]
     H = SymTridiagonal(zeros(eltype(E),n),E)
     vals = eigvals!(H)
     return vals .= .-vals
@@ -34,7 +34,7 @@ end
 
 @views function skeweigvals!(S::SkewHermitian{<:Real},irange::UnitRange)
     n = size(S.data,1)
-    E = sktrd!(S)[2]
+    E = skewblockedhess!(S)[2]
     H = SymTridiagonal(zeros(eltype(E),n),E)
     vals = eigvals!(H,irange)
     return vals .= .-vals
@@ -42,7 +42,7 @@ end
 
 @views function skeweigvals!(S::SkewHermitian{<:Real},vl::Real,vh::Real)
     n = size(S.data,1)
-    E = sktrd!(S)[2]
+    E = skewblockedhess!(S)[2]
     H = SymTridiagonal(zeros(eltype(E),n),E)
     vals = eigvals!(H,vl,vh)
     return vals .= .-vals
@@ -51,13 +51,9 @@ end
 @views function skeweigen!(S::SkewHermitian{<:Real})
     n = size(S.data,1)
 
-    tau,E = sktrd!(S)
-    tau2 = similar(tau,n-1)
-    tau2[1:n-2].=tau
-    tau2[n-1 ] = 0  
+    tau,E = skewblockedhess!(S)
     T = SkewHermTridiagonal(E)
-    #H1 = Hessenberg(S.data,tau2,LA.Tridiagonal(E,zeros(eltype(S.data),n),-E),'L')
-    H1 = Hessenberg{typeof(zero(eltype(S.data))),typeof(T),typeof(S.data),typeof(tau2),typeof(false)}(T, 'L', S.data, tau2, false)
+    H1 = Hessenberg{typeof(zero(eltype(S.data))),typeof(T),typeof(S.data),typeof(tau),typeof(false)}(T, 'L', S.data, tau, false)
     A = S.data
     H = SymTridiagonal(zeros(eltype(E),n),E)
     trisol = eigen!(H)
@@ -71,8 +67,6 @@ end
     temp = similar(A,n,n)
 
     Q=Matrix(H1.Q)
-    #Q  = diagm(ones(n))
-    #LA.LAPACK.ormqr!('L','N',A[2:n,1:n-2],tau,Q[2:end,2:end])
 
     Q1 = similar(A,(n+1)÷2,n)
     Q2 = similar(A,n÷2,n)
