@@ -259,6 +259,15 @@ end
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
 end
+@testset "pfaffian.jl" begin
+    for n in [2,3,4,5,6,8,10,20,40]
+        A=SLA.skewhermitian(rand(-10:10,n,n)*2)
+        Abig = BigInt.(A.data)
+        @test SLA.pfaffian(A) ≈ SLA.pfaffian(Abig)  == SLA.pfaffian(SLA.SkewHermitian(Abig))
+        @test SLA.pfaffian(Abig)^2 ≈ det(Abig) #ideally compare with == if recent Julia version
+    end
+
+end
 
 
 #=
