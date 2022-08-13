@@ -2,8 +2,8 @@
 if isdefined(LA,:exactdiv)
     const exactdiv = LA.exactdiv
 else
-    exactdiv(a,b) = a/ b
-    excatdiv(a::Integer, b::Integer) = div(a, b)
+    exactdiv(a,b) = a / b
+    exactdiv(a::Integer, b::Integer) = div(a, b)
 end
 
 # in-place O(n³) algorithm to compute the exact Pfaffian of
@@ -27,8 +27,10 @@ function _exactpfaffian!(A::AbstractMatrix)
         # swap rows/cols k and 2n
         if k != 2n
             for i = 1:2n
-                A[i,k], A[i,2n] = A[i,2n], A[i,k]
-                A[k,i], A[2n,i] = A[2n,i], A[k,i]
+                A[k,i], A[2n,i] = A[2n,i], A[k,i] # swap rows
+            end
+            for i = 1:2n
+                A[i,k], A[i,2n] = A[i,2n], A[i,k] # swap cols
             end
             signflip = !signflip
         end
