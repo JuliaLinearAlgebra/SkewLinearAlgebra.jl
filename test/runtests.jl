@@ -265,7 +265,6 @@ end
     end
 end
 
-
 @testset "pfaffian.jl" begin
     for n in [2,3,4,5,6,8,10,20,40]
         A=SLA.skewhermitian(rand(-10:10,n,n)*2)
@@ -297,19 +296,16 @@ end
 
 
 
+
 #=
 using BenchmarkTools
 n=1000
 A = SLA.skewhermitian(randn(n,n)+1im*randn(n,n))
 B = Hermitian(A.data*1im)
-
 C=Matrix(A)
 #@btime hessenberg(B)
 @btime hessenberg(A)
 #@btime hessenberg(C)
 a=1
-
 =#
-
-
 
