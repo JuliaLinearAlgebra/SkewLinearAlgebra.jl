@@ -1,5 +1,5 @@
 using LinearAlgebra, Random
-import .SkewLinearAlgebra as SLA
+import SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
@@ -72,10 +72,10 @@ end
         @test getindex(A,n,n-1) ==3
         @test getindex(A,n-1,n) ==-3
         @test parent(A) == A.data
-
+      
         x = rand(T,n)
         y = zeros(T,n)
-        mul!(y,A,x,2,0) #seems mul! doesn't support Int32
+        mul!(y,A,x,2,0) 
         @test y == 2*A.data*x
         k = dot(y,A,x)
         @test k ≈ adjoint(y)*A.data*x
