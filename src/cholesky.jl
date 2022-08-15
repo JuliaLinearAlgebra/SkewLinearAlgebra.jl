@@ -1,62 +1,68 @@
-#import .SkewLinearAlgebra as SLA
-@views function skewchol!(A::SLA.SkewHermitian)
-    B = A.data
-    tol = 1e-15
+
+struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:SkewHermTridiagonal{<:T},P<:AbstractVector{<:Integer}} 
+    Rm::R #Uppertriangular matrix
+    Jm::J # Block diagonal skew-symmetric matrix
+    Pv::P #Permutation vector
+
+    function SkewCholesky{T,R,J,P}(Rm,Jm,Pv) where {T,R,J,P}
+        LA.require_one_based_indexing(Rm)
+        new{T,R,J,P}(Rm,Jm,Pv)
+    end
+end
+#SkewCholesky(Rm::UpperTriangular{<:T},Jm::SkewHermTridiagonal{<:T},Pv::AbstractVector{<:Integer}) where {T<:Real} = SkewCholesky(Rm,Jm,Pv)
+
+function SkewCholesky(Rm::UpperTriangular{<:T},Pv::AbstractVector{<:Integer}) where {T<:Real}
+    n=size(Rm,1)
+    vec = zeros(T,n-1)
+    for i = 1:2:n-1
+        vec[i] = -1
+    end
+    return SkewCholesky{T,UpperTriangular{<:T},SkewHermTridiagonal{<:T},AbstractVector{<:Integer}}(Rm,SkewHermTridiagonal(vec),Pv)
+
+end
+
+function _skewchol!(A::SkewHermitian)
+    @views B = A.data
+    tol = 1e-15*norm(B)
     m = size(B,1)
-    J2 = [0 1;-1 0]
+    J2 = similar(B,2,2)
+    J2[1,1] = 0; J2[2,1] = -1; J2[1,2] = 1; J2[2,2] = 0
     ii = 0; jj = 0; kk = 0
     P = Array(1:m)
-    temp = similar(B,m)
     tempM = similar(B,2,m-2)
     for j = 1:m÷2
         j2 = 2*j
-        M = maximum(B[j2-1:m,j2-1:m])
-        for i1 = j2-1:m
-            for i2 = j2-1:m
-                if B[i1,i2] == M
-                    ii = i1
-                    jj = i2
-                end
-            end
-        end
+        
+        M = findmax(B[j2-1:m,j2-1:m])
+        ii = M[2][1] + j2 - 2
+        jj = M[2][2] + j2 - 2
         if abs(B[ii,jj])<tol
             rank = j2-2
-            return P
+            return P, rank
         end
         if jj == j2-1
-            kk=ii
+            kk = ii
         else
             kk = jj
         end
         if ii != j2-1
-
-            I = Array(1:m)
-            I[ii] = j2-1
-            I[j2-1] = ii
+            P[ii],P[j2-1] = P[j2-1],P[ii]
+            for t = 1:m 
+                B[t,ii], B[t,j2-1] = B[t,j2-1], B[t,ii]
+            end
+            for t = 1:m 
+                B[ii,t], B[j2-1,t] = B[j2-1,t], B[ii,t]
+            end
             
-            temp2 = P[ii]
-            P[ii] = P[j2-1]
-            P[j2-1] = temp2
-            
-            Base.permutecols!!(B,I)
-            temp .= B[ii,:]
-            B[ii,:] .= B[j2-1,:]
-            B[j2-1,:] .= temp
         end
         if kk != j2
-
-            I = Array(1:m)
-            I[kk] = j2
-            I[j2] = kk
-            
-            temp3 = P[kk]
-            P[kk] = P[j2]
-            P[j2] = temp3
-            
-            Base.permutecols!!(B,I)
-            temp .= B[kk,:]
-            B[kk,:] .= B[j2,:]
-            B[j2,:] .= temp
+            P[kk],P[j2] = P[j2],P[kk]
+            for t = 1:m 
+                B[t,kk], B[t,j2] = B[t,j2], B[t,kk]
+            end
+            for t = 1:m 
+                B[kk,t], B[j2,t] = B[j2,t], B[kk,t]
+            end
         end
         
         l = m-j2
@@ -64,42 +70,29 @@
         B[j2-1,j2-1] = r
         B[j2,j2] = r
         B[j2-1,j2] = 0
-        mul!(tempM[:,1:l],J2,B[j2-1:j2,j2+1:m])
+        @views mul!(tempM[:,1:l], J2, B[j2-1:j2,j2+1:m])
         B[j2-1:j2,j2+1:m] .= tempM[:,1:l]
         B[j2-1:j2,j2+1:m] .*= (-1/r)
-        mul!(tempM[:,1:l],J2,B[j2-1:j2,j2+1:m])
-        mul!(B[j2+1:m,j2+1:m],transpose(B[j2-1:j2,j2+1:m]),tempM[:,1:l],-1,1)
+        @views mul!(tempM[:,1:l], J2, B[j2-1:j2,j2+1:m])
+        @views mul!(B[j2+1:m,j2+1:m], transpose(B[j2-1:j2,j2+1:m]), tempM[:,1:l],-1,1)
+        
     end
-    r=2*(m÷2)
-    return P
+    rank=2*(m÷2)
+    return P,rank
+end
+copyeigtype(A::AbstractMatrix) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
+@views function skewchol!(A::SkewHermitian)
+    P = _skewchol!(A)[1]
+    return SkewCholesky(UpperTriangular(A.data),P)
 end
 
-@views function skewsolve(A::SkewHermitian,b::AbstractVector)
-    
-    n = size(A,1)
-    P = skewchol!(A)
-    y1 = similar(A.data,n)
-    y2 = similar(A.data,n)
-    R = UpperTriangular(A.data)
-    vec = zeros(n-1)
-    for i = 1:2:n-1
-        vec[i] = 1
-    end
-    Jt = Tridiagonal(vec,zeros(n),-vec)
-    Base.permute!(b,P)
-    y1 .= transpose(R)\b
-    mul!(y2,Jt,y1)
-    y1 .= R\y2
-    Base.permute!(y1,P)
-    return y1
+skewchol(A::SkewHermitian) = skewchol!(copyeigtype(A))
+skewchol!(A::AbstractMatrix) = @views  skewchol!(SkewHermitian(A))
+
+function skewchol(A::AbstractMatrix)
+    isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
+    return skewchol!(SkewHermitian(copyeigtype(A)))
 end
-#=
-A=SLA.skewhermitian(A)
-P=skewchol!(A)
-R=triu(A)
-dipslay(transpose(R)*)
-=#
-"""
-Q^TR^TJRQx=b
-=>RQx=J^T R^(-T) Q^Tb
-"""
+
+
+
