@@ -81,4 +81,3 @@ function pfaffian!(A::AbstractMatrix{<:Real})
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
     return _pfaffian!(SkewHermitian(A))
 end
-
