@@ -1,19 +1,44 @@
 # Based on eigen.jl in Julia. License is MIT: https://julialang.org/license
 
 
-@views function LA.eigvals!(A::SkewHermitian, sortby::Union{Function,Nothing}=nothing)
+@views function LA.eigvals!(A::SkewHermitian{<:Real}, sortby::Union{Function,Nothing}=nothing)
     vals = skeweigvals!(A)
     !isnothing(sortby) && sort!(vals, by=sortby)
     return complex.(0, vals)
 end
 
-@views function LA.eigvals!(A::SkewHermitian, irange::UnitRange)
+@views function LA.eigvals!(A::SkewHermitian{<:Real}, irange::UnitRange)
     vals = skeweigvals!(A,irange)
     return complex.(0, vals)
 end
 
-@views function LA.eigvals!(A::SkewHermitian, vl::Real,vh::Real)
+@views function LA.eigvals!(A::SkewHermitian{<:Real}, vl::Real,vh::Real)
     vals = skeweigvals!(A,-vh,-vl)
+    return complex.(0, vals)
+end
+
+@views function LA.eigvals!(A::SkewHermitian{<:Complex}, sortby::Union{Function,Nothing}=nothing)
+    H=Hermitian(A.data.*1im)
+    if sortby===nothing
+        return complex.(0, - eigvals!(H))
+    end
+    vals=eigvals!(H,sortby)
+    reverse!(vals)
+    vals.= .-vals
+    return complex.(0, vals)
+end
+
+@views function LA.eigvals!(A::SkewHermitian{<:Complex}, irange::UnitRange)
+    H=Hermitian(A.data.*1im)
+    vals=eigvals!(H,-irange)
+    vals.= .-vals
+    return complex.(0, vals)
+end
+
+@views function LA.eigvals!(A::SkewHermitian{<:Complex}, vl::Real,vh::Real)
+    H=Hermitian(A.data.*1im)
+    vals=eigvals!(H,-vh,-vl)
+    vals.= .-vals
     return complex.(0, vals)
 end
 
@@ -102,24 +127,34 @@ end
 end
 
 
-@views function LA.eigen!(A::SkewHermitian)
+@views function LA.eigen!(A::SkewHermitian{<:Real})
      vals,Qr,Qim = skeweigen!(A)
      return Eigen(vals,complex.(Qr,Qim))
 end
 
 copyeigtype(A::SkewHermitian) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
 
+@views function LA.eigen!(A::SkewHermitian{T}) where {T<:Complex}
+    H=Hermitian(A.data.*1im)
+    Eig=eigen!(H)
+    skew_Eig=Eigen(complex.(0,-Eig.values), Eig.vectors)
+    return skew_Eig
+end
+
 LA.eigen(A::SkewHermitian) = LA.eigen!(copyeigtype(A))
 
-@views function LA.svdvals!(A::SkewHermitian)
-    n=size(A,1)
+@views function LA.svdvals!(A::SkewHermitian{<:Real})
     vals = skeweigvals!(A)
     vals .= abs.(vals)
     return sort!(vals; rev=true)
 end
+@views function LA.svdvals!(A::SkewHermitian{<:Complex})
+    H=Hermitian(A.data.*1im)
+    return svdvals!(H)
+end
 LA.svdvals(A::SkewHermitian) = svdvals!(copyeigtype(A))
 
-@views function LA.svd!(A::SkewHermitian)
+@views function LA.svd!(A::SkewHermitian{<:Real})
     n=size(A,1)
     E=eigen!(A)
     U=E.vectors
@@ -138,5 +173,11 @@ LA.svdvals(A::SkewHermitian) = svdvals!(copyeigtype(A))
     end
     return LA.SVD(U,vals,adjoint(V))
 end
+@views function LA.svd(A::SkewHermitian{T}) where {T<:Complex}
+    H=Hermitian(A.data.*1im)
+    Svd=svd(H)
+    skew_Svd=SVD(Svd.U,Svd.S,(Svd.Vt).*(-1im))
+    return skew_Svd
+end
 
-LA.svd(A::SkewHermitian) = svd!(copyeigtype(A))
+LA.svd(A::SkewHermitian{<:Real}) = svd!(copyeigtype(A))

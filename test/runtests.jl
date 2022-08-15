@@ -100,10 +100,12 @@ end
         A.data[n,n] = 0
         A.data[n,1] = 4
         @test SLA.isskewhermitian(A.data) == false
-        #LU=lu(A)
-        #@test LU.L*LU.U≈A.data
-        LQ = lq(A)
-        @test LQ.L*LQ.Q ≈ A.data
+        LU=lu(A)
+        @test LU.L*LU.U≈A.data[LU.p,:]
+        if T!=Integer
+            LQ = lq(A)
+            @test LQ.L*LQ.Q ≈ A.data
+        end
         QR = qr(A)
         @test QR.Q*QR.R ≈ A.data
         if T<:Integer
@@ -147,7 +149,7 @@ end
 end
 
 @testset "eigen.jl" begin
-    for T in (Int32,Int64,Float32,Float64),n in [2,20,153,200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2,20,153,200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
         else
@@ -164,7 +166,7 @@ end
         valA = Eig.values
         Q2 = Eig.vectors
         valB,Q = eigen(B)
-        @test real(Q2*diagm(valA)*adjoint(Q2)) ≈ A.data
+        @test Q2*diagm(valA)*adjoint(Q2) ≈ A.data
         valA = imag(valA)
         valB = imag(valB)
         sort!(valA)
@@ -174,7 +176,9 @@ end
         @test Svd.U*Diagonal(Svd.S)*Svd.Vt ≈ A.data
         @test svdvals(A)≈svdvals(B)
     end
+
 end
+
 @testset "exp.jl" begin
 
     for T in (Int32,Int64,Float32,Float64), n in [2,20,153,200]
@@ -284,6 +288,7 @@ end
     # issue #49
     @test SLA.pfaffian(big.([0 14 7 -10 0 10 0 -11; -14 0 -10 7 13 -9 -12 -13; -7 10 0 -4 6 -17 -1 18; 10 -7 4 0 -2 -4 0 11; 0 -13 -6 2 0 -8 -18 17; -10 9 17 4 8 0 -8 12; 0 12 1 0 18 8 0 0; 11 13 -18 -11 -17 -12 0 0])) == -119000
 end
+
 
 
 #=
