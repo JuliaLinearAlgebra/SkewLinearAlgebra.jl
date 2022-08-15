@@ -102,7 +102,7 @@ end
         @test SLA.isskewhermitian(A.data) == false
         LU=lu(A)
         @test LU.L*LU.U≈A.data[LU.p,:]
-        if T!=Integer
+        if !(T<:Integer)
             LQ = lq(A)
             @test LQ.L*LQ.Q ≈ A.data
         end
