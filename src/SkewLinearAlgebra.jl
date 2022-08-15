@@ -11,18 +11,22 @@ export
     #Types
     SkewHermitian,
     SkewHermTridiagonal,
+    SkewCholesky,
     #functions
     isskewhermitian,
     skewhermitian,
     skewhermitian!,
     pfaffian,
-    pfaffian!
+    pfaffian!,
+    skewchol,
+    skewchol!
 
 include("skewhermitian.jl")
 include("tridiag.jl")
 include("hessenberg.jl")
 include("eigen.jl")
 include("exp.jl")
+include("cholesky.jl")
 include("pfaffian.jl")
 
 end
