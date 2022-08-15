@@ -142,8 +142,11 @@ function LA.dot(A::SkewHermitian, B::SkewHermitian)
         throw(DimensionMismatch("A has size $(size(A)) but B has size $(size(B))"))
     end
     dotprod = zero(dot(first(A), first(B)))
-    @inbounds for j = 1:n, i = 1:j-1
-        dotprod += 2 * real(dot(A.data[i, j], B.data[i, j]))
+    @inbounds for j = 1:n 
+        for i = 1:j-1
+            dotprod += 2 * dot(A.data[i, j], B.data[i, j])
+        end
+        dotprod += dot(A.data[j, j], B.data[j, j])
     end
     return dotprod
 end
@@ -212,9 +215,9 @@ end
 LA.kron(A::SkewHermitian,B::StridedMatrix) = kron(A.data,B)
 LA.kron(A::StridedMatrix,B::SkewHermitian) = kron(A,B.data)
 
-@views function LA.schur!(A::SkewHermitian)
+@views function LA.schur!(A::SkewHermitian{<:Real})
     F=eigen!(A)
     return Schur(typeof(F.vectors)(Diagonal(F.values)), F.vectors, F.values)
 
 end
-LA.schur(A::SkewHermitian)= LA.schur!(copy(A))
+LA.schur(A::SkewHermitian{<:Real})= LA.schur!(copyeigtype(A))
