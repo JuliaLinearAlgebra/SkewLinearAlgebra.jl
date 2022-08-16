@@ -9,7 +9,6 @@ struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:SkewHermTridiagonal{<:T},P<:Abs
         new{T,R,J,P}(Rm,Jm,Pv)
     end
 end
-#SkewCholesky(Rm::UpperTriangular{<:T},Jm::SkewHermTridiagonal{<:T},Pv::AbstractVector{<:Integer}) where {T<:Real} = SkewCholesky(Rm,Jm,Pv)
 
 function SkewCholesky(Rm::UpperTriangular{<:T},Pv::AbstractVector{<:Integer}) where {T<:Real}
     n=size(Rm,1)
@@ -32,19 +31,17 @@ function _skewchol!(A::SkewHermitian)
     tempM = similar(B,2,m-2)
     for j = 1:m÷2
         j2 = 2*j
-        
         M = findmax(B[j2-1:m,j2-1:m])
         ii = M[2][1] + j2 - 2
         jj = M[2][2] + j2 - 2
+
         if abs(B[ii,jj])<tol
             rank = j2-2
             return P, rank
         end
-        if jj == j2-1
-            kk = ii
-        else
-            kk = jj
-        end
+
+        kk= (jj == j2-1 ? ii : jj)
+
         if ii != j2-1
             P[ii],P[j2-1] = P[j2-1],P[ii]
             for t = 1:m 
@@ -81,9 +78,10 @@ function _skewchol!(A::SkewHermitian)
     return P,rank
 end
 copyeigtype(A::AbstractMatrix) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
+
 @views function skewchol!(A::SkewHermitian)
     P = _skewchol!(A)[1]
-    return SkewCholesky(UpperTriangular(A.data),P)
+    return SkewCholesky(UpperTriangular(A.data), P)
 end
 
 skewchol(A::SkewHermitian) = skewchol!(copyeigtype(A))

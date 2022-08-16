@@ -47,6 +47,7 @@ SkewHermTridiagonal(ev::AbstractVector{Complex{T}}, dvim::Nothing=nothing) where
 SkewHermTridiagonal(ev::AbstractVector{Complex{T}}, dvim::AbstractVector{T}) where T = SkewHermTridiagonal{Complex{T}, typeof(ev), typeof(dvim)}(ev, dvim)
 SkewHermTridiagonal{Complex{T}}(ev::AbstractVector, dvim::AbstractVector) where T =
     SkewHermTridiagonal(convert(AbstractVector{Complex{T}}, ev)::AbstractVector{Complex{T}}, convert(AbstractVector{T}, dvim)::AbstractVector{T})
+
 """
     SkewHermTridiagonal(A::AbstractMatrix)
 Construct a skewhermitian tridiagonal matrix from first subdiagonal
@@ -104,11 +105,11 @@ function Base.Matrix{T}(M::SkewHermTridiagonal) where T
     n == 0 && return Mf
     if M.dvim !== nothing
         @inbounds for i = 1:n-1
-            Mf[i,i]= M.dvim[i]*1im
+            Mf[i,i] = complex(0, M.dvim[i])
             Mf[i+1,i] = M.ev[i]
             Mf[i,i+1] = -M.ev[i]'
         end
-        Mf[n,n]=M.dvim[n]*1im
+        Mf[n,n] = complex(0, M.dvim[n])
     else
         @inbounds for i = 1:n-1
             Mf[i+1,i] = M.ev[i]
@@ -127,7 +128,7 @@ function Base.size(A::SkewHermTridiagonal, d::Integer)
     if d < 1
         throw(ArgumentError("dimension must be ≥ 1, got $d"))
     elseif d<=2
-        return length(A.ev)+1
+        return length(A.ev) + 1
     else
         return 1
     end
@@ -183,13 +184,13 @@ function Base.:+(A::SkewHermTridiagonal, B::SkewHermTridiagonal)
 end
 function Base.:-(A::SkewHermTridiagonal, B::SkewHermTridiagonal) 
     if A.dvim !== nothing && B.dvim !== nothing
-        return SkewHermTridiagonal(A.ev-B.ev,A.dvim-B.dvim)
+        return SkewHermTridiagonal(A.ev - B.ev, A.dvim - B.dvim)
     elseif A.dvim === nothing && B.dvim !== nothing
-        return SkewHermTridiagonal(A.ev-B.ev,-B.dvim)
+        return SkewHermTridiagonal(A.ev - B.ev, -B.dvim)
     elseif B.dvim === nothing && A.dvim !== nothing
-        return SkewHermTridiagonal(A.ev-B.ev,A.dvim)
+        return SkewHermTridiagonal(A.ev - B.ev,A.dvim)
     else
-        return SkewHermTridiagonal(A.ev-B.ev)
+        return SkewHermTridiagonal(A.ev - B.ev)
     end
 end
 function Base.:-(A::SkewHermTridiagonal) 
@@ -202,59 +203,59 @@ end
 
 function Base.:*(A::SkewHermTridiagonal, B::T) where {T<:Real} 
     if A.dvim !== nothing 
-        return SkewHermTridiagonal(A.ev*B,A.dvim*B)
+        return SkewHermTridiagonal(A.ev * B, A.dvim * B)
     else
-        return SkewHermTridiagonal(A.ev*B)
+        return SkewHermTridiagonal(A.ev * B)
     end
 end
 function Base.:*(B::T,A::SkewHermTridiagonal) where {T<:Real} 
     if A.dvim !== nothing 
-        return SkewHermTridiagonal(B*A.ev,B*A.dvim)
+        return SkewHermTridiagonal(B * A.ev, B * A.dvim)
     else
-        return SkewHermTridiagonal(B*A.ev)
+        return SkewHermTridiagonal(B * A.ev)
     end
 end
 function Base.:*(A::SkewHermTridiagonal, B::T) where {T<:Complex}
     if A.dvim !== nothing 
-        return LA.Tridiagonal(A.ev*B,A.dvim*B,-A.ev*B)
+        return LA.Tridiagonal(A.ev * B, A.dvim * B, -A.ev * B)
     else
-        return LA.Tridiagonal(A.ev*B,zeros(eltype(A.ev)),-A.ev*B)
+        return LA.Tridiagonal(A.ev * B, zeros(eltype(A.ev)), -A.ev * B)
     end
 end
 function Base.:*(B::T,A::SkewHermTridiagonal) where {T<:Complex}
     if A.dvim !== nothing 
-        return LA.Tridiagonal(B*A.ev,B*A.dvim,-B*A.ev)
+        return LA.Tridiagonal(B * A.ev,B * A.dvim,-B * A.ev)
     else
-        return LA.Tridiagonal(B*A.ev,zeros(eltype(A.ev)),-B*A.ev)
+        return LA.Tridiagonal(B * A.ev, zeros(eltype(A.ev)), -B * A.ev)
     end
 end
 
 function Base.:/(A::SkewHermTridiagonal, B::T) where {T<:Real} 
     if A.dvim !== nothing 
-        return SkewHermTridiagonal(A.ev/B,A.dvim/B)
+        return SkewHermTridiagonal(A.ev / B, A.dvim / B)
     else
-        return SkewHermTridiagonal(A.ev/B)
+        return SkewHermTridiagonal(A.ev / B)
     end
 end
 function Base.:/(A::SkewHermTridiagonal, B::T) where {T<:Complex}
     if A.dvim !== nothing 
-        return LA.Tridiagonal(A.ev/B,A.dvim/B,-A.ev/B)
+        return LA.Tridiagonal(A.ev / B, A.dvim / B, -A.ev / B)
     else
-        return LA.Tridiagonal(A.ev/B,zeros(eltype(A.ev)),-A.ev/B)
+        return LA.Tridiagonal(A.ev / B, zeros(eltype(A.ev)), -A.ev / B)
     end
 end
 function Base.:\(B::T,A::SkewHermTridiagonal) where {T<:Real} 
     if A.dvim !== nothing 
-        return SkewHermTridiagonal(B\A.ev,B \A.dvim)
+        return SkewHermTridiagonal(B \ A.ev, B \ A.dvim)
     else
-        return SkewHermTridiagonal(B\A.ev)
+        return SkewHermTridiagonal(B \ A.ev)
     end
 end
 function Base.:\(B::T,A::SkewHermTridiagonal) where {T<:Complex}
     if A.dvim !== nothing 
-        return LA.Tridiagonal(B\A.ev,B\A.dvim,-B\A.ev)
+        return LA.Tridiagonal(B \ A.ev, B \ A.dvim, -B \ A.ev)
     else
-        return LA.Tridiagonal(B\A.ev,zeros(eltype(A.ev)),-B\A.ev)
+        return LA.Tridiagonal(B \ A.ev, zeros(eltype(A.ev)), -B \ A.ev)
     end
 end
 
@@ -293,9 +294,9 @@ end
                 for i = 1:m - 1
                     x₋, x₀, x₊ = x₀, x₊, B[i + 1, j]
                     β₋, β₀ = β₀, β[i]
-                    LA._modify!(_add, β₋*x₋ -adjoint(β₀)*x₊, C, (i, j))
+                    LA._modify!(_add, β₋*x₋ -adjoint(β₀) * x₊, C, (i, j))
                 end
-                LA._modify!(_add, β[m-1]*x₀ , C, (m, j))
+                LA._modify!(_add, β[m-1] * x₀ , C, (m, j))
             end
         end
     else

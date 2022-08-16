@@ -24,6 +24,7 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 end
 
 @testset "SkewLinearAlgebra.jl" begin
+    
     for T in (Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2,20,153,200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
@@ -34,13 +35,28 @@ end
         @test SLA.isskewhermitian(A.data)
         B = 2*Matrix(A)
         @test SLA.isskewhermitian(B)
-
+        s=rand(T)
+        @test SLA.skewhermitian(s)==imag(s)
+        @test parent(A) == A.data
+        @test similar(A)== SLA.SkewHermitian(zeros(T,n,n))
+        @test similar(A,ComplexF64) == SLA.SkewHermitian(zeros(ComplexF64,n,n))
         @test A == copy(A)::SLA.SkewHermitian
+        dest=copy(4*A)
+        copyto!(dest,A)
+        @test dest ==A
+        dest=copy(4*A)
+        copyto!(dest,A.data)
+        @test dest == A
         @test size(A) == size(A.data)
         @test size(A,1) == size(A.data,1)
         @test size(A,2) == size(A.data,2)
         @test Matrix(A) == A.data
         @test tr(A) == tr(A.data)
+
+        @test tril(A)==tril(A.data)
+        @test tril(A,1)==tril(A.data,1)
+        @test triu(A)==triu(A.data)
+        @test triu(A,1)==triu(A.data,1)
         @test (-A).data ==-(A.data)
         A2 = A.data*A.data
         @test A*A == A2 ≈ Hermitian(A2)
@@ -71,7 +87,6 @@ end
         setindex!(A,3,n,n-1)
         @test getindex(A,n,n-1) ==3
         @test getindex(A,n-1,n) ==-3
-        @test parent(A) == A.data
       
         x = rand(T,n)
         y = zeros(T,n)
@@ -137,15 +152,20 @@ end
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
     """
-    A=zeros(T,4,4)
-    A[2:4,1]=ones(T,3)
-    A[1,2:4]=-ones(T,3)
-    A=SLA.SkewHermitian(A)
-    B=Matrix(A)
-    HA=hessenberg(A)
-    HB=hessenberg(B)
-    @test Matrix(HA.H)≈Matrix(HB.H)
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64)
+        A=zeros(T,4,4)
+        A[2:4,1]=ones(T,3)
+        A[1,2:4]=-ones(T,3)
+        A=SLA.SkewHermitian(A)
+        B=Matrix(A)
+        HA=hessenberg(A)
+        HB=hessenberg(B)
+        @test Matrix(HA.H)≈Matrix(HB.H)
+    end
     """
+    
+    
+    
 end
 
 @testset "eigen.jl" begin
@@ -181,7 +201,7 @@ end
 
 @testset "exp.jl" begin
 
-    for T in (Int32,Int64,Float32,Float64), n in [2,20,153,200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2,20,153,200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
         else
@@ -189,12 +209,12 @@ end
         end
         B=Matrix(A)
         @test exp(B) ≈ exp(A)
-        @test cis(A) ≈ exp(Hermitian(A.data*1im))
-        @test cos(B) ≈ cos(A)
-        @test sin(B) ≈ sin(A)
+        @test  Matrix(cis(A)) ≈ exp(Hermitian(A.data*1im))
+        @test cos(B) ≈ Matrix(cos(A))
+        @test sin(B) ≈  Matrix(sin(A))
         #@test tan(B)≈tan(A)
-        @test sinh(B) ≈ sinh(A)
-        @test cosh(B) ≈ cosh(A)
+        @test sinh(B) ≈  Matrix(sinh(A))
+        @test cosh(B) ≈  Matrix(cosh(A))
         #@test tanh(B) ≈ tanh(A)
     end
 end
@@ -302,14 +322,10 @@ using BenchmarkTools
 n=1000
 A = SLA.skewhermitian(randn(n,n)+1im*randn(n,n))
 B = Hermitian(A.data*1im)
-
 C=Matrix(A)
 #@btime hessenberg(B)
 @btime hessenberg(A)
 #@btime hessenberg(C)
 a=1
-
 =#
-
-
 
