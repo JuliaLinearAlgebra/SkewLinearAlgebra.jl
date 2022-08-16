@@ -178,7 +178,7 @@ julia> eigvals(A,1:3)
 ```
  ## SVD
 
- A specialized SVD using the eigenvalue decomposition is implemented for `SkewSymmetric` type.
+ A specialized SVD using the eigenvalue decomposition is implemented for `SkewHermitian` type.
  These functions can be called using the `LinearAlgebra` syntax.
 
 ```jl
