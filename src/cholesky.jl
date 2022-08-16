@@ -40,7 +40,7 @@ function _skewchol!(A::SkewHermitian)
             return P, rank
         end
 
-        kk= (jj > j2-1 ? ii : jj)
+        kk= (jj == j2-1 ? ii : jj)
 
         if ii != j2-1
             P[ii],P[j2-1] = P[j2-1],P[ii]

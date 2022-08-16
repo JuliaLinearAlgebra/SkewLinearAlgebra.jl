@@ -26,26 +26,36 @@ using VectorizationBase, LinearAlgebra, Static
       Nr = N ÷ $CU
       @assert Nr * $CU == N# "TODO: handle remainders!!!"
       r = 0
+      @show Nr
       for ro = 1:Nr
         # down rows
         # initialize accumulators
         Base.Cartesian.@nexprs $RUI u -> v_u = VectorizationBase.vzero($W, $T)
         Base.Cartesian.@nexprs $CUI u -> s_u = VectorizationBase.vzero($W, $T)
         c = 0
-        for co = 1:ro
+
+        
+
+        for co = 1:Nr
           # across columns
+          @show co
           Base.Cartesian.@nexprs $RUI ri -> begin
             rowind_ri = MM($W, r + (ri-1)*$W)
             sx_ri = VectorizationBase.vload(px, (rowind_ri,))
+            @show rowind_ri
           end
+
           Base.Cartesian.@nexprs $CUI ci -> begin
             colind = c+ci-1
             cx_ci = VectorizationBase.vbroadcast($W, VectorizationBase.vload(px, (colind,)))
             Base.Cartesian.@nexprs $RUI ri -> begin
               # rowind = MM($W, r + (ri-1)*$W)
-              m = colind < rowind_ri
+              m = colind < rowind_ri #(ro == co ? colind < rowind_ri : 0 < rowind_ri)
               vL = vload(pA, (rowind_ri, colind), m)
-              # @show  (rowind_ri, colind) vL
+              #@show  (rowind_ri, colind) vL
+              @show s_ci
+              @show sx_ri
+              @show vL
               v_ri = VectorizationBase.vfmadd(vL, cx_ci, v_ri)
               s_ci = VectorizationBase.vfnmadd(vL, sx_ri, s_ci)
             end
@@ -60,10 +70,13 @@ using VectorizationBase, LinearAlgebra, Static
         Base.Cartesian.@nexprs $RUI ri -> begin
           vus = VectorizationBase.VecUnroll( Base.Cartesian.@ntuple $WI u -> s_{u+(ri-1)*$WI})
           svreduced = VectorizationBase.reduce_to_onevec(+, VectorizationBase.transpose_vecunroll(vus))
-          # @show v_ri vus
+          @show v_ri vus
           v_to_store = @fastmath v_ri + svreduced
+          @show v_to_store
           VectorizationBase.vstore!(py, v_to_store, (MM($W, r + (ri-1)*$W),))
+          @show y
         end
+      
         r += $CUI
       end
       # #TODO: remainder
@@ -73,14 +86,15 @@ using VectorizationBase, LinearAlgebra, Static
   end
 end
 
-# N = 64;
-# x = rand(N);
-# A = rand(N,N); A .-= A';
-# y = similar(x);
+N = 16;
+x = rand(N);
+A = rand(N,N); A .-= A';
+display(A)
+y = similar(x);
 
-# yref = A*x
+yref = A*x
 
-# skewsymmetricmv!(y, A, x)
+skewsymmetricmv!(y, A, x)
 
 
 
