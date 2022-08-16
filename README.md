@@ -276,7 +276,7 @@ julia> R.Pv
  1
  4
  
- julia> transpose(R.Rm)*Matrix(R.Jm)*R.Rm≈A[R.Pv,R.Pv]
+ julia> transpose(R.Rm)*R.Jm*R.Rm≈A[R.Pv,R.Pv]
 true
 ```
 
