@@ -251,5 +251,32 @@ Every real skew-symmetric matrix $A$ can be factorized as $A=P^TR^TJRP$ where $P
 The function `skewchol`implements this factorization and returns a `SkewCholesky` structure composed of the matrices `Rm` and `Jm` of type `UpperTriangular` and `SkewHermTridiagonal` respectively. The permutation matrix $P$ is encoded as a permutation vector `Pv`.
 
 
+```jl
+julia> R=skewchol(A)
+SkewCholesky{Float64, LinearAlgebra.UpperTriangular{var"#s6", S} where {var"#s6"<:Float64, S<:AbstractMatrix{var"#s6"}}, SkewHermTridiagonal{var"#s3", V, Vim} where {var"#s3"<:Float64, V<:AbstractVector{var"#s3"}, Vim<:Union{Nothing, AbstractVector{var"#s6"} where var"#s6"<:Real}}, AbstractVector{var"#s2"} where var"#s2"<:Integer}([2.8284271247461903 0.0 0.7071067811865475 -1.0606601717798212; 0.0 2.8284271247461903 2.474873734152916 0.35355339059327373; 0.0 0.0 1.0606601717798216 0.0; 0.0 0.0 0.0 1.0606601717798216], [0.0 1.0 0.0 0.0; -1.0 0.0 -0.0 0.0; 0.0 0.0 0.0 1.0; 0.0 0.0 -1.0 0.0], [3, 2, 1, 4])
 
+julia> R.Rm
+4×4 LinearAlgebra.UpperTriangular{Float64, Matrix{Float64}}:
+ 2.82843  0.0      0.707107  -1.06066
+  ⋅       2.82843  2.47487    0.353553
+  ⋅        ⋅       1.06066    0.0
+  ⋅        ⋅        ⋅         1.06066
+
+julia> R.Jm
+4×4 SkewHermTridiagonal{Float64, Vector{Float64}, Nothing}:
+  0.0  1.0   0.0  0.0
+ -1.0  0.0  -0.0  0.0
+  0.0  0.0   0.0  1.0
+  0.0  0.0  -1.0  0.0
+
+julia> R.Pv
+4-element Vector{Int64}:
+ 3
+ 2
+ 1
+ 4
+ 
+ julia> transpose(R.Rm)*Matrix(R.Jm)*R.Rm≈A[R.Pv,R.Pv]
+true
+```
 
