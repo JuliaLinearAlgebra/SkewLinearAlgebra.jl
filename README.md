@@ -2,8 +2,8 @@
 
 WARNING: Package still in development!
 
-This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$.
-It provides the matrix type `SkewHermitian` and implements the usual linear operations on such
+This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$ and skew-hermitian matrices i.e $A=-A^*$.
+It provides the matrix types `SkewHermitian` and `SkewHermTridiagonal`and implements the usual linear operations on such
 matrices by extending functions from Julia's `LinearAlgebra` standard library, including optimized
 algorithms that exploit this special matrix structure.
 
@@ -13,13 +13,13 @@ In particular, the package provides the following optimized functions for `SkewH
 - Eigensolvers: `eigen`, `eigvals`
 - SVD: `svd`, `svdvals`
 - Trigonometric functions:`exp`, `cis`,`cos`,`sin`,`tan`,`sinh`,`cosh`,`tanh`
+- Cholesky-like factorization: `skewchol`
 
-(Currently, we only provide specialized algorithms for real skew-Hermitian/skew-symmetric matrices,
-but methods for complex skew-Hermitian matrices may be added in the future.  Note, however, that
-a complex skew-Hermitian matrix can be converted into an ordinary Hermitian matrix at negligible
-cost simply by multipling it by $i$, whereas for real skew-Hermitian matrices this would force
-you to use complex arithmetic.  Hence, the benefits of specialized algorithms are greatest for
-real skew-Hermitian matrices.)
+(Currently, we only provide specialized algorithms for real skew-Hermitian/skew-symmetric matrices.
+Methods for complex skew-Hermitian matrices transform these at negligible cost in complex `Hermitian` 
+matrices by multiplying by $i$. This allows to use efficient LAPACK algorithms for hermitian matrices.
+Note, however that for real skew-Hermitian matrices this would force you to use complex arithmetic.  
+Hence, the benefits of specialized algorithms are greatest for real skew-Hermitian matrices.)
 
 The `SkewHermitian(A)` wraps an existing matrix `A`, which *must* already be skew-Hermitian,
 in the `SkewHermitian` type, which supports fast specialized operations noted above.  You
@@ -79,7 +79,7 @@ julia> A\x
   The functions from the LinearAlgebra package can be used in the same fashion:
 ```jl
 julia> hessenberg(A)
-Hessenberg{Float64, Tridiagonal{Float64, Vector{Float64}}, Matrix{Float64}, Vector{Float64}, Bool}
+Hessenberg{Float64, SkewHermTridiagonal{Float64, Vector{Float64}, Nothing}, Matrix{Float64}, Vector{Float64}, Bool}
 Q factor:
 4×4 LinearAlgebra.HessenbergQ{Float64, Matrix{Float64}, Vector{Float64}, true}:
  1.0   0.0        0.0         0.0
@@ -87,11 +87,11 @@ Q factor:
  0.0   0.842701  -0.282138    0.458534
  0.0  -0.481543  -0.0141069   0.876309
 H factor:
-4×4 Tridiagonal{Float64, Vector{Float64}}:
- 0.0      -8.30662    ⋅        ⋅ 
- 8.30662   0.0      -8.53382   ⋅ 
-  ⋅        8.53382   0.0      1.08347
-  ⋅         ⋅       -1.08347  0.0
+4×4 SkewHermTridiagonal{Float64, Vector{Float64}, Nothing}:
+ 0.0      -8.30662   0.0       0.0 
+ 8.30662   0.0      -8.53382   0.0 
+ 0.0       8.53382   0.0       1.08347
+ 0.0       0.0      -1.08347   0.0
 
  julia> eigvals(A)
 4-element Vector{ComplexF64}:
@@ -102,11 +102,11 @@ H factor:
 
 ```
 
- ## Hessenberg/tridiagonal reduction
+ ## Hessenberg/Tridiagonal reduction
 The Hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$ is an orthonormal matrix.
 The `hessenberg` function computes the Hessenberg decomposition of `A` and return a `Hessenberg` object. If `F` is the
 factorization object, the unitary matrix can be accessed with `F.Q` (of type `LinearAlgebra.HessenbergQ`)
-and the Hessenberg matrix with `F.H` (of type `Tridiagonal`), either of
+and the Hessenberg matrix with `F.H` (of type `SkewHermTridiagonal`), either of
 which may be converted to a regular matrix with `Matrix(F.H)` or `Matrix(F.Q)`.
 
 ```jl
@@ -119,11 +119,11 @@ Q factor:
  0.0   0.842701  -0.282138    0.458534
  0.0  -0.481543  -0.0141069   0.876309
 H factor:
-4×4 Tridiagonal{Float64, Vector{Float64}}:
- 0.0      -8.30662    ⋅        ⋅ 
- 8.30662   0.0      -8.53382   ⋅ 
-  ⋅        8.53382   0.0      1.08347
-  ⋅         ⋅       -1.08347  0.0
+4×4 SkewHermTridiagonal{Float64, Vector{Float64}, Nothing}:
+ 0.0      -8.30662   0.0       0.0 
+ 8.30662   0.0      -8.53382   0.0 
+ 0.0       8.53382   0.0       1.08347
+ 0.0       0.0      -1.08347   0.0
 ```
 
  ## Eigenvalues and eigenvectors
