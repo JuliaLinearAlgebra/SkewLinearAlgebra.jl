@@ -244,7 +244,7 @@ julia> cosh(A)
   0.340045  -0.186256  0.633165  -0.547275
 ```
 
-##Cholesky-like factorization
+## Cholesky-like factorization
 
 The package provides a Cholesky-like factorization for real skew-symmetric matrices as presented in P. Benner et al, "[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000). 
 Every real skew-symmetric matrix $A$ can be factorized as $A=P^TR^TJRP$ where $P$ is a permutation matrix, $R$ is an `UpperTriangular` matrix and J is is tridiagonal skew-symmetric matrix composed of diagonal blocks of the form $B=[0, 1; -1, 0]$.
