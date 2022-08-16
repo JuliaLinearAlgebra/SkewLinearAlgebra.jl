@@ -220,7 +220,6 @@ end
 end
 
 
-
 @testset "tridiag.jl" begin 
     for T in (Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2,20,99]
         if T<:Integer
@@ -229,6 +228,7 @@ end
             C = SLA.skewhermitian(randn(T,n,n))
         end
         A=SLA.SkewHermTridiagonal(C)
+        @test SLA.isskewhermitian(A)==true
         @test Tridiagonal(Matrix(A))≈Tridiagonal(Matrix(C))
         
         
@@ -246,16 +246,34 @@ end
             y=randn(T,n) 
         end
         D2=copy(D1)
-        
+        B=Matrix(A)
         mul!(D1,A,C,2,1)
         @test D1≈D2+2*Matrix(A)*C
         mul!(D1,A,C,2,0)
+        @test size(A)==(n,n)
+        @test size(A,1)==n
+        if A.dvim !== nothing 
+            @test conj(A)==SLA.SkewHermTridiagonal(conj.(A.ev),conj.(A.dvim))
+            @test copy(A)==SLA.SkewHermTridiagonal(copy(A.ev),copy(A.dvim))
+            @test imag(A)==SLA.SymTridiagonal(imag.(A.dvim),imag.(A.ev))
+        else
+            @test conj(A)==SLA.SkewHermTridiagonal(conj.(A.ev))
+            @test copy(A)==SLA.SkewHermTridiagonal(copy(A.ev))
+            @test imag(A)==SLA.SymTridiagonal(zeros(eltype(imag(A.ev[1])),n),imag.(A.ev))
+        end
+        @test real(A)==SLA.SkewHermTridiagonal(real.(A.ev))
+        @test transpose(A) == -A
+        @test Matrix(adjoint(A)) == adjoint(Matrix(A))
+        @test Array(A)==Matrix(A)
         @test D1≈2*Matrix(A)*C
         @test Matrix(A+A)==Matrix(2*A)
+        @test Matrix(A)/2==Matrix(A/2)
+        @test Matrix(A+A)==Matrix(A*2)
         @test Matrix(A-2*A)==Matrix(-A)
         
         @test dot(x,A,y)≈dot(x,Matrix(A),y)
         B=Matrix(A)
+        @test A[1,2] == B[1,2]
         
         @test size(A,1)==n
         if T<:Real
@@ -272,7 +290,8 @@ end
             @test real(Svd.U*Diagonal(Svd.S)*Svd.Vt) ≈ B
             @test svdvals(A)≈svdvals(B)
         end
-        
+        setindex!(A,2,2,1)
+        @test A[2,1] == 2
 
 
         B = SLA.SkewHermTridiagonal([3,4,5])
@@ -327,5 +346,18 @@ C=Matrix(A)
 @btime hessenberg(A)
 #@btime hessenberg(C)
 a=1
+T=ComplexF64
+n=8
+vec=randn(T,n-1)
+A=Tridiagonal(vec,complex.(0,randn(Float64,n)),-vec)
+
+Di=zeros(T,n)
+for i=1:4:n
+    Di[i]=1
+    Di[i+1]=1im
+    Di[i+2]=-1
+    Di[i+3]=-1im
+end
+D=Diagonal(Di)
 =#
 
