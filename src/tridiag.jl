@@ -147,11 +147,11 @@ function Base.copyto!(dest::SkewHermTridiagonal, src::SkewHermTridiagonal)
 end
 
 #Elementary operations
+Base.conj(M::SkewHermTridiagonal{<:Real}) = SkewHermTridiagonal(conj.(M.ev))
+Base.conj(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(conj.(M.ev),(M.dvim !==nothing ? -M.dvim : nothing))
+Base.copy(M::SkewHermTridiagonal{<:Real}) = SkewHermTridiagonal(copy(M.ev))
+Base.copy(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(copy(M.ev), (M.dvim !==nothing ? copy(M.dvim) : nothing))
 
-for func in (:conj, :copy)
-    @eval Base.$func(M::SkewHermTridiagonal{<:Real}) = SkewHermTridiagonal(($func)(M.ev))
-    @eval Base.$func(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(($func)(M.ev), ($func)(M.dvim))
-end
 function Base.imag(M::SkewHermTridiagonal) 
     if M.dvim !== nothing
         LA.SymTridiagonal(imag.(M.dvim),imag.(M.ev))
@@ -164,7 +164,7 @@ Base.real(M::SkewHermTridiagonal) = SkewHermTridiagonal(real.(M.ev))
 
 Base.transpose(S::SkewHermTridiagonal) = -S
 Base.adjoint(S::SkewHermTridiagonal{<:Real}) = -S
-Base.adjoint(S::SkewHermTridiagonal) = -conj.(S)
+Base.adjoint(S::SkewHermTridiagonal) = -S
 
 Base.copy(S::LA.Adjoint{<:Any,<:SkewHermTridiagonal}) = SkewHermTridiagonal(map(x -> copy.(adjoint.(x)), (S.parent.ev,S.parent.dvim))...)
 
@@ -259,8 +259,15 @@ function Base.:\(B::T,A::SkewHermTridiagonal) where {T<:Complex}
     end
 end
 
-
-# ==(A::SkewHermTridiagonal, B::SkewHermTridiagonal) = (A.ev==B.ev)
+function Base. ==(A::SkewHermTridiagonal, B::SkewHermTridiagonal) 
+    if A.dvim !== nothing && B.dvim!== nothing
+        return (A.ev==B.ev) &&(A.dvim==B.dvim)
+    elseif A.dvim === nothing && B.dvim === nothing
+        return (A.ev==B.ev)
+    else
+        return false
+    end
+end
 
 @inline LA.mul!(A::StridedVecOrMat, B::SkewHermTridiagonal, C::StridedVecOrMat,
              alpha::Number, beta::Number) =
@@ -495,7 +502,7 @@ Base.@propagate_inbounds function Base.getindex(A::SkewHermTridiagonal{T}, i::In
         return @inbounds A.ev[j]
     elseif i + 1 == j
         return @inbounds -A.ev[i]'
-    elseif T <: Complex && i == j
+    elseif T <: Complex && i == j && A.dvim!==nothing
         return complex(zero(real(T)), A.dvim[i])
     else
         return zero(T)
