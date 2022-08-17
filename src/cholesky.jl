@@ -1,5 +1,5 @@
 
-struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:SkewHermTridiagonal{<:T},P<:AbstractVector{<:Integer}} 
+struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:SkewHermTridiagonal{<:T},P<:AbstractVector{<:Integer}}
     Rm::R #Uppertriangular matrix
     Jm::J # Block diagonal skew-symmetric matrix
     Pv::P #Permutation vector

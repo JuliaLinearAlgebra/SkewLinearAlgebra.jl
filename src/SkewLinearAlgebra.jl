@@ -16,6 +16,7 @@ export
     isskewhermitian,
     skewhermitian,
     skewhermitian!,
+    SkewHermTridiagonaltoSymTridiagonal,
     pfaffian,
     pfaffian!,
     skewchol,

@@ -135,7 +135,14 @@ function Base.size(A::SkewHermTridiagonal, d::Integer)
 end
 
 
-Base.similar(S::SkewHermTridiagonal{<:Complex}, ::Type{T}) where {T<:Complex} = SkewHermTridiagonal(similar(S.ev, T), similar(S.dvim,T))
+function Base.similar(S::SkewHermTridiagonal{<:Complex{T}}, ::Type{Complex{T}}) where {T} 
+    if S.dvim !== nothing
+        return SkewHermTridiagonal(similar(S.ev, Complex{T}), similar(S.dvim,T))
+    else
+        return SkewHermTridiagonal(similar(S.ev, Complex{T}))
+    end
+end
+
 Base.similar(S::SkewHermTridiagonal{<:Real}, ::Type{T}) where {T<:Real} = SkewHermTridiagonal(similar(S.ev, T))
 
 Base.similar(S::SkewHermTridiagonal, ::Type{T}, dims::Union{Dims{1},Dims{2}}) where {T} = zeros(T, dims...)
@@ -366,7 +373,7 @@ end
 #Base.:\(T::SkewHermTridiagonal, B::StridedVecOrMat) = Base.ldlt(T)\B
 
 @views function LA.eigvals!(A::SkewHermTridiagonal{T,V,Vim}, sortby::Union{Function,Nothing}=nothing) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
-    vals = skeweigvals!(A)
+    vals = skewtrieigvals!(A)
     !isnothing(sortby) && sort!(vals, by=sortby)
     return complex.(0, vals)
 end
@@ -381,9 +388,35 @@ end
     return complex.(0, vals)
 end
 
-LA.eigvals(A::SkewHermTridiagonal{T,V,Vim}, irange::UnitRange) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing} =
+@views function LA.eigvals!(A::SkewHermTridiagonal{T,V,Vim}, sortby::Union{Function,Nothing}=nothing) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
+    n=size(A,1)
+    S, Q = SkewHermTridiagonaltoSymTridiagonal(A)
+    vals = eigvals!(S)
+    !isnothing(sortby) && sort!(vals, by=sortby)
+    reverse!(vals)
+    return complex.(0, -vals)
+end
+
+@views function LA.eigvals!(A::SkewHermTridiagonal{T,V,Vim}, irange::UnitRange) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
+    n=size(A,1)
+    S, Q = SkewHermTridiagonaltoSymTridiagonal(A)
+    irange2 = .-(irange.- n)
+    vals = eigvals!(S, irange2)
+    return complex.(0, -vals)
+end
+
+@views function LA.eigvals!(A::SkewHermTridiagonal{T,V,Vim}, vl::Real,vh::Real) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
+    n=size(A,1)
+    S, Q = SkewHermTridiagonaltoSymTridiagonal(A)
+    vals = eigvals!(S,-vh , -vl)
+    return complex.(0, vals)
+end
+
+LA.eigvals(A::SkewHermTridiagonal{T,V,Vim}, sortby::Union{Function,Nothing}=nothing) where {T,V,Vim} =
+    LA.eigvals!(copyeigtype(A),sortby)
+LA.eigvals(A::SkewHermTridiagonal{T,V,Vim}, irange::UnitRange) where {T,V,Vim} =
     LA.eigvals!(copyeigtype(A), irange)
-LA.eigvals(A::SkewHermTridiagonal{T,V,Vim}, vl::Real,vh::Real)  where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}=
+LA.eigvals(A::SkewHermTridiagonal{T,V,Vim}, vl::Real,vh::Real)  where {T,V,Vim}=
     LA.eigvals!(copyeigtype(A), vl,vh)
 
 
@@ -442,6 +475,14 @@ end
 @views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
      return skewtrieigen!(A)
 end
+@views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
+    n=size(A,1)
+    S, Q = SkewHermTridiagonaltoSymTridiagonal(A)
+    Eig=eigen!(S)
+    Vec = similar(A.ev,n,n)
+    mul!(Vec,Q,Eig.vectors)
+    return Eigen(Eig.values.*(-1im),Vec)
+end
 
 function copyeigtype(A::SkewHermTridiagonal) 
     B=similar(A , LA.eigtype( eltype(A.ev) ))
@@ -449,20 +490,19 @@ function copyeigtype(A::SkewHermTridiagonal)
     return B
 end
 
-LA.eigen(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}=LA.eigen!(copyeigtype(A))
+LA.eigen(A::SkewHermTridiagonal{T,V,Vim}) where {T,V<:AbstractVector{T},Vim}=LA.eigen!(copyeigtype(A))
+LA.eigvecs(A::SkewHermTridiagonal{T,V,Vim})  where {T,V<:AbstractVector{T},Vim}= eigen(A).vectors
 
-LA.eigvecs(A::SkewHermTridiagonal{T,V,Vim})  where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}= eigen(A).vectors
-
-
-@views function LA.svdvals!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
+@views function LA.svdvals!(A::SkewHermTridiagonal)
     n=size(A,1)
-    vals = skewtrieigvals!(A)
+    vals = eigvals!(A)
     vals .= abs.(vals)
-    return sort!(vals; rev=true)
+    return sort!(real(vals); rev=true)
 end
+
 LA.svdvals(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}=svdvals!(copyeigtype(A))
 
-@views function LA.svd!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
+@views function LA.svd!(A::SkewHermTridiagonal) 
     n=size(A,1)
     E=eigen!(A)
     U=E.vectors
@@ -483,8 +523,32 @@ LA.svdvals(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},
 end
 
 
-LA.svd(A::SkewHermTridiagonal{T,V,Vim})  where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}= svd!(copyeigtype(A))
+LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
 
+@views function SkewHermTridiagonaltoSymTridiagonal(A::SkewHermTridiagonal{T}) where {T<:Complex}
+    n=size(A,1)
+    V = similar(A.ev,n-1)
+    Q = similar(A.ev,n)
+    Q[1] = 1
+    V .= A.ev
+    V.*= 1im
+    
+    for i=1:n-2
+        nm = abs(V[i])
+        Q[i+1] = V[i]/nm
+        V[i] = nm 
+        V[i+1] *= Q[i+1]
+    end
+    nm = abs(V[n-1])
+    Q[n] = V[n-1]/nm
+    V[n-1] = nm 
+    if A.dvim !== nothing 
+        SymTri = SymTridiagonal(-A.dvim,real(V))
+    else
+        SymTri = SymTridiagonal(zeros(real(T),n),real(V))
+    end
+    return SymTri,Diagonal(Q)
+end
 
 ###################
 # Generic methods #

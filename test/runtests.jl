@@ -21,19 +21,21 @@ Random.seed!(314159) # use same pseudorandom stream for every test
     @test eigvals(A, 0,15) ≈ [iλ₁,iλ₂]*im
     @test eigvals(A, 1:3) ≈ [iλ₁,iλ₂,-iλ₂]*im
     @test svdvals(A) ≈ [iλ₁,iλ₁,iλ₂,iλ₂]
+    C=SLA.skewchol(A)
+    @test transpose(C.Rm)*C.Jm*C.Rm≈A[C.Pv,C.Pv]
 end
 
 @testset "SkewLinearAlgebra.jl" begin
     
-    for T in (Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2,20,153,200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2,20,99]
         if T<:Integer
-            A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
+            A = SLA.skewhermitian(rand(T,n,n)*T(2))
         else
             A = SLA.skewhermitian(randn(T,n,n))
         end
         @test SLA.isskewhermitian(A)
         @test SLA.isskewhermitian(A.data)
-        B = 2*Matrix(A)
+        B = T(2)*Matrix(A)
         @test SLA.isskewhermitian(B)
         s=rand(T)
         @test SLA.skewhermitian(s)==imag(s)
@@ -65,9 +67,9 @@ end
         if iseven(n) # for odd n, a skew-Hermitian matrix is singular
             @test inv(A)::SLA.SkewHermitian ≈ inv(A.data)
         end
-        @test (A*2).data ==A.data*2
-        @test (2*A).data ==2*A.data
-        @test (A/2).data == A.data/2
+        @test (A*2).data ==A.data*T(2)
+        @test (2*A).data ==T(2)*A.data
+        @test (A/2).data == A.data/T(2)
         C = A + A
         @test C.data==A.data+A.data
         B = SLA.SkewHermitian(B)
@@ -85,35 +87,36 @@ end
         end
 
         setindex!(A,3,n,n-1)
-        @test getindex(A,n,n-1) ==3
-        @test getindex(A,n-1,n) ==-3
+        @test getindex(A,n,n-1) == T(3)
+        @test getindex(A,n-1,n) == T(-3)
       
         x = rand(T,n)
         y = zeros(T,n)
-        mul!(y,A,x,2,0) 
-        @test y == 2*A.data*x
+        #needed to have Int32 matrix
+        mul!(y,A,x,T(2),T(0)) 
+        @test y == T(2)*A.data*x
         k = dot(y,A,x)
         @test k ≈ adjoint(y)*A.data*x
         k = copy(y)
-        mul!(y,A,x,2,3)
-        @test y ≈ 2*A*x+3*k
+        mul!(y,A,x,T(2),T(3))
+        @test y ≈ T(2)*A*x+T(3)*k
         B = copy(A)
         copyto!(B,A)
         @test B == A
         B = Matrix(A)
         @test B == A.data
         C = similar(B,n,n)
-        mul!(C,A,B,2,0)
-        @test C == 2*A.data*B
-        mul!(C,B,A,2,0)
-        @test C == 2*B*A.data
+        mul!(C,A,B,T(2),T(0))
+        @test C == T(2)*A.data*B
+        mul!(C,B,A,T(2),T(0))
+        @test C == T(2)*B*A.data
         B = SLA.SkewHermitian(B)
-        mul!(C,B,A,2,0)
-        @test C == 2*B.data*A.data
-        A.data[n,n] = 4
+        mul!(C,B,A,T(2),T(0))
+        @test C == T(2)*B.data*A.data
+        A.data[n,n] = T(4)
         @test SLA.isskewhermitian(A.data) == false
-        A.data[n,n] = 0
-        A.data[n,1] = 4
+        A.data[n,n] = T(0)
+        A.data[n,1] = T(4)
         @test SLA.isskewhermitian(A.data) == false
         LU=lu(A)
         @test LU.L*LU.U≈A.data[LU.p,:]
@@ -124,7 +127,7 @@ end
         QR = qr(A)
         @test QR.Q*QR.R ≈ A.data
         if T<:Integer
-            A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
+            A = SLA.skewhermitian(rand(T,n,n)*2)
         else
             A = SLA.skewhermitian(randn(T,n,n))
         end
@@ -276,23 +279,22 @@ end
         @test A[1,2] == B[1,2]
         
         @test size(A,1)==n
-        if T<:Real
-            EA=eigen(A)
-            EB=eigen(B)
-            Q = EA.vectors
-            @test real(Q*diagm(EA.values)*adjoint(Q)) ≈ B
-            valA = imag(EA.values)
-            valB = imag(EB.values)
-            sort!(valA)
-            sort!(valB)
-            @test valA ≈ valB
-            Svd = svd(A)
-            @test real(Svd.U*Diagonal(Svd.S)*Svd.Vt) ≈ B
-            @test svdvals(A)≈svdvals(B)
-        end
+
+        EA=eigen(A)
+        EB=eigen(B)
+        Q = EA.vectors
+        @test Q*diagm(EA.values)*adjoint(Q) ≈ B
+        valA = imag(EA.values)
+        valB = imag(EB.values)
+        sort!(valA)
+        sort!(valB)
+        @test valA ≈ valB
+        Svd = svd(A)
+        @test Svd.U*Diagonal(Svd.S)*Svd.Vt ≈ B
+        @test svdvals(A)≈svdvals(B)
+        
         setindex!(A,2,2,1)
         @test A[2,1] == 2
-
 
         B = SLA.SkewHermTridiagonal([3,4,5])
         @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
@@ -319,7 +321,7 @@ end
 end
 
 @testset "cholesky.jl" begin
-    for T in (Int32, Int64, Float32, Float64), n in [2,4,20,100]
+    for T in (Int32, Int64, Float32, Float64), n in [2,20,153,200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
         else
