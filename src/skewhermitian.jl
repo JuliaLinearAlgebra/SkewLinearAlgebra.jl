@@ -103,10 +103,11 @@ and returns a [`SkewHermitian`](@ref) view.
 function skewhermitian!(A::AbstractMatrix{T}) where {T<:Number}
     LA.require_one_based_indexing(A)
     n = LA.checksquare(A)
+    two = T(2)
     @inbounds for i in 1:n
         A[i,i] = T isa Real ? zero(T) : complex(zero(real(T)),imag(A[i,i]))
         for j = 1:i-1
-            a = (A[i,j] - A[j,i]')/2
+            a = (A[i,j] - A[j,i]')/two
             A[i,j] = a
             A[j,i] = -a'
         end
@@ -138,13 +139,15 @@ LA.triu(A::SkewHermitian,k::Integer)  = triu!(copy(A),k)
 
 function LA.dot(A::SkewHermitian, B::SkewHermitian)
     n = size(A, 2)
+    T=eltype(A)
+    two=T(2)
     if n != size(B, 2)
         throw(DimensionMismatch("A has size $(size(A)) but B has size $(size(B))"))
     end
     dotprod = zero(dot(first(A), first(B)))
     @inbounds for j = 1:n 
         for i = 1:j-1
-            dotprod += 2 * dot(A.data[i, j], B.data[i, j])
+            dotprod += two * dot(A.data[i, j], B.data[i, j])
         end
         dotprod += dot(A.data[j, j], B.data[j, j])
     end
