@@ -67,6 +67,7 @@ end
         E[i] = alpha
         lefthouseholder!(A[i+1:end,i+1:end], v, atmp[i+1:end], stau)
         s = mul!(atmp[i+1:end], A[i+1:end,i+1:end], v)
+
         for j=i+1:n
             A[j,j] -= stau * s[j-i] * v[j-i]'
             for k=j+1:n
