@@ -33,9 +33,6 @@ using VectorizationBase, LinearAlgebra, Static
         Base.Cartesian.@nexprs $RUI u -> v_u = VectorizationBase.vzero($W, $T)
         Base.Cartesian.@nexprs $CUI u -> s_u = VectorizationBase.vzero($W, $T)
         c = 0
-
-        
-
         for co = 1:Nr
           # across columns
           @show co
