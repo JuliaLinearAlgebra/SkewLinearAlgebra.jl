@@ -26,7 +26,7 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 end
 
 @testset "SkewLinearAlgebra.jl" begin
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2, 20, 153, 200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2, 20, 99]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) * T(2))
         else
