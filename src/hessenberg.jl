@@ -16,29 +16,21 @@ LA.hessenberg(A::SkewHermitian)=hessenberg!(copyeigtype(A))
 
 @views function householder!(x::AbstractVector{T},n::Integer) where {T}
     if n == 1 && T <:Real
-        return convert(eltype(x), 0), x[1]
+        return convert(T, 0), x[1]
     end
-
     xnorm = (n > 1 ? norm(x[2:end]) : zero(real(x[1])))
     alpha = x[1]
-    if !iszero(xnorm) || n==1
-        
-        beta = (real(alpha) > 0 ? -1 : +1)*hypot(abs(alpha),xnorm)
-        tau = 1 - alpha / beta#complex((beta-alphar)/beta,-alphaim/beta)
-        beta = convert(T, beta)
+    if !iszero(xnorm) || (n == 1 && !iszero(alpha))
+        beta = (real(alpha) > 0 ? -1 : +1) * hypot(abs(alpha),xnorm)
+        tau = 1 - alpha / beta
         alpha = 1 / (alpha - beta)
-        x[1] = convert(T, 1)
-        alpha = convert(T, alpha)
-        
-        if n>1
-            @inbounds x[2:n].*=alpha
-        end
-        alpha=beta
-        
-    else
-        tau = convert(eltype(x), 0)
-        x = zeros(eltype(x),n)
-        alpha = convert(eltype(x), 0)
+        x[1] = 1
+        x[2:n] .*= alpha
+        alpha = T(beta)
+    else 
+        tau = T(0)
+        x .= zeros(T, n)
+        alpha = T(0)
     end
     return tau, alpha
 end
@@ -46,7 +38,6 @@ end
 @views function ger2!(tau::Number , v::StridedVector{T} , s::StridedVector{T},
     A::StridedMatrix{T}) where {T<:LA.BlasFloat}
     tau2 = promote(tau, zero(T))[1]
-
     if tau2 isa Union{Bool,T}
         return LA.BLAS.ger!(tau2, v, s, A)
     else
@@ -71,13 +62,11 @@ end
     n = size(A, 1)
     atmp = similar(A, n)
     @inbounds (for i = 1:n-1
-
-        stau,alpha = householder!(A[i+1:end,i], n - i)
+        stau, alpha = householder!(A[i+1:end,i], n - i)
         @views v = A[i+1:end,i]
         E[i] = alpha
         lefthouseholder!(A[i+1:end,i+1:end], v, atmp[i+1:end], stau)
         s = mul!(atmp[i+1:end], A[i+1:end,i+1:end], v)
-
         for j=i+1:n
             A[j,j] -= stau * s[j-i] * v[j-i]'
             for k=j+1:n
