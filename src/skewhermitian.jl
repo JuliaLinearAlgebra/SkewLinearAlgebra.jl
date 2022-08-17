@@ -139,8 +139,8 @@ LA.triu(A::SkewHermitian,k::Integer)  = triu!(copy(A),k)
 
 function LA.dot(A::SkewHermitian, B::SkewHermitian)
     n = size(A, 2)
-    T=eltype(A)
-    two=T(2)
+    T = eltype(A)
+    two = T(2)
     if n != size(B, 2)
         throw(DimensionMismatch("A has size $(size(A)) but B has size $(size(B))"))
     end

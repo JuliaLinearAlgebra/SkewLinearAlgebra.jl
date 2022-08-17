@@ -27,105 +27,102 @@ end
 
 @testset "SkewLinearAlgebra.jl" begin
     
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2,20,99]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2, 20, 153, 200]
         if T<:Integer
-            A = SLA.skewhermitian(rand(T,n,n)*T(2))
+            A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) * T(2))
         else
-            A = SLA.skewhermitian(randn(T,n,n))
+            A = SLA.skewhermitian(randn(T, n, n))
         end
         @test SLA.isskewhermitian(A)
         @test SLA.isskewhermitian(A.data)
-        B = T(2)*Matrix(A)
+        B = T(2) * Matrix(A)
         @test SLA.isskewhermitian(B)
-        s=rand(T)
-        @test SLA.skewhermitian(s)==imag(s)
+        s = rand(T)
+        @test SLA.skewhermitian(s) == imag(s)
         @test parent(A) == A.data
-        @test similar(A)== SLA.SkewHermitian(zeros(T,n,n))
-        @test similar(A,ComplexF64) == SLA.SkewHermitian(zeros(ComplexF64,n,n))
+        @test similar(A) == SLA.SkewHermitian(zeros(T, n, n))
+        @test similar(A,ComplexF64) == SLA.SkewHermitian(zeros(ComplexF64, n, n))
         @test A == copy(A)::SLA.SkewHermitian
-        dest=copy(4*A)
-        copyto!(dest,A)
-        @test dest ==A
-        dest=copy(4*A)
-        copyto!(dest,A.data)
+        dest = copy(4 * A)
+        copyto!(dest, A)
+        @test dest == A
+        dest = copy(4*A)
+        copyto!(dest, A.data)
         @test dest == A
         @test size(A) == size(A.data)
-        @test size(A,1) == size(A.data,1)
-        @test size(A,2) == size(A.data,2)
+        @test size(A, 1) == size(A.data, 1)
+        @test size(A, 2) == size(A.data, 2)
         @test Matrix(A) == A.data
         @test tr(A) == tr(A.data)
-
-        @test tril(A)==tril(A.data)
-        @test tril(A,1)==tril(A.data,1)
-        @test triu(A)==triu(A.data)
-        @test triu(A,1)==triu(A.data,1)
-        @test (-A).data ==-(A.data)
-        A2 = A.data*A.data
-        @test A*A == A2 ≈ Hermitian(A2)
-        @test A*B == A.data*B
-        @test B*A == B*A.data
+        @test tril(A) == tril(A.data)
+        @test tril(A, 1) == tril(A.data, 1)
+        @test triu(A) == triu(A.data)
+        @test triu(A,1) == triu(A.data, 1)
+        @test (-A).data == -(A.data)
+        A2 = A.data * A.data
+        @test A * A == A2 ≈ Hermitian(A2)
+        @test A * B == A.data * B
+        @test B * A == B * A.data
         if iseven(n) # for odd n, a skew-Hermitian matrix is singular
             @test inv(A)::SLA.SkewHermitian ≈ inv(A.data)
         end
-        @test (A*2).data ==A.data*T(2)
-        @test (2*A).data ==T(2)*A.data
-        @test (A/2).data == A.data/T(2)
+        @test (A * 2).data == A.data * T(2)
+        @test (2 * A).data == T(2) * A.data
+        @test (A / 2).data == A.data / T(2)
         C = A + A
-        @test C.data==A.data+A.data
+        @test C.data == A.data + A.data
         B = SLA.SkewHermitian(B)
         C = A - B
-        @test C.data==-A.data
-        B=triu(A)
-        @test B≈triu(A.data)
-        B = tril(A,n-2)
-        @test B≈tril(A.data,n-2)
-        k = dot(A,A)
-        @test k≈dot(A.data,A.data)
-
-        if n>1
-            @test getindex(A,2,1) == A.data[2,1]
+        @test C.data == -A.data
+        B = triu(A)
+        @test B ≈ triu(A.data)
+        B = tril(A, n - 2)
+        @test B ≈ tril(A.data, n - 2)
+        k = dot(A, A)
+        @test k ≈ dot(A.data, A.data)
+        if n > 1
+            @test getindex(A, 2, 1) == A.data[2,1]
         end
 
-        setindex!(A,3,n,n-1)
-        @test getindex(A,n,n-1) == T(3)
-        @test getindex(A,n-1,n) == T(-3)
+        setindex!(A,3, n, n-1)
+        @test getindex(A, n, n-1) == T(3)
+        @test getindex(A, n-1, n) == T(-3)
       
-        x = rand(T,n)
-        y = zeros(T,n)
-        #needed to have Int32 matrix
-        mul!(y,A,x,T(2),T(0)) 
-        @test y == T(2)*A.data*x
-        k = dot(y,A,x)
-        @test k ≈ adjoint(y)*A.data*x
+        x = rand(T, n)
+        y = zeros(T, n)
+        mul!(y, A, x, T(2), T(0)) 
+        @test y == T(2) * A.data * x
+        k = dot(y, A, x)
+        @test k ≈ adjoint(y) * A.data * x
         k = copy(y)
-        mul!(y,A,x,T(2),T(3))
-        @test y ≈ T(2)*A*x+T(3)*k
+        mul!(y, A, x, T(2), T(3))
+        @test y ≈ T(2) * A * x + T(3) * k
         B = copy(A)
-        copyto!(B,A)
+        copyto!(B, A)
         @test B == A
         B = Matrix(A)
         @test B == A.data
-        C = similar(B,n,n)
-        mul!(C,A,B,T(2),T(0))
-        @test C == T(2)*A.data*B
-        mul!(C,B,A,T(2),T(0))
-        @test C == T(2)*B*A.data
+        C = similar(B, n, n)
+        mul!(C, A, B, T(2), T(0))
+        @test C == T(2) * A.data * B
+        mul!(C, B, A, T(2), T(0))
+        @test C == T(2) * B * A.data
         B = SLA.SkewHermitian(B)
-        mul!(C,B,A,T(2),T(0))
-        @test C == T(2)*B.data*A.data
+        mul!(C, B, A, T(2), T(0))
+        @test C == T(2) * B.data * A.data
         A.data[n,n] = T(4)
         @test SLA.isskewhermitian(A.data) == false
         A.data[n,n] = T(0)
         A.data[n,1] = T(4)
         @test SLA.isskewhermitian(A.data) == false
-        LU=lu(A)
-        @test LU.L*LU.U≈A.data[LU.p,:]
+        LU = lu(A)
+        @test LU.L * LU.U ≈ A.data[LU.p,:]
         if !(T<:Integer)
             LQ = lq(A)
-            @test LQ.L*LQ.Q ≈ A.data
+            @test LQ.L * LQ.Q ≈ A.data
         end
         QR = qr(A)
-        @test QR.Q*QR.R ≈ A.data
+        @test QR.Q * QR.R ≈ A.data
         if T<:Integer
             A = SLA.skewhermitian(rand(T,n,n)*2)
         else
@@ -144,9 +141,9 @@ end
 @testset "hessenberg.jl" begin
     for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2,20,153,200]
         if T<:Integer
-            A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
+            A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) *T(2))
         else
-            A = SLA.skewhermitian(randn(T,n,n))
+            A = SLA.skewhermitian(randn(T, n, n))
         end
         B = Matrix(A)
         HA = hessenberg(A)
@@ -172,11 +169,11 @@ end
 end
 
 @testset "eigen.jl" begin
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2,20,153,200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2, 20, 153, 200]
         if T<:Integer
-            A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
+            A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)* T(2))
         else
-            A = SLA.skewhermitian(randn(T,n,n))
+            A = SLA.skewhermitian(randn(T, n, n))
         end
         B = Matrix(A)
 
@@ -196,8 +193,8 @@ end
         sort!(valB)
         @test valA ≈ valB
         Svd = svd(A)
-        @test Svd.U*Diagonal(Svd.S)*Svd.Vt ≈ A.data
-        @test svdvals(A)≈svdvals(B)
+        @test Svd.U * Diagonal(Svd.S) * Svd.Vt ≈ A.data
+        @test svdvals(A) ≈ svdvals(B)
     end
 
 end
@@ -206,13 +203,13 @@ end
 
     for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2,20,153,200]
         if T<:Integer
-            A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
+            A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n)*T(2))
         else
-            A = SLA.skewhermitian(randn(T,n,n))
+            A = SLA.skewhermitian(randn(T, n, n))
         end
-        B=Matrix(A)
+        B = Matrix(A)
         @test exp(B) ≈ exp(A)
-        @test  Matrix(cis(A)) ≈ exp(Hermitian(A.data*1im))
+        @test  Matrix(cis(A)) ≈ exp(Hermitian(A.data * 1im))
         @test cos(B) ≈ Matrix(cos(A))
         @test sin(B) ≈  Matrix(sin(A))
         #@test tan(B)≈tan(A)
@@ -224,77 +221,75 @@ end
 
 
 @testset "tridiag.jl" begin 
-    for T in (Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2,20,99]
+    for T in (Int32, Int64, Float32, Float64, ComplexF32, ComplexF64), n in [2, 20, 153, 200]
         if T<:Integer
-            C = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
+            C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
         else
             C = SLA.skewhermitian(randn(T,n,n))
         end
-        A=SLA.SkewHermTridiagonal(C)
-        @test SLA.isskewhermitian(A)==true
-        @test Tridiagonal(Matrix(A))≈Tridiagonal(Matrix(C))
+        A = SLA.SkewHermTridiagonal(C)
+        @test SLA.isskewhermitian(A) == true
+        @test Tridiagonal(Matrix(A)) ≈ Tridiagonal(Matrix(C))
         
         
         if T<:Integer
-            A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-10:10),n-1)*2)
-            C=rand(convert(Array{T},-10:10),n,n)
-            D1=rand(convert(Array{T},-10:10),n,n)
-            x=rand(convert(Array{T},-10:10),n)
-            y=rand(convert(Array{T},-10:10),n) 
+            A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
+            C = rand(convert(Array{T},-10:10), n, n)
+            D1 =  rand(convert(Array{T},-10:10), n, n)
+            x = rand(convert(Array{T},-10:10), n)
+            y = rand(convert(Array{T},-10:10), n) 
         else
-            A=SLA.SkewHermTridiagonal(randn(T,n-1))
-            C=randn(T,n,n)
-            D1=randn(T,n,n) 
-            x=randn(T,n)
-            y=randn(T,n) 
+            A = SLA.SkewHermTridiagonal(rand(T, n - 1))
+            C = randn(T, n, n)
+            D1 = randn(T, n, n) 
+            x = randn(T, n)
+            y = randn(T, n) 
         end
-        D2=copy(D1)
-        B=Matrix(A)
-        mul!(D1,A,C,2,1)
-        @test D1≈D2+2*Matrix(A)*C
-        mul!(D1,A,C,2,0)
-        @test size(A)==(n,n)
-        @test size(A,1)==n
+        D2 = copy(D1)
+        B = Matrix(A)
+        mul!(D1, A, C, T(2), T(1))
+        @test D1 ≈ D2 + T(2) * Matrix(A) * C
+        mul!(D1, A, C, T(2), T(0))
+        @test size(A) == (n, n)
+        @test size(A,1) == n
         if A.dvim !== nothing 
-            @test conj(A)==SLA.SkewHermTridiagonal(conj.(A.ev),conj.(A.dvim))
-            @test copy(A)==SLA.SkewHermTridiagonal(copy(A.ev),copy(A.dvim))
-            @test imag(A)==SLA.SymTridiagonal(imag.(A.dvim),imag.(A.ev))
+            @test conj(A) == SLA.SkewHermTridiagonal(conj.(A.ev),conj.(A.dvim))
+            @test copy(A) == SLA.SkewHermTridiagonal(copy(A.ev),copy(A.dvim))
+            @test imag(A) == SLA.SymTridiagonal(imag.(A.dvim),imag.(A.ev))
         else
-            @test conj(A)==SLA.SkewHermTridiagonal(conj.(A.ev))
-            @test copy(A)==SLA.SkewHermTridiagonal(copy(A.ev))
-            @test imag(A)==SLA.SymTridiagonal(zeros(eltype(imag(A.ev[1])),n),imag.(A.ev))
+            @test conj(A) == SLA.SkewHermTridiagonal(conj.(A.ev))
+            @test copy(A) ==SLA.SkewHermTridiagonal(copy(A.ev))
+            @test imag(A) == SLA.SymTridiagonal(zeros(eltype(imag(A.ev[1])),n),imag.(A.ev))
         end
-        @test real(A)==SLA.SkewHermTridiagonal(real.(A.ev))
+        @test real(A) == SLA.SkewHermTridiagonal(real.(A.ev))
         @test transpose(A) == -A
         @test Matrix(adjoint(A)) == adjoint(Matrix(A))
-        @test Array(A)==Matrix(A)
-        @test D1≈2*Matrix(A)*C
-        @test Matrix(A+A)==Matrix(2*A)
-        @test Matrix(A)/2==Matrix(A/2)
-        @test Matrix(A+A)==Matrix(A*2)
-        @test Matrix(A-2*A)==Matrix(-A)
-        
-        @test dot(x,A,y)≈dot(x,Matrix(A),y)
-        B=Matrix(A)
+        @test Array(A) == Matrix(A)
+        @test D1 ≈ T(2) * Matrix(A) * C
+        @test Matrix(A + A) == Matrix( 2 * A)
+        @test Matrix(A)/2 == Matrix(A / 2)
+        @test Matrix(A + A) == Matrix(A * 2)
+        @test Matrix(A- 2 * A) == Matrix(-A)
+        @test dot(x, A, y) ≈ dot(x, Matrix(A), y)
+        B = Matrix(A)
         @test A[1,2] == B[1,2]
-        
-        @test size(A,1)==n
+        @test size(A,1) == n
 
-        EA=eigen(A)
-        EB=eigen(B)
+        EA = eigen(A)
+        EB = eigen(B)
         Q = EA.vectors
-        @test Q*diagm(EA.values)*adjoint(Q) ≈ B
+        @test Q * diagm(EA.values) * adjoint(Q) ≈ B
         valA = imag(EA.values)
         valB = imag(EB.values)
         sort!(valA)
         sort!(valB)
         @test valA ≈ valB
         Svd = svd(A)
-        @test Svd.U*Diagonal(Svd.S)*Svd.Vt ≈ B
-        @test svdvals(A)≈svdvals(B)
+        @test Svd.U * Diagonal(Svd.S) * Svd.Vt ≈ B
+        @test svdvals(A) ≈ svdvals(B)
         
-        setindex!(A,2,2,1)
-        @test A[2,1] == 2
+        setindex!(A, T(2), 2, 1)
+        @test A[2,1] == T(2)
 
         B = SLA.SkewHermTridiagonal([3,4,5])
         @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
@@ -308,7 +303,7 @@ end
 
 @testset "pfaffian.jl" begin
     for n in [2,3,4,5,6,8,10,20,40]
-        A=SLA.skewhermitian(rand(-10:10,n,n)*2)
+        A = SLA.skewhermitian(rand(-10:10,n,n) * 2)
         Abig = BigInt.(A.data)
         @test SLA.pfaffian(A) ≈ SLA.pfaffian(Abig)  == SLA.pfaffian(SLA.SkewHermitian(Abig))
         if VERSION ≥ v"1.7" # for exact det of BigInt matrices
@@ -323,43 +318,18 @@ end
 @testset "cholesky.jl" begin
     for T in (Int32, Int64, Float32, Float64), n in [2,20,153,200]
         if T<:Integer
-            A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)*2)
+            A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n)*T(2))
         else
-            A = SLA.skewhermitian(randn(T,n,n))
+            A = SLA.skewhermitian(randn(T, n, n))
         end
         C = SLA.skewchol(A)
-        @test transpose(C.Rm)*Matrix(C.Jm)*C.Rm ≈A.data[C.Pv,C.Pv]
+        @test transpose(C.Rm) * C.Jm *C.Rm ≈ A.data[C.Pv, C.Pv]
         B = Matrix(A)
         C = SLA.skewchol(B)
-        @test transpose(C.Rm)*Matrix(C.Jm)*C.Rm ≈B[C.Pv,C.Pv]
+        @test transpose(C.Rm)* C.Jm *C.Rm ≈ B[C.Pv, C.Pv]
     end
 end
 
 
 
-
-#=
-using BenchmarkTools
-n=1000
-A = SLA.skewhermitian(randn(n,n)+1im*randn(n,n))
-B = Hermitian(A.data*1im)
-C=Matrix(A)
-#@btime hessenberg(B)
-@btime hessenberg(A)
-#@btime hessenberg(C)
-a=1
-T=ComplexF64
-n=8
-vec=randn(T,n-1)
-A=Tridiagonal(vec,complex.(0,randn(Float64,n)),-vec)
-
-Di=zeros(T,n)
-for i=1:4:n
-    Di[i]=1
-    Di[i+1]=1im
-    Di[i+2]=-1
-    Di[i+3]=-1im
-end
-D=Diagonal(Di)
-=#
 

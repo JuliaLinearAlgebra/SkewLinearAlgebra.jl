@@ -11,18 +11,18 @@ struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:SkewHermTridiagonal{<:T},P<:Abs
 end
 
 function SkewCholesky(Rm::UpperTriangular{<:T},Pv::AbstractVector{<:Integer}) where {T<:Real}
-    n=size(Rm,1)
-    vec = zeros(T,n-1)
-    for i = 1:2:n-1
+    n = size(Rm, 1)
+    vec = zeros(T, n - 1)
+    for i = 1 : 2 : n - 1
         vec[i] = -1
     end
-    return SkewCholesky{T,UpperTriangular{<:T},SkewHermTridiagonal{<:T},AbstractVector{<:Integer}}(Rm,SkewHermTridiagonal(vec),Pv)
+    return SkewCholesky{T,UpperTriangular{<:T},SkewHermTridiagonal{<:T},AbstractVector{<:Integer}}(Rm, SkewHermTridiagonal(vec), Pv)
 
 end
 
 function _skewchol!(A::SkewHermitian)
     @views B = A.data
-    tol = 1e-15*norm(B)
+    tol = 1e-15 * norm(B)
     m = size(B,1)
     J2 = similar(B,2,2)
     J2[1,1] = 0; J2[2,1] = -1; J2[1,2] = 1; J2[2,2] = 0
