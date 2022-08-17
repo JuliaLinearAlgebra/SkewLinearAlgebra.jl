@@ -480,6 +480,14 @@ end
     mul!(Vec, Q, Eig.vectors)
     return Eigen(Eig.values.*(-1im),Vec)
 end
+@views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
+    n=size(A,1)
+    S, Q = SkewHermTridiagonaltoSymTridiagonal(A)
+    Eig=eigen!(S)
+    Vec = similar(A.ev,n,n)
+    mul!(Vec,Q,Eig.vectors)
+    return Eigen(Eig.values.*(-1im),Vec)
+end
 
 function copyeigtype(A::SkewHermTridiagonal) 
     B = similar(A , LA.eigtype( eltype(A.ev) ))
