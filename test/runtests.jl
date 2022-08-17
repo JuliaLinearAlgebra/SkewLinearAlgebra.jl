@@ -26,7 +26,6 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 end
 
 @testset "SkewLinearAlgebra.jl" begin
-    
     for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2, 20, 153, 200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) * T(2))
@@ -83,7 +82,6 @@ end
         if n > 1
             @test getindex(A, 2, 1) == A.data[2,1]
         end
-
         setindex!(A,3, n, n-1)
         @test getindex(A, n, n-1) == T(3)
         @test getindex(A, n-1, n) == T(-3)
@@ -290,7 +288,6 @@ end
         
         setindex!(A, T(2), 2, 1)
         @test A[2,1] == T(2)
-
         B = SLA.SkewHermTridiagonal([3,4,5])
         @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
         #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
