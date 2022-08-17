@@ -279,7 +279,7 @@ end
         @test A[1,2] == B[1,2]
         
         @test size(A,1)==n
-        
+
         EA=eigen(A)
         EB=eigen(B)
         Q = EA.vectors
@@ -295,6 +295,7 @@ end
         
         setindex!(A,2,2,1)
         @test A[2,1] == 2
+
         B = SLA.SkewHermTridiagonal([3,4,5])
         @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
         #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
