@@ -460,7 +460,7 @@ end
 @views function skewtrieigen!(S::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
 
     n = size(S, 1)
-    H = SymTridiagonal(zeros(T,n), S.ev)
+    H = SymTridiagonal(zeros(T, n), S.ev)
     trisol = eigen!(H)
     vals  = trisol.values*1im
     vals .*= -1

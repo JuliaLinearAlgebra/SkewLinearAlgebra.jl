@@ -1,18 +1,26 @@
 # SkewLinearAlgebra
 
+To use this package, using the `LinearAlgebra` standard library is required.
+```jl
+using LinearAlgebra
+using SkewLinearAlgebra
+```
 WARNING: Package still in development!
+## SkewHermitian and SkewHermTridiagonal types
 
-This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$ and skew-hermitian matrices i.e $A=-A^*$.
+This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$ and complex skew-hermitian matrices i.e $A=-A^*$.
 It provides the matrix types `SkewHermitian` and `SkewHermTridiagonal`and implements the usual linear operations on such
 matrices by extending functions from Julia's `LinearAlgebra` standard library, including optimized
 algorithms that exploit this special matrix structure.
 
-In particular, the package provides the following optimized functions for `SkewHermitian` matrices:
+In particular, the package provides the following optimized functions for `SkewHermitian` and `SkewHermTridiagonal` matrices:
 
 - Tridiagonal reduction: `hessenberg`
 - Eigensolvers: `eigen`, `eigvals`
 - SVD: `svd`, `svdvals`
 - Trigonometric functions:`exp`, `cis`,`cos`,`sin`,`tan`,`sinh`,`cosh`,`tanh`
+
+Only for `SkewHermitian` matrices:
 - Cholesky-like factorization: `skewchol`
 
 (Currently, we only provide specialized algorithms for real skew-Hermitian/skew-symmetric matrices.
@@ -76,6 +84,37 @@ julia> A\x
  -1.3333333333333333
 ```
 
+The `SkewHermTridiagonal(ev,dvim)`creates a abstract version of a tridiagonal skew-Hermitian matrix
+where `ev` is the subdiagonal and `dvim` is a `Real` vector representing the pure imaginary diagonal of the matrix.
+Real skew-symmetric matrices having zero diagonal elements, the constructor allows to only give the subdiagonal as argument.
+
+Here is a basic example to initialize a `SkewHermTridiagonal`
+```jl
+julia> A=SkewHermTridiagonal(rand(ComplexF64,4), rand(5))
+5×5 SkewHermTridiagonal{ComplexF64, Vector{ComplexF64}, Vector{Float64}}:
+      0.0+0.150439im  -0.576265+0.23126im          0.0+0.0im             0.0+0.0im             0.0+0.0im
+ 0.576265+0.23126im         0.0+0.0833022im  -0.896415+0.6846im          0.0+0.0im             0.0+0.0im
+      0.0+0.0im        0.896415+0.6846im           0.0+0.868229im  -0.593476+0.421484im        0.0+0.0im
+      0.0+0.0im             0.0+0.0im         0.593476+0.421484im        0.0+0.995528im  -0.491818+0.32038im
+      0.0+0.0im             0.0+0.0im              0.0+0.0im        0.491818+0.32038im         0.0+0.241177im
+      
+julia> SkewHermTridiagonal(randn(ComplexF32, 4))
+5×5 SkewHermTridiagonal{ComplexF32, Vector{ComplexF32}, Nothing}:
+       0.0+0.0im        0.343935+0.292369im         0.0+0.0im             0.0+0.0im             0.0+0.0im
+ -0.343935+0.292369im        0.0+0.0im       -0.0961587-0.282884im        0.0+0.0im             0.0+0.0im
+       0.0+0.0im       0.0961587-0.282884im         0.0+0.0im       -0.397075+0.518492im        0.0+0.0im
+       0.0+0.0im             0.0+0.0im         0.397075+0.518492im        0.0+0.0im       -0.405492+0.679622im
+       0.0+0.0im             0.0+0.0im              0.0+0.0im        0.405492+0.679622im        0.0+0.0im
+
+julia> SkewHermTridiagonal(randn(4))
+5×5 SkewHermTridiagonal{Float64, Vector{Float64}, Nothing}:
+  0.0      1.93717    0.0        0.0       0.0
+ -1.93717  0.0       -0.370536   0.0       0.0
+  0.0      0.370536   0.0       -0.964014  0.0
+  0.0      0.0        0.964014   0.0       1.33282
+  0.0      0.0        0.0       -1.33282   0.0
+```
+
   The functions from the LinearAlgebra package can be used in the same fashion:
 ```jl
 julia> hessenberg(A)
@@ -102,9 +141,10 @@ H factor:
 
 ```
 
- ## Hessenberg/Tridiagonal reduction
+## Hessenberg/Tridiagonal reduction
+
 The Hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$ is an orthonormal matrix.
-The `hessenberg` function computes the Hessenberg decomposition of `A` and return a `Hessenberg` object. If `F` is the
+The `hessenberg` function computes the Hessenberg decomposition of `A` and returns a `Hessenberg` object. If `F` is the
 factorization object, the unitary matrix can be accessed with `F.Q` (of type `LinearAlgebra.HessenbergQ`)
 and the Hessenberg matrix with `F.H` (of type `SkewHermTridiagonal`), either of
 which may be converted to a regular matrix with `Matrix(F.H)` or `Matrix(F.Q)`.
@@ -128,34 +168,26 @@ H factor:
 
  ## Eigenvalues and eigenvectors
 
- The package also provides eigensolvers for  `SkewHermitian` matrices. The method to solve the eigenvalue problem is based on the algorithm described in Penke et al, "[High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem](https://arxiv.org/abs/1912.04062)" (2020).
+The package also provides eigensolvers for  `SkewHermitian` and `SkewHermTridiagonal` matrices. The method to solve the eigenvalue problem is based on the algorithm described in Penke et al, "[High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem](https://arxiv.org/abs/1912.04062)" (2020).
 
-The function `eigen` returns the eigenvalues plus the real part of the eigenvectors and the imaginary part separeted.
+The function `eigen` returns a `Eigen`structure as the LinearAlgebra standard library:
 ```jl
-  julia> val,Qr,Qim=eigen(A)
-
-  julia> val
+julia> E = eigen(A)
+Eigen{ComplexF64, ComplexF64, Matrix{ComplexF64}, Vector{ComplexF64}}
+values:
 4-element Vector{ComplexF64}:
   0.0 + 11.934458713974193im
-  0.0 + 0.7541188264752758im
+  0.0 + 0.7541188264752741im
  -0.0 - 0.7541188264752989im
- -0.0 - 11.93445871397423im
-
-julia> Qr
-4×4 Matrix{Float64}:
- -0.49111     -0.508735     0.508735    0.49111
- -0.488014     0.471107    -0.471107    0.488014
- -0.143534     0.138561    -0.138561    0.143534
- -0.00717668   0.00692804  -0.00692804  0.00717668
-
-julia> Qim
-4×4 Matrix{Float64}:
-  0.0        0.0         0.0         0.0
- -0.176712   0.0931315   0.0931315  -0.176712
-  0.615785  -0.284619   -0.284619    0.615785
- -0.299303  -0.640561   -0.640561   -0.299303
-
+ -0.0 - 11.934458713974236im
+vectors:
+4×4 Matrix{ComplexF64}:
+    -0.49111+0.0im        -0.508735+0.0im           0.508735+0.0im           0.49111+0.0im
+   -0.488014-0.176712im    0.471107+0.0931315im    -0.471107+0.0931315im    0.488014-0.176712im
+   -0.143534+0.615785im    0.138561-0.284619im     -0.138561-0.284619im     0.143534+0.615785im
+ -0.00717668-0.299303im  0.00692804-0.640561im   -0.00692804-0.640561im   0.00717668-0.299303im
 ```
+
  The function `eigvals` provides the eigenvalues of $A$. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
 ```jl
  julia> eigvals(A)
@@ -178,9 +210,8 @@ julia> eigvals(A,1:3)
 ```
  ## SVD
 
- A specialized SVD using the eigenvalue decomposition is implemented for `SkewHermitian` type.
+ A specialized SVD using the eigenvalue decomposition is implemented for `SkewHermitian` and `SkewHermTridiagonal` type.
  These functions can be called using the `LinearAlgebra` syntax.
-
 ```jl
  julia> svd(A)
 SVD{ComplexF64, Float64, Matrix{ComplexF64}}
