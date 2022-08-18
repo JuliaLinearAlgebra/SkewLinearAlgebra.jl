@@ -28,7 +28,7 @@ function SkewCholesky(Rm::UpperTriangular{<:T},Pv::AbstractVector{<:Integer}) wh
 
 end
 
-function _skewchol!(A::SkewHermitian)
+function _skewchol!(A::SkewHermitian{<:Real})
     @views B = A.data
     tol = 1e-15 * norm(B)
     m = size(B,1)
@@ -87,7 +87,7 @@ function _skewchol!(A::SkewHermitian)
 end
 copyeigtype(A::AbstractMatrix) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
 
-@views function skewchol!(A::SkewHermitian{<:Real})
+@views function skewchol!(A::SkewHermitian)
     P = _skewchol!(A)[1]
     return SkewCholesky(UpperTriangular(A.data), P)
 end
@@ -97,18 +97,15 @@ skewchol!(A::AbstractMatrix) = @views  skewchol!(SkewHermitian(A))
 
 """
     skewchol(A)
-Computes a Cholesky-like factorization of A real skew-symmetric.
-The function returns a `SkewCholesky` structure composed of three arguments: 
+
+Computes a Cholesky-like factorization of the real skew-symmetric matrix `A`.
+The function returns a `SkewCholesky` structure composed of three fields: 
 `Rm`,`Jm`,`Pv`. `Rm` is `UpperTriangular`, `Jm` is `SkewHermTridiagonal`, 
 `Pv` is an array of integers. Let `S` be the returned structure, then the factorization 
-is such that:
-```jl 
+is such that `S.Rm'*S.Jm*S.Rm = A[S.Pv,S.Pv]`
 
-S.Rm' * S.Jm * S.Rm = A[S.Pv,S.Pv]
-
-This factorization is issued from P. Benner et al, 
+This factorization (and the underlying algorithm) is described in from P. Benner et al, 
 "[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000). 
-```
 """
 function skewchol(A::AbstractMatrix)
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
