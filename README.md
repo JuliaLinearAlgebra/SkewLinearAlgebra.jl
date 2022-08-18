@@ -13,6 +13,7 @@ In particular, the package provides the following optimized functions for `SkewH
 - Tridiagonal reduction: `hessenberg`
 - Eigensolvers: `eigen`, `eigvals`
 - SVD: `svd`, `svdvals`
+
 Only for `SkewHermitian` matrices:
 - Trigonometric functions:`exp`, `cis`,`cos`,`sin`,`tan`,`sinh`,`cosh`,`tanh`
 - Cholesky-like factorization: `skewchol`
