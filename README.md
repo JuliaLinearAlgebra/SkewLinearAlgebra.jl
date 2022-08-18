@@ -84,18 +84,35 @@ julia> A\x
  -1.3333333333333333
 ```
 
-The `SkewHerTridiagonal(ev,dvim)`creates a abstract version of a tridiagonal skew-Hermitian matrix
+The `SkewHermTridiagonal(ev,dvim)`creates a abstract version of a tridiagonal skew-Hermitian matrix
 where `ev` is the subdiagonal and `dvim` is a `Real` vector representing the pure imaginary diagonal of the matrix.
+Real skew-symmetric matrices having zero diagonal elements, the constructor allows to only give the subdiagonal as argument.
 
 Here is a basic example to initialize a `SkewHermTridiagonal`
 ```jl
-julia> A=SkewHermTridiagonal(rand(ComplexF64,4),rand(5))
+julia> A=SkewHermTridiagonal(rand(ComplexF64,4), rand(5))
 5×5 SkewHermTridiagonal{ComplexF64, Vector{ComplexF64}, Vector{Float64}}:
       0.0+0.150439im  -0.576265+0.23126im          0.0+0.0im             0.0+0.0im             0.0+0.0im
  0.576265+0.23126im         0.0+0.0833022im  -0.896415+0.6846im          0.0+0.0im             0.0+0.0im
       0.0+0.0im        0.896415+0.6846im           0.0+0.868229im  -0.593476+0.421484im        0.0+0.0im
       0.0+0.0im             0.0+0.0im         0.593476+0.421484im        0.0+0.995528im  -0.491818+0.32038im
       0.0+0.0im             0.0+0.0im              0.0+0.0im        0.491818+0.32038im         0.0+0.241177im
+      
+julia> SkewHermTridiagonal(randn(ComplexF32, 4))
+5×5 SkewHermTridiagonal{ComplexF32, Vector{ComplexF32}, Nothing}:
+       0.0+0.0im        0.343935+0.292369im         0.0+0.0im             0.0+0.0im             0.0+0.0im
+ -0.343935+0.292369im        0.0+0.0im       -0.0961587-0.282884im        0.0+0.0im             0.0+0.0im
+       0.0+0.0im       0.0961587-0.282884im         0.0+0.0im       -0.397075+0.518492im        0.0+0.0im
+       0.0+0.0im             0.0+0.0im         0.397075+0.518492im        0.0+0.0im       -0.405492+0.679622im
+       0.0+0.0im             0.0+0.0im              0.0+0.0im        0.405492+0.679622im        0.0+0.0im
+
+julia> SkewHermTridiagonal(randn(4))
+5×5 SkewHermTridiagonal{Float64, Vector{Float64}, Nothing}:
+  0.0      1.93717    0.0        0.0       0.0
+ -1.93717  0.0       -0.370536   0.0       0.0
+  0.0      0.370536   0.0       -0.964014  0.0
+  0.0      0.0        0.964014   0.0       1.33282
+  0.0      0.0        0.0       -1.33282   0.0
 ```
 
   The functions from the LinearAlgebra package can be used in the same fashion:
@@ -151,7 +168,7 @@ H factor:
 
  ## Eigenvalues and eigenvectors
 
-The package also provides eigensolvers for  `SkewHermitian` matrices. The method to solve the eigenvalue problem is based on the algorithm described in Penke et al, "[High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem](https://arxiv.org/abs/1912.04062)" (2020).
+The package also provides eigensolvers for  `SkewHermitian` and `SkewHermTridiagonal` matrices. The method to solve the eigenvalue problem is based on the algorithm described in Penke et al, "[High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem](https://arxiv.org/abs/1912.04062)" (2020).
 
 The function `eigen` returns a `Eigen`structure as the LinearAlgebra standard library:
 ```jl
@@ -193,7 +210,7 @@ julia> eigvals(A,1:3)
 ```
  ## SVD
 
- A specialized SVD using the eigenvalue decomposition is implemented for `SkewHermitian` type.
+ A specialized SVD using the eigenvalue decomposition is implemented for `SkewHermitian` and `SkewHermTridiagonal` type.
  These functions can be called using the `LinearAlgebra` syntax.
 ```jl
  julia> svd(A)
