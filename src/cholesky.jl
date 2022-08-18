@@ -87,7 +87,7 @@ function _skewchol!(A::SkewHermitian)
 end
 copyeigtype(A::AbstractMatrix) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
 
-@views function skewchol!(A::SkewHermitian)
+@views function skewchol!(A::SkewHermitian{<:Real})
     P = _skewchol!(A)[1]
     return SkewCholesky(UpperTriangular(A.data), P)
 end
@@ -104,7 +104,7 @@ The function returns a `SkewCholesky` structure composed of three arguments:
 is such that:
 ```jl 
 
-transpose(S.Rm)*S.Jm*S.Rm = A[S.Pv,S.Pv]
+S.Rm' * S.Jm * S.Rm = A[S.Pv,S.Pv]
 
 This factorization is issued from P. Benner et al, 
 "[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000). 
