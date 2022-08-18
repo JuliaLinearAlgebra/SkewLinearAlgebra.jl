@@ -1,5 +1,9 @@
 # SkewLinearAlgebra
 
+```jl
+using LinearAlgebra
+using SkewLinearAlgebra
+```
 WARNING: Package still in development!
 ## SkewHermitian and SkewHermTridiagonal types
 
