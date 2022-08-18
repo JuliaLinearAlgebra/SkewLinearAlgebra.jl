@@ -80,7 +80,7 @@ julia> A\x
 ```
 
 The `SkewHerTridiagonal(ev,dvim)`creates a abstract version of a tridiagonal skew-Hermitian matrix
-where ev is the subdiagonal and dvim is a `Real` vector representing the pure imaginary diagonal of the matrix.
+where `ev` is the subdiagonal and `dvim` is a `Real` vector representing the pure imaginary diagonal of the matrix.
 
 Here is a basic example to initialize a `SkewHermTridiagonal`
 ```jl
