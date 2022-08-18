@@ -1,10 +1,18 @@
 # This file is a part of Julia. License is MIT: https://julialang.org/license
 
-function skewexp!(A::SkewHermitian{<:Real})
+function skewexp!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
     n = size(A, 1)
-    n == 1 && return fill(exp(A.data[1,1]), 1, 1)
-    vals, Qr, Qim = skeweigen!(A)
-
+    
+    if typeof(A) <:SkewHermitian
+        n == 1 && return fill(1, 1, 1)
+        vals, Qr, Qim = skeweigen!(A)
+    else
+        n == 1 && return fill(1, 1, 1)
+        E = eigen!(A)
+        vals = E.values
+        Qr = real(E.vectors)
+        Qim = imag(E.vectors)
+    end
     temp2 = similar(A, n, n)
     Q1 = similar(A, n, n)
     Q2 = similar(A, n, n)
@@ -29,9 +37,15 @@ function skewexp!(A::SkewHermitian{<:Real})
     return temp2
 end
 
-@views function skewexp!(A::SkewHermitian{<:Complex})
+@views function skewexp!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A, 1)
-    n == 1 && return fill(exp(A.data[1,1]), 1, 1)
+    if n == 1
+        if typeof(A)<:SkewHermitian
+            return fill(exp(A.data[1,1]), 1, 1)
+        else
+            return fill(exp(complex(0, A.dvim[1])), 1, 1)
+        end
+    end
     Eig = eigen!(A)
     eig = exp.(Eig.values)
     temp = similar(A, n, n)
@@ -41,13 +55,11 @@ end
     return Exp
 end
 
-function Base.exp(A::SkewHermitian)
-    return skewexp!(copyeigtype(A))
-end
+Base.exp(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewexp!(copyeigtype(A))
 
-@views function skewcis!(A::SkewHermitian{<:Real})
+@views function skewcis!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
     n = size(A, 1)
-    n == 1 && return fill(cis(A.data[1,1]), 1, 1)
+    n == 1 && Hermitian(fill(1, 1, 1))
     Eig = eigen!(A)
     Q = Eig.vectors
     temp = similar(Q, n, n)
@@ -59,9 +71,15 @@ end
     return Hermitian(temp2)
 end
 
-@views function skewcis!(A::SkewHermitian{<:Complex})
+@views function skewcis!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A,1)
-    n == 1 && return fill(exp(A.data[1,1]), 1,1)
+    if n == 1
+        if typeof(A)<:SkewHermitian
+            return Hermitian(fill(cis(A.data[1,1]), 1, 1))
+        else
+            return Hermitian(fill(cis(complex(0, A.dvim[1])), 1, 1))
+        end
+    end
     Eig = eigen!(A)
     eig = @. exp(-imag(Eig.values))
     Cis = similar(A, n, n)
@@ -71,12 +89,18 @@ end
     return Hermitian(Cis)
 end
 
-@views function skewcos!(A::SkewHermitian{<:Real})
+@views function skewcos!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
     n = size(A,1)
-    if n == 1
-        return exp(A.data*1im)
+    if typeof(A) <:SkewHermitian
+        n == 1 && return Symmetric(fill(1, 1, 1))
+        vals, Qr, Qim = skeweigen!(A)
+    else
+        n == 1 && return Symmetric(fill(1, 1, 1))
+        E = eigen!(A)
+        vals = E.values
+        Qr = real(E.vectors)
+        Qim = imag(E.vectors)
     end
-    vals, Qr, Qim = skeweigen!(A)
     temp2 = similar(A, n, n)
     Q1 = similar(A, n, n)
     Q2 = similar(A, n, n)
@@ -90,9 +114,15 @@ end
     return Symmetric(Q1)
 end
 
-@views function skewcos!(A::SkewHermitian{<:Complex})
+@views function skewcos!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A,1)
-    n == 1 && return fill(exp(A.data[1,1]), 1,1)
+    if n == 1
+        if typeof(A)<:SkewHermitian
+            return Hermitian(fill(cos(A.data[1,1]), 1, 1))
+        else
+            return Hermitian(fill(cos(complex(0, A.dvim[1])), 1, 1))
+        end
+    end
     Eig = eigen!(A)
     eig1 = @. exp(-imag(Eig.values))
     eig2 = @. exp(imag(Eig.values))
@@ -108,12 +138,18 @@ end
     return Hermitian(Cos)
 end
 
-@views function skewsin!(A::SkewHermitian{<:Real})
+@views function skewsin!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
     n = size(A, 1)
-    if n == 1
-        return exp(A.data * 1im)
+    if typeof(A) <:SkewHermitian
+        n == 1 && return fill(0, 1, 1)
+        vals, Qr, Qim = skeweigen!(A)
+    else
+        n == 1 && return fill(0, 1, 1)
+        E = eigen!(A)
+        vals = E.values
+        Qr = real(E.vectors)
+        Qim = imag(E.vectors)
     end
-    vals, Qr, Qim = skeweigen!(A)
     temp2 = similar(A, n, n)
     Q1 = similar(A, n, n)
     Q2 = similar(A, n, n)
@@ -127,9 +163,15 @@ end
     return Q1
 end
 
-@views function skewsin!(A::SkewHermitian{<:Complex})
+@views function skewsin!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A,1)
-    n == 1 && return fill(exp(A.data[1,1]), 1, 1)
+    if n == 1
+        if typeof(A)<:SkewHermitian
+            return fill(sin(A.data[1,1]), 1, 1)
+        else
+            return fill(sin(complex(0, A.dvim[1])), 1, 1)
+        end
+    end
     Eig = eigen!(A)
     eig1 = @. exp(-imag(Eig.values))
     eig2 = @. exp(imag(Eig.values))
@@ -146,13 +188,19 @@ end
     return Sin
 end
 
-Base.cis(A::SkewHermitian) = skewcis!(copyeigtype(A))
-Base.cos(A::SkewHermitian) = skewcos!(copyeigtype(A))
-Base.sin(A::SkewHermitian) = skewsin!(copyeigtype(A))
+Base.cis(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewcis!(copyeigtype(A))
+Base.cos(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewcos!(copyeigtype(A))
+Base.sin(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsin!(copyeigtype(A))
 
-@views function skewsincos!(A::SkewHermitian{<:Complex})
+@views function skewsincos!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A, 1)
-    n == 1 && return fill(exp(A.data[1,1]), 1,1)
+    if n == 1
+        if typeof(A)<:SkewHermitian
+            return fill(sin(A.data[1,1]), 1, 1), Hermitian(fill(cos(A.data[1,1]), 1, 1))
+        else
+            return fill(sin(A.data[1,1]), 1, 1), Hermitian(fill(cos(complex(0, A.dvim[1])), 1, 1))
+        end
+    end
     Eig = eigen!(A)
     eig1 = @. exp(-imag(Eig.values))
     eig2 = @. exp(imag(Eig.values))
@@ -179,16 +227,16 @@ function Base.tan(A::SkewHermitian{<:Real})
     return C\S
 end
 
-function Base.tan(A::SkewHermitian{<:Complex})
+function Base.tan(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     Sin, Cos =skewsincos!(copyeigtype(A))
     return Cos\Sin
 end
 
-Base.sinh(A::SkewHermitian) = skewhermitian!(exp(A))
-Base.cosh(A::SkewHermitian{<:Real}) = hermitian!(exp(A))
-@views function Base.cosh(A::SkewHermitian{<:Complex}) 
+Base.sinh(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewhermitian!(exp(A))
+Base.cosh(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}}) = hermitian!(exp(A))
+@views function Base.cosh(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}}) 
     B = hermitian!(exp(A))
-    Cosh=complex.(real(B),-imag(B))
+    Cosh = complex.(real(B),-imag(B))
     return Cosh
 end
 

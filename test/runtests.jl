@@ -204,7 +204,23 @@ end
         end
         B = Matrix(A)
         @test exp(B) ≈ exp(A)
-        @test  Matrix(cis(A)) ≈ exp(Hermitian(A.data * 1im))
+        @test  Matrix(cis(A)) ≈ exp(Matrix(A)*1im)
+        @test cos(B) ≈ Matrix(cos(A))
+        @test sin(B) ≈  Matrix(sin(A))
+        #@test tan(B)≈tan(A)
+        @test sinh(B) ≈  Matrix(sinh(A))
+        @test cosh(B) ≈  Matrix(cosh(A))
+        #@test tanh(B) ≈ tanh(A)
+    end
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2,20,99]
+        if T<:Integer
+            A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
+        else
+            A = SLA.SkewHermTridiagonal(rand(T, n - 1))
+        end
+        B = Matrix(A)
+        @test exp(B) ≈ exp(A)
+        @test  Matrix(cis(A)) ≈ exp(Matrix(A)*1im)
         @test cos(B) ≈ Matrix(cos(A))
         @test sin(B) ≈  Matrix(sin(A))
         #@test tan(B)≈tan(A)
