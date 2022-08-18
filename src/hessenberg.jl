@@ -2,9 +2,8 @@ LA.HessenbergQ(F::Hessenberg{<:Any,<:SkewHermTridiagonal,S,W}) where {S,W} = LA.
 
 @views function LA.hessenberg!(A::SkewHermitian{T}) where {T}
     tau, E = skewblockedhess!(A)
-    n = size(A, 1)
     if T <: Complex 
-        Tr=SkewHermTridiagonal(E, imag( diag(A.data)))
+        Tr=SkewHermTridiagonal(convert.(T, E), imag( diag(A.data)))
     else
         Tr=SkewHermTridiagonal(E)
     end
@@ -13,26 +12,33 @@ end
 
 LA.hessenberg(A::SkewHermitian)=hessenberg!(copyeigtype(A))
 
+"""
+    householder!(x,n)
 
+Takes `x::AbstractVector{T}` and its size `n` as input.
+Computes the associated householder reflector  v overwitten in x.
+The reflector matrix is H = I-tau * v * v'.
+Returns tau as first output and beta as second output where beta 
+is the first element of the output vector of H*x.
+"""
 @views function householder!(x::AbstractVector{T},n::Integer) where {T}
     if n == 1 && T <:Real
-        return convert(T, 0), x[1]
+        return T(0), real(x[1]) # no final 1x1 reflection for the real case
     end
-    xnorm = (n > 1 ? norm(x[2:end]) : zero(real(x[1])))
+    xnorm = norm(x[2:end]) 
     alpha = x[1]
     if !iszero(xnorm) || (n == 1 && !iszero(alpha))
-        beta = (real(alpha) > 0 ? -1 : +1) * hypot(abs(alpha),xnorm)
+        beta = (real(alpha) > 0 ? -1 : +1) * hypot(alpha,xnorm)
         tau = 1 - alpha / beta
         alpha = 1 / (alpha - beta)
         x[1] = 1
         x[2:n] .*= alpha
-        alpha = T(beta)
     else 
         tau = T(0)
-        x .= zeros(T, n)
-        alpha = T(0)
+        x .= 0
+        beta = real(T)(0)
     end
-    return tau, alpha
+    return tau, beta
 end
 
 @views function ger2!(tau::Number , v::StridedVector{T} , s::StridedVector{T},
@@ -41,6 +47,7 @@ end
     if tau2 isa Union{Bool,T}
         return LA.BLAS.ger!(tau2, v, s, A)
     else
+        iszero(tau2) && return 
         m = length(v)
         n = length(s)
         @inbounds for j = 1:n
@@ -101,7 +108,7 @@ end
 
         #Generate elementary reflector H(i) to annihilate A(i+2:n,i)
         stau,alpha = householder!(A[i+1:n,i],n-i)
-        E[i]   = real(alpha)
+        E[i]   = alpha
 
         mul!(W[i+1:n,i], A[i+1:n,i+1:n], A[i+1:n,i], 1, 0)  
         if i>1
@@ -123,6 +130,7 @@ end
     end)
     return
 end
+
 function setnb(n::Integer)
     if n<=12
         return max(n-4,1)
@@ -144,7 +152,7 @@ end
 
     nb  = setnb(n)
     A   = S.data
-    E   = similar(A, n - 1)
+    E   = similar(A, real(T), n - 1)
     tau = similar(A, n - 1)
     W   = similar(A, n, nb)
     update = similar(A, n - nb, n - nb)

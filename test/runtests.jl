@@ -26,7 +26,7 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 end
 
 @testset "SkewLinearAlgebra.jl" begin
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2, 20, 99]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2, 20, 153, 200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) * T(2))
         else
@@ -212,7 +212,7 @@ end
         @test cosh(B) ≈  Matrix(cosh(A))
         #@test tanh(B) ≈ tanh(A)
     end
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2,20,99]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2, 20, 153, 200]
         if T<:Integer
             A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
         else
@@ -339,4 +339,3 @@ end
         @test transpose(C.Rm)* C.Jm *C.Rm ≈ B[C.Pv, C.Pv]
     end
 end
-
