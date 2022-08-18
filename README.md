@@ -1,5 +1,6 @@
 # SkewLinearAlgebra
 
+To use this package, using the `LinearAlgebra` standard library is required.
 ```jl
 using LinearAlgebra
 using SkewLinearAlgebra
