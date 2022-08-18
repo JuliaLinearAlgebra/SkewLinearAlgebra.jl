@@ -3,7 +3,7 @@
 WARNING: Package still in development!
 ## SkewHermitian and SkewHermTridiagonal types
 
-This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$ and skew-hermitian matrices i.e $A=-A^*$.
+This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$ and complex skew-hermitian matrices i.e $A=-A^*$.
 It provides the matrix types `SkewHermitian` and `SkewHermTridiagonal`and implements the usual linear operations on such
 matrices by extending functions from Julia's `LinearAlgebra` standard library, including optimized
 algorithms that exploit this special matrix structure.
