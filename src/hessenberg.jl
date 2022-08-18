@@ -13,43 +13,26 @@ end
 
 LA.hessenberg(A::SkewHermitian)=hessenberg!(copyeigtype(A))
 
-# todo: add a comment explaining what this function returns
+
 @views function householder!(x::AbstractVector{T},n::Integer) where {T}
     if n == 1 && T <:Real
-<<<<<<< HEAD
         return convert(T, 0), x[1]
     end
     xnorm = (n > 1 ? norm(x[2:end]) : zero(real(x[1])))
     alpha = x[1]
     if !iszero(xnorm) || (n == 1 && !iszero(alpha))
         beta = (real(alpha) > 0 ? -1 : +1) * hypot(abs(alpha),xnorm)
-=======
-        return T(0), real(x[1]) # no final 1x1 reflection in the real case
-    end
-    xnorm = norm(x[2:end])
-    alpha = x[1]
-    if !iszero(xnorm) || 
-       (n == 1 && !iszero(alpha)) # sign reflection for 1x1 complex case
-        beta = (real(alpha) > 0 ? -1 : +1) * hypot(alpha,xnorm)
->>>>>>> 338103351bd235f2d1b76117f98920182551c96b
         tau = 1 - alpha / beta
         alpha = 1 / (alpha - beta)
         x[1] = 1
         x[2:n] .*= alpha
-<<<<<<< HEAD
         alpha = T(beta)
     else 
         tau = T(0)
         x .= zeros(T, n)
         alpha = T(0)
-=======
-    else 
-        tau = T(0)
-        x .= 0
-        beta = real(T)(0)
->>>>>>> 338103351bd235f2d1b76117f98920182551c96b
     end
-    return tau, beta
+    return tau, alpha
 end
 
 @views function ger2!(tau::Number , v::StridedVector{T} , s::StridedVector{T},
@@ -118,7 +101,7 @@ end
 
         #Generate elementary reflector H(i) to annihilate A(i+2:n,i)
         stau,alpha = householder!(A[i+1:n,i],n-i)
-        E[i]   = alpha
+        E[i]   = real(alpha)
 
         mul!(W[i+1:n,i], A[i+1:n,i+1:n], A[i+1:n,i], 1, 0)  
         if i>1
@@ -161,7 +144,7 @@ end
 
     nb  = setnb(n)
     A   = S.data
-    E   = similar(A, real(T), n - 1)
+    E   = similar(A, n - 1)
     tau = similar(A, n - 1)
     W   = similar(A, n, nb)
     update = similar(A, n - nb, n - nb)
@@ -187,4 +170,3 @@ end
     end
     return tau, E
 end
-
