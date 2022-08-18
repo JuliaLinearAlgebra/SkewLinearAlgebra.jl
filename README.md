@@ -148,32 +148,24 @@ H factor:
 
 The package also provides eigensolvers for  `SkewHermitian` matrices. The method to solve the eigenvalue problem is based on the algorithm described in Penke et al, "[High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem](https://arxiv.org/abs/1912.04062)" (2020).
 
-The function `eigen` returns the eigenvalues plus the real part of the eigenvectors and the imaginary part separeted.
+The function `eigen` returns a `Eigen`structure as the LinearAlgebra standard library:
 ```jl
-  julia> val,Qr,Qim=eigen(A)
-
-  julia> val
+julia> E = eigen(A)
+Eigen{ComplexF64, ComplexF64, Matrix{ComplexF64}, Vector{ComplexF64}}
+values:
 4-element Vector{ComplexF64}:
   0.0 + 11.934458713974193im
-  0.0 + 0.7541188264752758im
+  0.0 + 0.7541188264752741im
  -0.0 - 0.7541188264752989im
- -0.0 - 11.93445871397423im
-
-julia> Qr
-4×4 Matrix{Float64}:
- -0.49111     -0.508735     0.508735    0.49111
- -0.488014     0.471107    -0.471107    0.488014
- -0.143534     0.138561    -0.138561    0.143534
- -0.00717668   0.00692804  -0.00692804  0.00717668
-
-julia> Qim
-4×4 Matrix{Float64}:
-  0.0        0.0         0.0         0.0
- -0.176712   0.0931315   0.0931315  -0.176712
-  0.615785  -0.284619   -0.284619    0.615785
- -0.299303  -0.640561   -0.640561   -0.299303
-
+ -0.0 - 11.934458713974236im
+vectors:
+4×4 Matrix{ComplexF64}:
+    -0.49111+0.0im        -0.508735+0.0im           0.508735+0.0im           0.49111+0.0im
+   -0.488014-0.176712im    0.471107+0.0931315im    -0.471107+0.0931315im    0.488014-0.176712im
+   -0.143534+0.615785im    0.138561-0.284619im     -0.138561-0.284619im     0.143534+0.615785im
+ -0.00717668-0.299303im  0.00692804-0.640561im   -0.00692804-0.640561im   0.00717668-0.299303im
 ```
+
  The function `eigvals` provides the eigenvalues of $A$. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
 ```jl
  julia> eigvals(A)
