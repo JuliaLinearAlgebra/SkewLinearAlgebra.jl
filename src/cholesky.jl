@@ -10,6 +10,14 @@ struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:SkewHermTridiagonal{<:T},P<:Abs
     end
 end
 
+"""
+    SkewCholesky(Rm,Pv)
+
+Construct a `SkewCholesky` structure from the `UpperTriangular`
+matrix `Rm` and the permutation vector `Pv`. A matrix `Jm` of type `SkewHermTridiagonal`
+is build calling this function. 
+The `SkewCholesky` structure has three arguments: `Rm`,`Jm` and `Pv`.
+"""
 function SkewCholesky(Rm::UpperTriangular{<:T},Pv::AbstractVector{<:Integer}) where {T<:Real}
     n = size(Rm, 1)
     vec = zeros(T, n - 1)
@@ -87,6 +95,21 @@ end
 skewchol(A::SkewHermitian) = skewchol!(copyeigtype(A))
 skewchol!(A::AbstractMatrix) = @views  skewchol!(SkewHermitian(A))
 
+"""
+    skewchol(A)
+Computes a Cholesky-like factorization of A real skew-symmetric.
+The function returns a `SkewCholesky` structure composed of three arguments: 
+`Rm`,`Jm`,`Pv`. `Rm` is `UpperTriangular`, `Jm` is `SkewHermTridiagonal`, 
+`Pv` is an array of integers. Let `S` be the returned structure, then the factorization 
+is such that:
+```jl 
+
+transpose(S.Rm)*S.Jm*S.Rm = A[S.Pv,S.Pv]
+
+This factorization is issued from P. Benner et al, 
+"[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000). 
+```
+"""
 function skewchol(A::AbstractMatrix)
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
     return skewchol!(SkewHermitian(copyeigtype(A)))

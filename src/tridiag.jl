@@ -16,24 +16,31 @@ struct SkewHermTridiagonal{T, V<:AbstractVector{T}, Vim<:Union{AbstractVector{<:
     end
 end
 """
-    SkewHermTridiagonal(ev::V) where V <: AbstractVector
-Construct a skewhermitian tridiagonal matrix from the subdiagonal (`ev`).
-The result is of type `SkewHermTridiagonal`
+    SkewHermTridiagonal(ev::V, dvim::Vim) where {V <: AbstractVector, Vim <: AbstractVector{<:Real}}
+Construct a skewhermitian tridiagonal matrix from the subdiagonal (`ev`) 
+and the imaginary part of the main diagonal (`dvim`). The result is of type `SkewHermTridiagonal`
 and provides efficient specialized eigensolvers, but may be converted into a
 regular matrix with [`convert(Array, _)`](@ref) (or `Array(_)` for short).
 # Examples
 ```jldoctest
-julia> ev = [7, 8, 9]
+julia> ev = complex.([7, 8, 9] , [7, 8, 9])
 3-element Vector{Int64}:
- 7
- 8
- 9
-julia> SkewHermTridiagonal(ev)
-4×4 SkewHermTridiagonal{Int64, Vector{Int64}}:
- 0 -7  ⋅  ⋅
- 7  . -8  ⋅
- ⋅  8  . -9
- ⋅  ⋅  9  .
+ 7 + 7im
+ 8 + 8im
+ 9 + 9im
+
+ julia> dvim =  [1, 2, 3, 4]
+ 4-element Vector{Int64}:
+  1
+  2
+  3
+  4
+julia> SkewHermTridiagonal(ev, dvim)
+4×4 SkewHermTridiagonal{Complex{Int64}, Vector{Complex{Int64}}, Vector{Int64}}:
+ 0+1im -7+7im  0+0im  0+0im
+ 7-7im  0+2im -8+8im  0+0im
+ 0+0im -8+8im  0+3im -9+9im
+ 0+0im  0+0im  9+9im  0+4im
 ```
 """
 
@@ -61,9 +68,9 @@ julia> A = [1 2 3; 2 4 5; 3 5 6]
  3  5  6
 julia> SkewHermTridiagonal(A)
 3×3 SkewHermTridiagonal{Int64, Vector{Int64}}:
- . -2  ⋅
- 2  . -5
- ⋅  5  .
+ 0 -2  0
+ 2  0 -5
+ 0  5  0
 ```
 """
 function SkewHermTridiagonal(A::AbstractMatrix)
@@ -172,6 +179,14 @@ Base.real(M::SkewHermTridiagonal) = SkewHermTridiagonal(real.(M.ev))
 Base.transpose(S::SkewHermTridiagonal) = -S
 Base.adjoint(S::SkewHermTridiagonal{<:Real}) = -S
 Base.adjoint(S::SkewHermTridiagonal) = -S
+
+function LA.tr(S::SkewHermTridiagonal{T}) where T
+    if T<:Real || S.dvim === nothing
+        return zero(eltype(A.ev))
+    else 
+        return complex(zero(eltype(S.dvim)), sum(S.dvim))
+    end
+end
 
 Base.copy(S::LA.Adjoint{<:Any,<:SkewHermTridiagonal}) = SkewHermTridiagonal(map(x -> copy.(adjoint.(x)), (S.parent.ev,S.parent.dvim))...)
 
