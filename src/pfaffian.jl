@@ -60,13 +60,13 @@ pfaffian!(A::AbstractMatrix{<:BigInt}) = exactpfaffian!(A)
 pfaffian(A::AbstractMatrix{<:BigInt}) = pfaffian!(copy(A))
 
 function _pfaffian!(A::SkewHermitian{<:Real})
-    n=size(A,1)
-    if n%2==1
-        return convert(eltype(A.data),0)
+    n = size(A,1)
+    if n%2 == 1
+        return convert(eltype(A.data), 0)
     end 
-    H=hessenberg(A)
-    pf=convert(eltype(A.data),1)
-    T=H.H
+    H = hessenberg(A)
+    pf = convert(eltype(A.data), 1)
+    T = H.H
     for i=1:2:n-1
         pf *= -T.ev[i]
     end
@@ -80,4 +80,26 @@ pfaffian(A::AbstractMatrix{<:Real}) = pfaffian!(copy(A))
 function pfaffian!(A::AbstractMatrix{<:Real})
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
     return _pfaffian!(SkewHermitian(A))
+end
+
+function _logabspfaffian!(A::SkewHermitian{<:Real})
+    n = size(A, 1)
+    if n%2 == 1
+        throw(ArgumentError("Pfaffian of singular matrix is zero, log(0) is undefined"))
+    end 
+    H = hessenberg(A)
+    logpf = convert(eltype(A.data), 1)
+    T = H.H
+    for i=1:2:n-1
+        logpf += log(abs(T.ev[i]))
+    end
+    return logpf
+end
+logabspfaffian!(A::SkewHermitian{<:Real})= _logabspfaffian!(A)
+logabspfaffian(A::SkewHermitian{<:Real})= logabspfaffian!(copyeigtype(A))
+logabspfaffian(A::AbstractMatrix{<:Real}) = logabspfaffian!(copy(A))
+
+function logabspfaffian!(A::AbstractMatrix{<:Real})
+    isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
+    return _logabspfaffian!(SkewHermitian(A))
 end

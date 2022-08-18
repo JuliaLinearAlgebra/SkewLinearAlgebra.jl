@@ -160,6 +160,14 @@ function Base.copyto!(dest::SkewHermTridiagonal, src::SkewHermTridiagonal)
     end
 end
 
+function LA.Tridiagonal(A::SkewHermTridiagonal)
+    if A.dvim !== nothing
+        return Tridiagonal(A.ev,complex.(0, A.dvim),-A.ev)
+    else
+        return Tridiagonal(A.ev,zeros(eltype(A.ev), length(A.ev) + 1),-A.ev)
+    end
+end
+
 #Elementary operations
 Base.conj(M::SkewHermTridiagonal{<:Real}) = SkewHermTridiagonal(conj.(M.ev))
 Base.conj(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(conj.(M.ev),(M.dvim !==nothing ? -M.dvim : nothing))
@@ -192,6 +200,30 @@ Base.copy(S::LA.Adjoint{<:Any,<:SkewHermTridiagonal}) = SkewHermTridiagonal(map(
 
 isskewhermitian(S::SkewHermTridiagonal) = true
 
+@views function LA.rdiv!(A::SkewHermTridiagonal, b::Number) 
+    LA.rdiv!(A.ev, checkreal(b))
+    if A.dvim !== nothing
+        LA.rdiv!(A.dvim, checkreal(b))
+    end
+end
+@views function LA.ldiv!(b::Number,A::SkewHermTridiagonal) 
+    LA.ldiv!(checkreal(b), A.ev)
+    if A.dvim !== nothing
+        LA.ldiv!(checkreal(b), A.dvim)
+    end
+end
+@views function LA.rmul!(A::SkewHermTridiagonal, b::Number) 
+    LA.rmul!(A.ev, checkreal(b))
+    if A.dvim !== nothing
+        LA.rmul!(A.dvim, checkreal(b))
+    end
+end
+@views function LA.lmul!(b::Number,A::SkewHermTridiagonal) 
+    LA.lmul!(checkreal(b), A.ev)
+    if A.dvim !== nothing
+        LA.lmul!(checkreal(b), A.dvim)
+    end
+end
 
 function Base.:+(A::SkewHermTridiagonal, B::SkewHermTridiagonal) 
     if A.dvim !== nothing && B.dvim !== nothing
@@ -342,7 +374,6 @@ end
                 end
                 LA._modify!(_add, β[m-1]*x₀+α[m]*x₊*1im , C, (m, j))
             end
-
         end
     end
 
@@ -381,7 +412,6 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
         end
         r += dot(adjoint(-adjoint(sub))*x₀, y[nx])
     end
-
     return r
 end
 
@@ -439,7 +469,6 @@ LA.eigvals(A::SkewHermTridiagonal{T,V,Vim}, vl::Real,vh::Real)  where {T,V,Vim}=
     H = SymTridiagonal(zeros(eltype(S.ev), n), S.ev)
     vals = eigvals!(H)
     return vals .= .-vals
-
 end
 
 @views function skewtrieigvals!(S::SkewHermTridiagonal{T,V,Vim},irange::UnitRange) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
@@ -447,7 +476,6 @@ end
     H = SymTridiagonal(zeros(eltype(S.ev), n), S.ev)
     vals = eigvals!(H, irange)
     return vals .= .-vals
-
 end
 
 @views function skewtrieigvals!(S::SkewHermTridiagonal{T,V,Vim},vl::Real,vh::Real) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
@@ -460,8 +488,14 @@ end
 @views function skewtrieigen!(S::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
 
     n = size(S, 1)
-    H = SymTridiagonal(zeros(T,n), S.ev)
-    trisol = eigen!(H)
+    unshiftedH = SymTridiagonal(zeros(T, n), S.ev)
+    shift = norm(unshiftedH)
+    #shiftedH = SymTridiagonal(ones(T, n) .* (shift*shift), S.ev)
+    #trisol = eigen!(shiftedH)
+    #trisol.values ./= shift
+    #trisol.values .-= shift*shift
+    trisol = eigen!(unshiftedH.*shift)
+    trisol.values ./= shift
     vals  = trisol.values*1im
     vals .*= -1
     Qdiag = complex(similar(trisol.vectors,n,n))
@@ -474,11 +508,9 @@ end
             Qdiag[i+1,j] = complex(0, trisol.vectors[i+1,j] * c)
             c *= (-1)
         end
-
     end
     if n%2==1
         Qdiag[n,:] = trisol.vectors[n,:] * c
-
     end
     return Eigen(vals, Qdiag)
 end
@@ -498,7 +530,9 @@ end
 @views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
     n=size(A,1)
     S, Q = SkewHermTridiagonaltoSymTridiagonal(A)
-    Eig=eigen!(S)
+    shift = norm(S)
+    Eig=eigen!(S.*shift)
+    Eig.values ./= shift
     Vec = similar(A.ev,n,n)
     mul!(Vec,Q,Eig.vectors)
     return Eigen(Eig.values.*(-1im),Vec)
@@ -514,7 +548,6 @@ LA.eigen(A::SkewHermTridiagonal{T,V,Vim}) where {T,V<:AbstractVector{T},Vim}=LA.
 LA.eigvecs(A::SkewHermTridiagonal{T,V,Vim})  where {T,V<:AbstractVector{T},Vim}= eigen(A).vectors
 
 @views function LA.svdvals!(A::SkewHermTridiagonal)
-    n=size(A,1)
     vals = eigvals!(A)
     vals .= abs.(vals)
     return sort!(real(vals); rev=true)

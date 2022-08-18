@@ -234,6 +234,7 @@ end
 
 Base.sinh(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewhermitian!(exp(A))
 Base.cosh(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}}) = hermitian!(exp(A))
+
 @views function Base.cosh(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}}) 
     B = hermitian!(exp(A))
     Cosh = complex.(real(B),-imag(B))

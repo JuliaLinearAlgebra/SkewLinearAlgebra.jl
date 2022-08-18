@@ -79,8 +79,9 @@ end
     H1 = Hessenberg{typeof(zero(eltype(S.data))),typeof(T),typeof(S.data),typeof(tau),typeof(false)}(T, 'L', S.data, tau, false)
     A = S.data
     H = SymTridiagonal(zeros(eltype(E), n), E)
-    trisol = eigen!(H)
-
+    shift = norm(H)
+    trisol = eigen!(H.*shift)
+    trisol.values ./= shift
     vals  = trisol.values * 1im
     vals .*= -1
     Qdiag = trisol.vectors
