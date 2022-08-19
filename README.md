@@ -18,10 +18,11 @@ In particular, the package provides the following optimized functions for `SkewH
 - Tridiagonal reduction: `hessenberg`
 - Eigensolvers: `eigen`, `eigvals`
 - SVD: `svd`, `svdvals`
-- Trigonometric functions:`exp`, `cis`,`cos`,`sin`,`tan`,`sinh`,`cosh`,`tanh`
+- Trigonometric functions:`exp`, `cis`,`cos`,`sin`,`sinh`,`cosh`,`sincos`
 
 Only for `SkewHermitian` matrices:
 - Cholesky-like factorization: `skewchol`
+- Pfaffian of real `SkewHermitian`: `pfaffian`, `logabspfaffian`
 
 (Currently, we only provide specialized algorithms for real skew-Hermitian/skew-symmetric matrices.
 Methods for complex skew-Hermitian matrices transform these at negligible cost in complex `Hermitian` 
@@ -311,3 +312,24 @@ julia> R.Pv
 true
 ```
 
+## Pfaffian
+
+The determinant of a real skew-Hermitian maxtrix is a perfect square. 
+The pfaffian of A is a signed number such that `pfaffian(A)^2 = det(A)`.
+Since the pfaffian may overflow, it may be convenient to compute the logarithm
+of its absolute value. `logabspfaffian(A)` returns a tuple containing the logarithm 
+of the absolute value of the pfaffian and the sign of the pfaffian.
+```jl
+julia> A = skewhermitian(rand(4,4))
+4×4 SkewHermitian{Float64, Matrix{Float64}}:
+  0.0         0.0308807   0.190193   -0.0601449
+ -0.0308807   0.0        -0.251285    0.224804
+ -0.190193    0.251285    0.0         0.0202728
+  0.0601449  -0.224804   -0.0202728   0.0
+
+julia> pfaffian(A)
+-0.027016439325052065
+
+julia> logabspfaffian(A)
+(-2.6113097343694056, -1.0)
+```

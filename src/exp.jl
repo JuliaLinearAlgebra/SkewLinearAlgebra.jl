@@ -1,13 +1,13 @@
 # This file is a part of Julia. License is MIT: https://julialang.org/license
 
-function skewexp!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
+function skewexp!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A, 1)
     
     if typeof(A) <:SkewHermitian
-        n == 1 && return fill(1, 1, 1)
+        n == 1 && return fill(T(1), 1, 1)
         vals, Qr, Qim = skeweigen!(A)
     else
-        n == 1 && return fill(1, 1, 1)
+        n == 1 && return fill(T(1), 1, 1)
         E = eigen!(A)
         vals = E.values
         Qr = real(E.vectors)
@@ -57,9 +57,9 @@ end
 
 Base.exp(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewexp!(copyeigtype(A))
 
-@views function skewcis!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
+@views function skewcis!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A, 1)
-    n == 1 && Hermitian(fill(1, 1, 1))
+    n == 1 && Hermitian(fill(T(1), 1, 1))
     Eig = eigen!(A)
     Q = Eig.vectors
     temp = similar(Q, n, n)
@@ -89,13 +89,13 @@ end
     return Hermitian(Cis)
 end
 
-@views function skewcos!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
+@views function skewcos!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A,1)
     if typeof(A) <:SkewHermitian
-        n == 1 && return Symmetric(fill(1, 1, 1))
+        n == 1 && return Symmetric(fill(T(1), 1, 1))
         vals, Qr, Qim = skeweigen!(A)
     else
-        n == 1 && return Symmetric(fill(1, 1, 1))
+        n == 1 && return Symmetric(fill(T(1), 1, 1))
         E = eigen!(A)
         vals = E.values
         Qr = real(E.vectors)
@@ -138,13 +138,13 @@ end
     return Hermitian(Cos)
 end
 
-@views function skewsin!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
+@views function skewsin!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A, 1)
     if typeof(A) <:SkewHermitian
-        n == 1 && return fill(0, 1, 1)
+        n == 1 && return fill(T(0), 1, 1)
         vals, Qr, Qim = skeweigen!(A)
     else
-        n == 1 && return fill(0, 1, 1)
+        n == 1 && return fill(T(0), 1, 1)
         E = eigen!(A)
         vals = E.values
         Qr = real(E.vectors)
@@ -192,13 +192,13 @@ Base.cis(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewcis!(copyeigtype(A))
 Base.cos(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewcos!(copyeigtype(A))
 Base.sin(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsin!(copyeigtype(A))
 
-@views function skewsincos!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
+@views function skewsincos!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A,1)
     if typeof(A) <:SkewHermitian
-        n == 1 && return fill(0, 1, 1), Symmetric(fill(1, 1, 1))
+        n == 1 && return fill(T(0), 1, 1), Symmetric(fill(T(1), 1, 1))
         vals, Qr, Qim = skeweigen!(A)
     else
-        n == 1 && return fill(0, 1, 1), Symmetric(fill(1, 1, 1))
+        n == 1 && return fill(T(0), 1, 1), Symmetric(fill(T(1), 1, 1))
         E = eigen!(A)
         vals = E.values
         Qr = real(E.vectors)
@@ -251,7 +251,7 @@ end
 end
 Base.sincos(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsincos!(copyeigtype(A))
 Base.sinh(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewhermitian!(exp(A))
-Base.cosh(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}}) = hermitian!(exp(A))
+Base.cosh(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real} = hermitian!(exp(A))
 
 @views function Base.cosh(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}}) 
     B = hermitian!(exp(A))
