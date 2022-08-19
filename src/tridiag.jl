@@ -434,7 +434,7 @@ end
 end
 
 @views function LA.eigvals!(A::SkewHermTridiagonal{T,V,Vim}, sortby::Union{Function,Nothing}=nothing) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
-    S = SkewHermTridiagonaltoSymTridiagonal(A)[1]
+    S = to_symtridiagonal(A)[1]
     vals = eigvals!(S)
     !isnothing(sortby) && sort!(vals, by=sortby)
     reverse!(vals)
@@ -443,14 +443,14 @@ end
 
 @views function LA.eigvals!(A::SkewHermTridiagonal{T,V,Vim}, irange::UnitRange) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
     n = size(A,1)
-    S = SkewHermTridiagonaltoSymTridiagonal(A)[1]
+    S = to_symtridiagonal(A)[1]
     irange2 = .-(irange.- n)
     vals = eigvals!(S, irange2)
     return complex.(0, -vals)
 end
 
 @views function LA.eigvals!(A::SkewHermTridiagonal{T,V,Vim}, vl::Real,vh::Real) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
-    S = SkewHermTridiagonaltoSymTridiagonal(A)[1]
+    S = to_symtridiagonal(A)[1]
     vals = eigvals!(S, -vh , -vl)
     return complex.(0, vals)
 end
@@ -521,7 +521,7 @@ end
 end
 @views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
     n = size(A, 1)
-    S, Q = SkewHermTridiagonaltoSymTridiagonal(A)
+    S, Q = to_symtridiagonal(A)
     Eig = eigen!(S)
     Vec = similar(A.ev, n, n)
     mul!(Vec, Q, Eig.vectors)
@@ -529,7 +529,7 @@ end
 end
 @views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
     n=size(A,1)
-    S, Q = SkewHermTridiagonaltoSymTridiagonal(A)
+    S, Q = to_symtridiagonal(A)
     shift = norm(S)
     Eig=eigen!(S.*shift)
     Eig.values ./= shift
@@ -578,7 +578,7 @@ end
 
 LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
 
-@views function SkewHermTridiagonaltoSymTridiagonal(A::SkewHermTridiagonal{T}) where {T<:Complex}
+@views function to_symtridiagonal(A::SkewHermTridiagonal{T}) where {T<:Complex}
     n = size(A, 1)
     V = similar(A.ev, n - 1)
     Q = similar(A.ev, n)
