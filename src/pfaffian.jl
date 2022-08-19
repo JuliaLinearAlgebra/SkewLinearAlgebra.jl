@@ -90,10 +90,12 @@ function _logabspfaffian!(A::SkewHermitian{<:Real})
     H = hessenberg(A)
     logpf = convert(eltype(A.data), 1)
     T = H.H
+    sgn = one(eltype(A.data))
     for i=1:2:n-1
         logpf += log(abs(T.ev[i]))
+        sgn *= sign(T.ev[i])
     end
-    return logpf
+    return logpf, sgn
 end
 logabspfaffian!(A::SkewHermitian{<:Real})= _logabspfaffian!(A)
 logabspfaffian(A::SkewHermitian{<:Real})= logabspfaffian!(copyeigtype(A))

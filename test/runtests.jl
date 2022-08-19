@@ -26,7 +26,7 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 end
 
 @testset "SkewLinearAlgebra.jl" begin
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2, 20, 153, 200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [1, 2, 20, 153, 200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) * T(2))
         else
@@ -81,10 +81,10 @@ end
         @test k ≈ dot(A.data, A.data)
         if n > 1
             @test getindex(A, 2, 1) == A.data[2,1]
+            setindex!(A,3, n, n-1)
+            @test getindex(A, n, n-1) == T(3)
+            @test getindex(A, n-1, n) == T(-3)
         end
-        setindex!(A,3, n, n-1)
-        @test getindex(A, n, n-1) == T(3)
-        @test getindex(A, n-1, n) == T(-3)
       
         x = rand(T, n)
         y = zeros(T, n)
@@ -137,7 +137,7 @@ end
 end
 
 @testset "hessenberg.jl" begin
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2,20,153,200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2, 20,153,200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) *T(2))
         else
@@ -164,7 +164,7 @@ end
 end
 
 @testset "eigen.jl" begin
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [2, 20, 153, 200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [1, 2, 20, 153, 200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)* T(2))
         else
@@ -196,7 +196,7 @@ end
 
 @testset "exp.jl" begin
 
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2,20,153,200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [1, 2,20,153,200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n)*T(2))
         else
@@ -212,7 +212,7 @@ end
         @test cosh(B) ≈  Matrix(cosh(A))
         #@test tanh(B) ≈ tanh(A)
     end
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2, 20, 153, 200]
+    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [ 2, 20, 153, 200]
         if T<:Integer
             A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
         else
@@ -232,7 +232,7 @@ end
 
 
 @testset "tridiag.jl" begin 
-    for T in (Int32, Int64, Float32, Float64, ComplexF32, ComplexF64), n in [2, 20, 153, 200]
+    for T in (Int32, Int64, Float32, Float64, ComplexF32, ComplexF64), n in [ 2, 20, 153, 200]
         if T<:Integer
             C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
         else
@@ -240,7 +240,7 @@ end
         end
         A = SLA.SkewHermTridiagonal(C)
         @test SLA.isskewhermitian(A) == true
-        @test Tridiagonal(Matrix(A)) ≈ Tridiagonal(Matrix(C))
+        @test Tridiagonal(A) ≈ Tridiagonal(C)
         
         
         if T<:Integer
@@ -282,6 +282,14 @@ end
         @test Matrix(A + A) == Matrix(A * 2)
         @test Matrix(A- 2 * A) == Matrix(-A)
         @test dot(x, A, y) ≈ dot(x, Matrix(A), y)
+        if T<:Complex
+            z = rand(T)
+            @test A*z ≈ Tridiagonal(A)*z
+            @test z*A ≈ z*Tridiagonal(A)
+            @test A/z ≈ Tridiagonal(A)/z
+        end
+        #@test A\x ≈ Matrix(A)\x
+        #@test y' /A ≈ y' / Matrix(A)
         B = Matrix(A)
         @test A[1,2] == B[1,2]
         @test size(A,1) == n
@@ -312,7 +320,7 @@ end
 end
 
 @testset "pfaffian.jl" begin
-    for n in [2,3,4,5,6,8,10,20,40]
+    for n in [1, 2,3,4,5,6,8,10,20,40]
         A = SLA.skewhermitian(rand(-10:10,n,n) * 2)
         Abig = BigInt.(A.data)
         @test SLA.pfaffian(A) ≈ SLA.pfaffian(Abig)  == SLA.pfaffian(SLA.SkewHermitian(Abig))
@@ -326,7 +334,7 @@ end
 end
 
 @testset "cholesky.jl" begin
-    for T in (Int32, Int64, Float32, Float64), n in [2,20,153,200]
+    for T in (Int32, Int64, Float32, Float64), n in [2, 20, 153, 200]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n)*T(2))
         else
