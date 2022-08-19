@@ -151,14 +151,14 @@ end
     end
 
     for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64)
-        A=zeros(T,4,4)
-        A[2:4,1]=ones(T,3)
-        A[1,2:4]=-ones(T,3)
-        A=SLA.SkewHermitian(A)
-        B=Matrix(A)
-        HA=hessenberg(A)
-        HB=hessenberg(B)
-        @test Matrix(HA.H)≈Matrix(HB.H)
+        A = zeros(T, 4, 4)
+        A[2:4,1] = ones(T,3)
+        A[1,2:4] = -ones(T,3)
+        A = SLA.SkewHermitian(A)
+        B = Matrix(A)
+        HA = hessenberg(A)
+        HB = hessenberg(B)
+        @test Matrix(HA.H) ≈ Matrix(HB.H)
     end
     
 end
@@ -207,26 +207,32 @@ end
         @test  Matrix(cis(A)) ≈ exp(Matrix(A)*1im)
         @test cos(B) ≈ Matrix(cos(A))
         @test sin(B) ≈  Matrix(sin(A))
-        #@test tan(B)≈tan(A)
+        sc = sincos(A)
+        @test sc[1]≈ sin(B)
+        @test sc[2]≈ Hermitian(cos(B))
         @test sinh(B) ≈  Matrix(sinh(A))
         @test cosh(B) ≈  Matrix(cosh(A))
-        #@test tanh(B) ≈ tanh(A)
     end
     for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [ 2, 20, 153, 200]
         if T<:Integer
             A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
         else
-            A = SLA.SkewHermTridiagonal(rand(T, n - 1))
+            if T<:Complex 
+                A = SLA.SkewHermTridiagonal(rand(T, n - 1), rand(real(T), n))
+            else
+                A = SLA.SkewHermTridiagonal(rand(T, n - 1))
+            end
         end
         B = Matrix(A)
         @test exp(B) ≈ exp(A)
         @test  Matrix(cis(A)) ≈ exp(Matrix(A)*1im)
         @test cos(B) ≈ Matrix(cos(A))
         @test sin(B) ≈  Matrix(sin(A))
-        #@test tan(B)≈tan(A)
+        sc = sincos(A)
+        @test sc[1]≈ sin(B)
+        @test sc[2]≈ Hermitian(cos(B))
         @test sinh(B) ≈  Matrix(sinh(A))
         @test cosh(B) ≈  Matrix(cosh(A))
-        #@test tanh(B) ≈ tanh(A)
     end
 end
 
@@ -250,7 +256,11 @@ end
             x = rand(convert(Array{T},-10:10), n)
             y = rand(convert(Array{T},-10:10), n) 
         else
-            A = SLA.SkewHermTridiagonal(rand(T, n - 1))
+            if T<:Complex 
+                A = SLA.SkewHermTridiagonal(rand(T, n - 1), rand(real(T), n))
+            else
+                A = SLA.SkewHermTridiagonal(rand(T, n - 1))
+            end
             C = randn(T, n, n)
             D1 = randn(T, n, n) 
             x = randn(T, n)
@@ -264,13 +274,11 @@ end
         @test size(A) == (n, n)
         @test size(A,1) == n
         if A.dvim !== nothing 
-            @test conj(A) == SLA.SkewHermTridiagonal(conj.(A.ev),conj.(A.dvim))
+            @test conj(A) == SLA.SkewHermTridiagonal(conj.(A.ev),-A.dvim)
             @test copy(A) == SLA.SkewHermTridiagonal(copy(A.ev),copy(A.dvim))
-            @test imag(A) == SLA.SymTridiagonal(imag.(A.dvim),imag.(A.ev))
         else
             @test conj(A) == SLA.SkewHermTridiagonal(conj.(A.ev))
             @test copy(A) ==SLA.SkewHermTridiagonal(copy(A.ev))
-            @test imag(A) == SLA.SymTridiagonal(zeros(eltype(imag(A.ev[1])),n),imag.(A.ev))
         end
         @test real(A) == SLA.SkewHermTridiagonal(real.(A.ev))
         @test transpose(A) == -A
@@ -287,7 +295,13 @@ end
             @test A*z ≈ Tridiagonal(A)*z
             @test z*A ≈ z*Tridiagonal(A)
             @test A/z ≈ Tridiagonal(A)/z
+            @test z\ A ≈ z\Tridiagonal(A)   
         end
+        B = Matrix(A)
+        @test tr(A) ≈ tr(B)
+        B = copy(A)
+        @test B == A
+
         #@test A\x ≈ Matrix(A)\x
         #@test y' /A ≈ y' / Matrix(A)
         B = Matrix(A)
@@ -297,6 +311,7 @@ end
         EA = eigen(A)
         EB = eigen(B)
         Q = EA.vectors
+        @test eigvecs(A) ≈ Q
         @test Q * diagm(EA.values) * adjoint(Q) ≈ B
         valA = imag(EA.values)
         valB = imag(EB.values)
@@ -313,7 +328,7 @@ end
         @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
         #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
         for f in (real, imag)
-            @test f(A) == f(Matrix(A))
+            @test Matrix(f(A)) == f(Matrix(A))
         end
 
     end
