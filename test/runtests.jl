@@ -342,7 +342,7 @@ end
             @test SLA.pfaffian(Abig)^2 == det(Abig)
         end
         @test Float64(SLA.pfaffian(Abig)^2) ≈ (iseven(n) ? det(Float64.(A)) : 0.0)
-        logpf, sign = SLA.logpfaffian(A)
+        logpf, sign = SLA.logabspfaffian(A)
         @test SLA.pfaffian(A) ≈ sign * exp(logpf)
     end
     # issue #49
