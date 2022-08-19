@@ -49,6 +49,7 @@ LA.eigvals(A::SkewHermitian, vl::Real,vh::Real) =
 
 @views function skeweigvals!(S::SkewHermitian{<:Real})
     n = size(S.data, 1)
+    n == 1 && return [S.data[1,1]]
     E = skewblockedhess!(S)[2]
     H = SymTridiagonal(zeros(eltype(E), n), E)
     vals = eigvals!(H)
@@ -57,6 +58,7 @@ end
 
 @views function skeweigvals!(S::SkewHermitian{<:Real},irange::UnitRange)
     n = size(S.data,1)
+    n == 1 && return [S.data[1,1]]
     E = skewblockedhess!(S)[2]
     H = SymTridiagonal(zeros(eltype(E), n), E)
     vals = eigvals!(H,irange)
@@ -65,18 +67,21 @@ end
 
 @views function skeweigvals!(S::SkewHermitian{<:Real},vl::Real,vh::Real)
     n = size(S.data,1)
+    n == 1 && imag(S.data[1,1]) > vl && imag(S.data[1,1]) < vh && return [S.data[1,1]]
     E = skewblockedhess!(S)[2]
     H = SymTridiagonal(zeros(eltype(E), n), E)
     vals = eigvals!(H,vl,vh)
     return vals .= .-vals
 end
 
-@views function skeweigen!(S::SkewHermitian{<:Real})
+@views function skeweigen!(S::SkewHermitian{T}) where {T<:Real}
     n = size(S.data, 1)
-
+    if n == 1
+        return [S.data[1,1]], ones(T,1,1), zeros(T,1,1)
+    end
     tau,E = skewblockedhess!(S)
-    T = SkewHermTridiagonal(E)
-    H1 = Hessenberg{typeof(zero(eltype(S.data))),typeof(T),typeof(S.data),typeof(tau),typeof(false)}(T, 'L', S.data, tau, false)
+    Tr = SkewHermTridiagonal(E)
+    H1 = Hessenberg{typeof(zero(eltype(S.data))),typeof(Tr),typeof(S.data),typeof(tau),typeof(false)}(Tr, 'L', S.data, tau, false)
     A = S.data
     H = SymTridiagonal(zeros(eltype(E), n), E)
     shift = norm(H)
