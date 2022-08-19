@@ -114,6 +114,8 @@ function skewhermitian!(A::AbstractMatrix{T}) where {T<:Number}
     end
     return SkewHermitian(A)
 end
+LA.Tridiagonal(A::SkewHermitian) = Tridiagonal(A.data)
+
 
 #Classic operators on a matrix
 Base.isreal(A::SkewHermitian) = isreal(A.data)
@@ -204,12 +206,12 @@ for op in (:*, :/, :\)
 end
 function checkreal(x::Number)
     isreal(x) || throw(ArgumentError("in-place scaling of SkewHermitian requires a real scalar"))
-    return real(a)
+    return real(x)
 end
-LA.rdiv!(A::SkewHermitian, b::Number) = LA.rdiv!(A.data, checkreal(b))
-LA.ldiv!(b::Number, A::SkewHermitian) = LA.ldiv!(checkreal(b), A.data)
-LA.rmul!(A::SkewHermitian, b::Number) = LA.rmul!(A.data, checkreal(b))
-LA.lmul!(b::Number, A::SkewHermitian) = LA.lmul!(checkreal(b), A.data)
+LA.rdiv!(A::SkewHermitian, b::Number) = rdiv!(A.data, checkreal(b))
+LA.ldiv!(b::Number, A::SkewHermitian) = ldiv!(checkreal(b), A.data)
+LA.rmul!(A::SkewHermitian, b::Number) = rmul!(A.data, checkreal(b))
+LA.lmul!(b::Number, A::SkewHermitian) = lmul!(checkreal(b), A.data)
 
 for f in (:det, :logdet, :lu, :lu!, :lq, :lq!, :qr, :qr!)
     @eval LA.$f(A::SkewHermitian) = LA.$f(A.data)

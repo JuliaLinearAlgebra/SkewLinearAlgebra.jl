@@ -240,7 +240,7 @@ end
         end
         A = SLA.SkewHermTridiagonal(C)
         @test SLA.isskewhermitian(A) == true
-        @test Tridiagonal(Matrix(A)) ≈ Tridiagonal(Matrix(C))
+        @test Tridiagonal(A) ≈ Tridiagonal(C)
         
         
         if T<:Integer
@@ -282,6 +282,14 @@ end
         @test Matrix(A + A) == Matrix(A * 2)
         @test Matrix(A- 2 * A) == Matrix(-A)
         @test dot(x, A, y) ≈ dot(x, Matrix(A), y)
+        if T<:Complex
+            z = rand(T)
+            @test A*z ≈ Tridiagonal(A)*z
+            @test z*A ≈ z*Tridiagonal(A)
+            @test A/z ≈ Tridiagonal(A)/z
+        end
+        #@test A\x ≈ Matrix(A)\x
+        #@test y' /A ≈ y' / Matrix(A)
         B = Matrix(A)
         @test A[1,2] == B[1,2]
         @test size(A,1) == n
