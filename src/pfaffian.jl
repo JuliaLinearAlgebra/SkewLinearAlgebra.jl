@@ -96,7 +96,7 @@ function _logabspfaffian!(A::SkewHermitian{<:Real})
     sgn = one(eltype(H))
     for i=1:2:n-1
         logpf += log(abs(T.ev[i]))
-        sgn *= sign(T.ev[i])
+        sgn *= sign(-T.ev[i])
     end
     return logpf, sgn
 end
