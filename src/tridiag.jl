@@ -259,10 +259,12 @@ end
 @views function LA.ldiv!(b::AbstractVecOrMat,A::SkewHermTridiagonal) 
     return b / Tridiagonal(A)
 end
+
 @views function LA.rmul!(A::SkewHermTridiagonal, b::AbstractVecOrMat) 
     y = similar(A, size(A,1), size(b,2))
     return mul!(y,Tridiagonal(A),b)
 end
+
 @views function LA.lmul!(b::AbstractVecOrMat,A::SkewHermTridiagonal)
     y = similar(A, size(b,1), size(A,2)) 
     return mul!(y, b, Tridiagonal(A))
