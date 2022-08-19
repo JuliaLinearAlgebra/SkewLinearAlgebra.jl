@@ -319,4 +319,7 @@ isskewhermitian
 SkewHermitian
 SkewHermTridiagonal
 skewchol
+pfaffian
+logabspfaffian
 ```
+- link to [`SkewHermitian`](@ref)
