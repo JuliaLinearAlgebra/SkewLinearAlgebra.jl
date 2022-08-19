@@ -61,11 +61,9 @@ pfaffian(A::AbstractMatrix{<:BigInt}) = pfaffian!(copy(A))
 
 function _pfaffian!(A::SkewHermitian{<:Real})
     n = size(A,1)
-    if n%2 == 1
-        return convert(eltype(A.data), 0)
-    end 
-    H = hessenberg(A)
-    pf = convert(eltype(A.data), 1)
+    isodd(n) && return zero(eltype(A))
+    H = hessenberg!(A)
+    pf = one(eltype(A))
     T = H.H
     for i=1:2:n-1
         pf *= -T.ev[i]
@@ -91,13 +89,11 @@ end
 
 function _logabspfaffian!(A::SkewHermitian{<:Real})
     n = size(A, 1)
-    if n%2 == 1
-        throw(ArgumentError("Pfaffian of singular matrix is zero, log(0) is undefined"))
-    end 
-    H = hessenberg(A)
-    logpf = convert(eltype(A.data), 1)
+    isodd(n) && return convert(eltype(A), -Inf), zero(eltype(A))
+    H = hessenberg!(A)
+    logpf = zero(eltype(H))
     T = H.H
-    sgn = one(eltype(A.data))
+    sgn = one(eltype(H))
     for i=1:2:n-1
         logpf += log(abs(T.ev[i]))
         sgn *= sign(T.ev[i])
