@@ -19,6 +19,8 @@ export
     to_symtridiagonal,
     pfaffian,
     pfaffian!,
+    logabspfaffian,
+    logabspfaffian!,
     skewchol,
     skewchol!
 

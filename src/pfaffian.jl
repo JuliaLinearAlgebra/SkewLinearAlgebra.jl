@@ -75,6 +75,13 @@ end
 
 pfaffian!(A::SkewHermitian{<:Real})= _pfaffian!(A)
 pfaffian(A::SkewHermitian{<:Real})= pfaffian!(copyeigtype(A))
+"""
+    pfaffian(A)
+
+Returns the pfaffian of `A` where a is a real skew-Hermitian matrix.
+If `A` is not of type `SkewHermitian{<:Real}`, then `isskewhermitian(A)`
+is performed to ensure that `A = -A'`
+"""
 pfaffian(A::AbstractMatrix{<:Real}) = pfaffian!(copy(A))
 
 function pfaffian!(A::AbstractMatrix{<:Real})
@@ -99,6 +106,14 @@ function _logabspfaffian!(A::SkewHermitian{<:Real})
 end
 logabspfaffian!(A::SkewHermitian{<:Real})= _logabspfaffian!(A)
 logabspfaffian(A::SkewHermitian{<:Real})= logabspfaffian!(copyeigtype(A))
+"""
+    logabspfaffian(A)
+
+Returns a tuple with the log of the absolute value of the pfaffian of `A` as first output
+and the sign of the pfaffian as second output. A must be a real skew-Hermitian matrix.
+If `A` is not of type `SkewHermitian{<:Real}`, then `isskewhermitian(A)`
+is performed to ensure that `A = -A'`
+"""
 logabspfaffian(A::AbstractMatrix{<:Real}) = logabspfaffian!(copy(A))
 
 function logabspfaffian!(A::AbstractMatrix{<:Real})
