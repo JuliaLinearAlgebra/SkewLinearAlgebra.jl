@@ -301,7 +301,6 @@ end
         @test tr(A) ≈ tr(B)
         B = copy(A)
         @test B == A
-
         #@test A\x ≈ Matrix(A)\x
         #@test y' /A ≈ y' / Matrix(A)
         B = Matrix(A)

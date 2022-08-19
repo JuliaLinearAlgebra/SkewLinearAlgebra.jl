@@ -20,7 +20,7 @@ end
 Construct a skewhermitian tridiagonal matrix from the subdiagonal (`ev`) 
 and the imaginary part of the main diagonal (`dvim`). The result is of type `SkewHermTridiagonal`
 and provides efficient specialized eigensolvers, but may be converted into a
-regular matrix with [`convert(Array, _)`](@ref) (or `Array(_)` for short).
+regular matrix with `convert(Array, _)` (or `Array(_)` for short).
 # Examples
 ```jldoctest
 julia> ev = complex.([7, 8, 9] , [7, 8, 9])
@@ -43,8 +43,6 @@ julia> SkewHermTridiagonal(ev, dvim)
  0+0im  0+0im  9+9im  0+4im
 ```
 """
-
-# real skew-symmetric case
 SkewHermTridiagonal(ev::AbstractVector{T}, dvim::Nothing=nothing) where {T<:Real} = SkewHermTridiagonal{T, typeof(ev), Nothing}(ev, nothing)
 SkewHermTridiagonal{T}(ev::AbstractVector, dvim::Nothing=nothing) where {T<:Real} =
     SkewHermTridiagonal(convert(AbstractVector{T}, ev)::AbstractVector{T})
@@ -57,7 +55,7 @@ SkewHermTridiagonal{Complex{T}}(ev::AbstractVector, dvim::AbstractVector) where 
 
 """
     SkewHermTridiagonal(A::AbstractMatrix)
-Construct a skewhermitian tridiagonal matrix from first subdiagonal
+Construct a skewhermitian tridiagonal matrix from first subdiagonal and main diagonal
 of the skewhermitian matrix `A`.
 # Examples
 ```jldoctest
