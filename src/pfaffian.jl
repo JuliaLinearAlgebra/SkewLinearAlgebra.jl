@@ -95,7 +95,7 @@ function _logabspfaffian!(A::SkewHermitian{<:Real})
         throw(ArgumentError("Pfaffian of singular matrix is zero, log(0) is undefined"))
     end 
     H = hessenberg(A)
-    logpf = convert(eltype(A.data), 1)
+    logpf = convert(eltype(A.data), 0)
     T = H.H
     sgn = one(eltype(A.data))
     for i=1:2:n-1

@@ -26,6 +26,7 @@ export
 
 include("skewhermitian.jl")
 include("tridiag.jl")
+include("jmatrix.jl")
 include("hessenberg.jl")
 include("eigen.jl")
 include("exp.jl")
