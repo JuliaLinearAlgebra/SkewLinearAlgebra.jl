@@ -192,6 +192,36 @@ Base.cis(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewcis!(copyeigtype(A))
 Base.cos(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewcos!(copyeigtype(A))
 Base.sin(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsin!(copyeigtype(A))
 
+@views function skewsincos!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})
+    n = size(A,1)
+    if typeof(A) <:SkewHermitian
+        n == 1 && return fill(0, 1, 1), Symmetric(fill(1, 1, 1))
+        vals, Qr, Qim = skeweigen!(A)
+    else
+        n == 1 && return fill(0, 1, 1), Symmetric(fill(1, 1, 1))
+        E = eigen!(A)
+        vals = E.values
+        Qr = real(E.vectors)
+        Qim = imag(E.vectors)
+    end
+    temp2 = similar(A, n, n)
+    Cos = similar(A, n, n)
+    Sin = similar(A, n, n)
+    Q2 = similar(A, n, n)
+    eig = @. exp(-imag(vals))
+    E = Diagonal(eig)
+
+    mul!(Sin, Qr, E)
+    mul!(Q2, Qim, E)
+    mul!(temp2, Sin, transpose(Qr))
+    mul!(Cos, Q2, transpose(Qim))
+    Cos .+= temp2
+    mul!(temp2, Sin, transpose(Qim))
+    mul!(Sin, Q2, transpose(Qr))
+    Sin .-= temp2
+
+    return Sin, Symmetric(Cos)
+end
 @views function skewsincos!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A, 1)
     if n == 1
@@ -219,19 +249,7 @@ Base.sin(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsin!(copyeigtype(A))
     Sin .*= -1im/2
     return Sin, Hermitian(Cos) 
 end
-
-function Base.tan(A::SkewHermitian{<:Real})
-    E=cis(A)
-    C=real(A)
-    S=imag(A)
-    return C\S
-end
-
-function Base.tan(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
-    Sin, Cos =skewsincos!(copyeigtype(A))
-    return Cos\Sin
-end
-
+Base.sincos(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsincos!(copyeigtype(A))
 Base.sinh(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewhermitian!(exp(A))
 Base.cosh(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}}) = hermitian!(exp(A))
 
@@ -241,10 +259,6 @@ Base.cosh(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}}) = hermiti
     return Cosh
 end
 
-function Base.tanh(A::SkewHermitian{<:Real})
-    E = skewexp!(2A)
-    return (E+LA.I)\(E-LA.I)
-end
 
 # someday this should be in LinearAlgebra: https://github.com/JuliaLang/julia/pull/31836
 function hermitian!(A::AbstractMatrix{<:Number})

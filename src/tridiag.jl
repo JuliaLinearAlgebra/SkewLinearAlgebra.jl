@@ -202,7 +202,7 @@ Base.copy(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(copy(M.ev), (
 
 function Base.imag(M::SkewHermTridiagonal) 
     if M.dvim !== nothing
-        LA.SymTridiagonal(imag.(M.dvim), imag.(M.ev))
+        LA.SymTridiagonal(M.dvim, imag.(M.ev))
     else
         n=size(M,1)
         LA.SymTridiagonal(zeros(eltype(imag(M.ev[1])), n), imag.(M.ev))
@@ -216,7 +216,7 @@ Base.adjoint(S::SkewHermTridiagonal) = -S
 
 function LA.tr(S::SkewHermTridiagonal{T}) where T
     if T<:Real || S.dvim === nothing
-        return zero(eltype(A.ev))
+        return zero(eltype(S.ev))
     else 
         return complex(zero(eltype(S.dvim)), sum(S.dvim))
     end
@@ -426,7 +426,6 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
     x₀ = x[1]
     x₊ = x[2]
     sub = ev[1]
-
     if dv !== nothing
         r = dot( adjoint(sub)*x₊+complex(zero(dv[1]),-dv[1])*x₀, y[1])
         @inbounds for j in 2:nx-1
@@ -574,8 +573,8 @@ function copyeigtype(A::SkewHermTridiagonal)
     return B
 end
 
-LA.eigen(A::SkewHermTridiagonal{T,V,Vim}) where {T,V<:AbstractVector{T},Vim}=LA.eigen!(copyeigtype(A))
-LA.eigvecs(A::SkewHermTridiagonal{T,V,Vim})  where {T,V<:AbstractVector{T},Vim}= eigen(A).vectors
+LA.eigen(A::SkewHermTridiagonal) = LA.eigen!(copyeigtype(A))
+LA.eigvecs(A::SkewHermTridiagonal) = eigen(A).vectors
 
 @views function LA.svdvals!(A::SkewHermTridiagonal)
     vals = eigvals!(A)
