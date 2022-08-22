@@ -33,7 +33,6 @@ skewhermitian(A::AbstractMatrix) = skewhermitian!(Base.copymutable(A))
 skewhermitian(a::Number) = imag(a)
 
 Base.@propagate_inbounds Base.getindex(A::SkewHermitian, i::Integer, j::Integer) = A.data[i,j]
-
 Base.@propagate_inbounds function Base.setindex!(A::SkewHermitian, v, i::Integer, j::Integer)
     if i == j
         real(v) == 0 || throw(ArgumentError("diagonal elements must be zero"))
