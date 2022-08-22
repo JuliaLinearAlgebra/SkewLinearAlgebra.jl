@@ -109,8 +109,6 @@ function skewhermitian!(A::AbstractMatrix{T}) where {T<:Number}
 end
 LA.Tridiagonal(A::SkewHermitian) = Tridiagonal(A.data)
 
-
-#Classic operators on a matrix
 Base.isreal(A::SkewHermitian) = isreal(A.data)
 Base.transpose(A::SkewHermitian) = SkewHermitian(transpose(A.data))
 Base.adjoint(A::SkewHermitian) = SkewHermitian(A.data')
