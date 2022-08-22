@@ -256,16 +256,16 @@ end
 @views function LA.rdiv!(A::SkewHermTridiagonal, B::AbstractMatrix) 
     return Tridiagonal(A) / B
 end
-@views function LA.ldiv!(b::AbstractVecOrMat,A::SkewHermTridiagonal) 
-    return b / Tridiagonal(A)
+@views function LA.ldiv!(B::AbstractVecOrMat,A::SkewHermTridiagonal) 
+    return B / Tridiagonal(A)
 end
 
-@views function LA.rmul!(A::SkewHermTridiagonal, b::AbstractVecOrMat) 
+@views function LA.rmul!(A::SkewHermTridiagonal, b::StridedVecOrMat) 
     y = similar(A, size(A,1), size(b,2))
     return mul!(y,Tridiagonal(A),b)
 end
 
-@views function LA.lmul!(b::AbstractVecOrMat,A::SkewHermTridiagonal)
+@views function LA.lmul!(b::StridedVecOrMat,A::SkewHermTridiagonal)
     y = similar(A, size(b,1), size(A,2)) 
     return mul!(y, b, Tridiagonal(A))
 end
@@ -274,11 +274,12 @@ Base.:*(A::SkewHermTridiagonal, B::Number) = rmul!(copy(A), B)
 Base.:*(B::Number,A::SkewHermTridiagonal) = lmul!(B, copy(A))
 Base.:/(A::SkewHermTridiagonal, B::Number) = rdiv!(copy(A), B)
 Base.:\(B::Number, A::SkewHermTridiagonal) = ldiv!(B, copy(A))
-#Base.:*(A::SkewHermTridiagonal, B::AbstractVecOrMat) = rmul!(A, B)
-#Base.:*(B::AbstractVecOrMat, A::SkewHermTridiagonal) = lmul!(B, Amul!)
-#Base.:/(A::SkewHermTridiagonal, B::AbstractMatrix) = rdiv!(A, B)
+
+Base.:*(A::SkewHermTridiagonal, B::StridedVecOrMat) = rmul!(A, B)
+Base.:*(B::StridedVecOrMat, A::SkewHermTridiagonal) = lmul!(B, A)
+Base.:/(A::SkewHermTridiagonal, B::StridedMatrix) = rdiv!(A, B)
 Base.:/(B::AbstractVecOrMat, A::SkewHermTridiagonal) = B / Tridiagonal(A)
-#Base.:\(B::AbstractVecOrMat, A::SkewHermTridiagonal) = ldiv!(B, Amul!)
+Base.:\(B::StridedVecOrMat, A::SkewHermTridiagonal) = ldiv!(B, A)
 Base.:\(A::SkewHermTridiagonal, B::AbstractVecOrMat) = Tridiagonal(A) \ B
 
 function Base.:*(A::SkewHermTridiagonal, B::T) where {T<:Complex}
