@@ -61,11 +61,9 @@ pfaffian(A::AbstractMatrix{<:BigInt}) = pfaffian!(copy(A))
 
 function _pfaffian!(A::SkewHermitian{<:Real})
     n = size(A,1)
-    if n%2 == 1
-        return convert(eltype(A.data), 0)
-    end 
-    H = hessenberg(A)
-    pf = convert(eltype(A.data), 1)
+    isodd(n) && return zero(eltype(A))
+    H = hessenberg!(A)
+    pf = one(eltype(A))
     T = H.H
     for i=1:2:n-1
         pf *= -T.ev[i]
@@ -82,7 +80,7 @@ Returns the pfaffian of `A` where a is a real skew-Hermitian matrix.
 If `A` is not of type `SkewHermitian{<:Real}`, then `isskewhermitian(A)`
 is performed to ensure that `A = -A'`
 """
-pfaffian(A::AbstractMatrix{<:Real}) = pfaffian!(copy(A))
+pfaffian(A::AbstractMatrix{<:Real}) = pfaffian!(copyeigtype(A))
 
 function pfaffian!(A::AbstractMatrix{<:Real})
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
@@ -91,16 +89,14 @@ end
 
 function _logabspfaffian!(A::SkewHermitian{<:Real})
     n = size(A, 1)
-    if n%2 == 1
-        throw(ArgumentError("Pfaffian of singular matrix is zero, log(0) is undefined"))
-    end 
-    H = hessenberg(A)
-    logpf = convert(eltype(A.data), 0)
+    isodd(n) && return convert(eltype(A), -Inf), zero(eltype(A))
+    H = hessenberg!(A)
+    logpf = zero(eltype(H))
     T = H.H
-    sgn = one(eltype(A.data))
+    sgn = one(eltype(H))
     for i=1:2:n-1
         logpf += log(abs(T.ev[i]))
-        sgn *= sign(T.ev[i])
+        sgn *= sign(-T.ev[i])
     end
     return logpf, sgn
 end
@@ -109,12 +105,12 @@ logabspfaffian(A::SkewHermitian{<:Real})= logabspfaffian!(copyeigtype(A))
 """
     logabspfaffian(A)
 
-Returns a tuple with the log of the absolute value of the pfaffian of `A` as first output
-and the sign of the pfaffian as second output. A must be a real skew-Hermitian matrix.
+Returns a tuple `(log|Pf A|, sign)`, with the log of the absolute value of the pfaffian of `A` as first output
+and the sign (±1) of the pfaffian as second output. A must be a real skew-Hermitian matrix.
 If `A` is not of type `SkewHermitian{<:Real}`, then `isskewhermitian(A)`
 is performed to ensure that `A = -A'`
 """
-logabspfaffian(A::AbstractMatrix{<:Real}) = logabspfaffian!(copy(A))
+logabspfaffian(A::AbstractMatrix{<:Real}) = logabspfaffian!(copyeigtype(A))
 
 function logabspfaffian!(A::AbstractMatrix{<:Real})
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
