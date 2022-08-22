@@ -21,7 +21,7 @@ Random.seed!(314159) # use same pseudorandom stream for every test
     @test eigvals(A, 0,15) ≈ [iλ₁,iλ₂]*im
     @test eigvals(A, 1:3) ≈ [iλ₁,iλ₂,-iλ₂]*im
     @test svdvals(A) ≈ [iλ₁,iλ₁,iλ₂,iλ₂]
-    C=SLA.skewchol(A)
+    C = SLA.skewchol(A)
     @test transpose(C.Rm)*C.Jm*C.Rm≈A[C.Pv,C.Pv]
 end
 
@@ -361,3 +361,29 @@ end
         @test transpose(C.Rm)* C.Jm *C.Rm ≈ B[C.Pv, C.Pv]
     end
 end
+
+@testset "jmatrix.jl" begin
+    for T in (Int32, Int64, Float32, Float64), n in [2, 20, 153, 200]
+        A = rand(T,n,n)
+        J = SLA.JMatrix(T, n)
+        vec = zeros(T, n - 1)
+        for i = 1 : 2 : n - 1
+            vec[i] = -1
+        end
+        Jtest = SLA.SkewHermTridiagonal(vec)
+        @test size(J) == (n, n)
+        @test size(J, 1) == n
+        @test Matrix(J) == Matrix(Jtest)
+        @test A*Jtest ≈ A*J
+        Jtest2 = Matrix(J)
+        @test Matrix(-J) == -Jtest2
+        @test Matrix(transpose(J)) == -Jtest2
+        if  iszero(n%2)
+            B = inv(J)
+            @test B == -Jtest2
+            @test B * A ≈ Matrix(J) \ A
+        end
+        
+    end
+end
+

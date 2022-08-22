@@ -1,7 +1,7 @@
 
-struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:SkewHermTridiagonal{<:T},P<:AbstractVector{<:Integer}}
+struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:JMatrix{<:T},P<:AbstractVector{<:Integer}}
     Rm::R #Uppertriangular matrix
-    Jm::J # Block diagonal skew-symmetric matrix
+    Jm::J # Block diagonal skew-symmetric matrix of type JMatrix
     Pv::P #Permutation vector
 
     function SkewCholesky{T,R,J,P}(Rm,Jm,Pv) where {T,R,J,P}
@@ -14,17 +14,13 @@ end
     SkewCholesky(Rm,Pv)
 
 Construct a `SkewCholesky` structure from the `UpperTriangular`
-matrix `Rm` and the permutation vector `Pv`. A matrix `Jm` of type `SkewHermTridiagonal`
+matrix `Rm` and the permutation vector `Pv`. A matrix `Jm` of type `JMatrix`
 is build calling this function. 
 The `SkewCholesky` structure has three arguments: `Rm`,`Jm` and `Pv`.
 """
 function SkewCholesky(Rm::UpperTriangular{<:T},Pv::AbstractVector{<:Integer}) where {T<:Real}
     n = size(Rm, 1)
-    vec = zeros(T, n - 1)
-    for i = 1 : 2 : n - 1
-        vec[i] = -1
-    end
-    return SkewCholesky{T,UpperTriangular{<:T},SkewHermTridiagonal{<:T},AbstractVector{<:Integer}}(Rm, SkewHermTridiagonal(vec), Pv)
+    return SkewCholesky{T,UpperTriangular{<:T},JMatrix{<:T},AbstractVector{<:Integer}}(Rm, JMatrix(T, n), Pv)
 
 end
 
@@ -100,7 +96,7 @@ skewchol!(A::AbstractMatrix) = @views  skewchol!(SkewHermitian(A))
 
 Computes a Cholesky-like factorization of the real skew-symmetric matrix `A`.
 The function returns a `SkewCholesky` structure composed of three fields: 
-`Rm`,`Jm`,`Pv`. `Rm` is `UpperTriangular`, `Jm` is `SkewHermTridiagonal`, 
+`Rm`,`Jm`,`Pv`. `Rm` is `UpperTriangular`, `Jm` is a `JMatrix`, 
 `Pv` is an array of integers. Let `S` be the returned structure, then the factorization 
 is such that `S.Rm'*S.Jm*S.Rm = A[S.Pv,S.Pv]`
 

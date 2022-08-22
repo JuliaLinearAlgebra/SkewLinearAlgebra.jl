@@ -4,10 +4,8 @@ function skewexp!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:R
     n = size(A, 1)
     
     if typeof(A) <:SkewHermitian
-        n == 1 && return fill(T(1), 1, 1)
         vals, Qr, Qim = skeweigen!(A)
     else
-        n == 1 && return fill(T(1), 1, 1)
         E = eigen!(A)
         vals = E.values
         Qr = real(E.vectors)
@@ -39,13 +37,6 @@ end
 
 @views function skewexp!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A, 1)
-    if n == 1
-        if typeof(A)<:SkewHermitian
-            return fill(exp(A.data[1,1]), 1, 1)
-        else
-            return fill(exp(complex(0, A.dvim[1])), 1, 1)
-        end
-    end
     Eig = eigen!(A)
     eig = exp.(Eig.values)
     temp = similar(A, n, n)
@@ -59,7 +50,6 @@ Base.exp(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewexp!(copyeigtype(A))
 
 @views function skewcis!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A, 1)
-    n == 1 && Hermitian(fill(T(1), 1, 1))
     Eig = eigen!(A)
     Q = Eig.vectors
     temp = similar(Q, n, n)
@@ -73,13 +63,6 @@ end
 
 @views function skewcis!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A,1)
-    if n == 1
-        if typeof(A)<:SkewHermitian
-            return Hermitian(fill(cis(A.data[1,1]), 1, 1))
-        else
-            return Hermitian(fill(cis(complex(0, A.dvim[1])), 1, 1))
-        end
-    end
     Eig = eigen!(A)
     eig = @. exp(-imag(Eig.values))
     Cis = similar(A, n, n)
@@ -92,10 +75,8 @@ end
 @views function skewcos!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A,1)
     if typeof(A) <:SkewHermitian
-        n == 1 && return Symmetric(fill(T(1), 1, 1))
         vals, Qr, Qim = skeweigen!(A)
     else
-        n == 1 && return Symmetric(fill(T(1), 1, 1))
         E = eigen!(A)
         vals = E.values
         Qr = real(E.vectors)
@@ -116,13 +97,6 @@ end
 
 @views function skewcos!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A,1)
-    if n == 1
-        if typeof(A)<:SkewHermitian
-            return Hermitian(fill(cos(A.data[1,1]), 1, 1))
-        else
-            return Hermitian(fill(cos(complex(0, A.dvim[1])), 1, 1))
-        end
-    end
     Eig = eigen!(A)
     eig1 = @. exp(-imag(Eig.values))
     eig2 = @. exp(imag(Eig.values))
@@ -141,10 +115,8 @@ end
 @views function skewsin!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A, 1)
     if typeof(A) <:SkewHermitian
-        n == 1 && return fill(T(0), 1, 1)
         vals, Qr, Qim = skeweigen!(A)
     else
-        n == 1 && return fill(T(0), 1, 1)
         E = eigen!(A)
         vals = E.values
         Qr = real(E.vectors)
@@ -165,13 +137,6 @@ end
 
 @views function skewsin!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A,1)
-    if n == 1
-        if typeof(A)<:SkewHermitian
-            return fill(sin(A.data[1,1]), 1, 1)
-        else
-            return fill(sin(complex(0, A.dvim[1])), 1, 1)
-        end
-    end
     Eig = eigen!(A)
     eig1 = @. exp(-imag(Eig.values))
     eig2 = @. exp(imag(Eig.values))
@@ -195,10 +160,8 @@ Base.sin(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsin!(copyeigtype(A))
 @views function skewsincos!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A,1)
     if typeof(A) <:SkewHermitian
-        n == 1 && return fill(T(0), 1, 1), Symmetric(fill(T(1), 1, 1))
         vals, Qr, Qim = skeweigen!(A)
     else
-        n == 1 && return fill(T(0), 1, 1), Symmetric(fill(T(1), 1, 1))
         E = eigen!(A)
         vals = E.values
         Qr = real(E.vectors)
@@ -224,13 +187,6 @@ Base.sin(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsin!(copyeigtype(A))
 end
 @views function skewsincos!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A, 1)
-    if n == 1
-        if typeof(A)<:SkewHermitian
-            return fill(sin(A.data[1,1]), 1, 1), Hermitian(fill(cos(A.data[1,1]), 1, 1))
-        else
-            return fill(sin(A.data[1,1]), 1, 1), Hermitian(fill(cos(complex(0, A.dvim[1])), 1, 1))
-        end
-    end
     Eig = eigen!(A)
     eig1 = @. exp(-imag(Eig.values))
     eig2 = @. exp(imag(Eig.values))
