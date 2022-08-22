@@ -274,11 +274,12 @@ Base.:*(A::SkewHermTridiagonal, B::Number) = rmul!(copy(A), B)
 Base.:*(B::Number,A::SkewHermTridiagonal) = lmul!(B, copy(A))
 Base.:/(A::SkewHermTridiagonal, B::Number) = rdiv!(copy(A), B)
 Base.:\(B::Number, A::SkewHermTridiagonal) = ldiv!(B, copy(A))
-#Base.:*(A::SkewHermTridiagonal, B::AbstractVecOrMat) = rmul!(A, B)
-#Base.:*(B::AbstractVecOrMat, A::SkewHermTridiagonal) = lmul!(B, Amul!)
-#Base.:/(A::SkewHermTridiagonal, B::AbstractMatrix) = rdiv!(A, B)
+
+Base.:*(A::SkewHermTridiagonal, B::StridedVecOrMat) = rmul!(A, B)
+Base.:*(B::StridedVecOrMat, A::SkewHermTridiagonal) = lmul!(B, A)
+Base.:/(A::SkewHermTridiagonal, B::StridedMatrix) = rdiv!(A, B)
 Base.:/(B::AbstractVecOrMat, A::SkewHermTridiagonal) = B / Tridiagonal(A)
-#Base.:\(B::AbstractVecOrMat, A::SkewHermTridiagonal) = ldiv!(B, Amul!)
+Base.:\(B::StridedVecOrMat, A::SkewHermTridiagonal) = ldiv!(B, A)
 Base.:\(A::SkewHermTridiagonal, B::AbstractVecOrMat) = Tridiagonal(A) \ B
 
 function Base.:*(A::SkewHermTridiagonal, B::T) where {T<:Complex}

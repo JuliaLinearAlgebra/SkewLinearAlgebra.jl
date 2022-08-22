@@ -236,7 +236,6 @@ end
     end
 end
 
-
 @testset "tridiag.jl" begin 
     for T in (Int32, Int64, Float32, Float64, ComplexF32, ComplexF64), n in [ 2, 20, 153, 200]
         if T<:Integer
@@ -292,18 +291,26 @@ end
         @test dot(x, A, y) ≈ dot(x, Matrix(A), y)
         if T<:Complex
             z = rand(T)
-            @test A*z ≈ Tridiagonal(A)*z
-            @test z*A ≈ z*Tridiagonal(A)
-            @test A/z ≈ Tridiagonal(A)/z
-            @test z\ A ≈ z\Tridiagonal(A)   
+            @test A * z ≈ Tridiagonal(A) * z
+            @test z * A ≈ z * Tridiagonal(A)
+            @test A / z ≈ Tridiagonal(A) / z
+            @test z \ A ≈ z \ Tridiagonal(A)   
         end
         B = Matrix(A)
         @test tr(A) ≈ tr(B)
         B = copy(A)
         @test B == A
-        #@test A\x ≈ Matrix(A)\x
-        #@test y' /A ≈ y' / Matrix(A)
         B = Matrix(A)
+        yb = rand(T, 1, n)
+        if !iszero(det(Tridiagonal(A)))
+            @test A \ x ≈ B \ x
+            @test yb / A ≈ yb / B
+            @test A / B ≈ B / A ≈ I
+        end
+        @test A * x ≈ B * x
+        @test yb * A ≈ yb * B
+        @test B * A ≈ A * B ≈ B * B
+        
         @test A[1,2] == B[1,2]
         @test size(A,1) == n
 
@@ -365,7 +372,7 @@ end
 end
 
 @testset "jmatrix.jl" begin
-    for T in (Int32, Int64, Float32, Float64), n in [2, 20, 153, 200]
+    for T in (Int32, Int64, Float32, Float64), n in [2, 20, 55, 78]
         A = rand(T,n,n)
         J = SLA.JMatrix(T, n)
         vec = zeros(T, n - 1)
@@ -377,15 +384,17 @@ end
         @test size(J, 1) == n
         @test Matrix(J) == Matrix(Jtest)
         @test A*Jtest ≈ A*J
+        @test Jtest*A ≈ J*A
         Jtest2 = Matrix(J)
         @test Matrix(-J) == -Jtest2
         @test Matrix(transpose(J)) == -Jtest2
         if  iszero(n%2)
             B = inv(J)
             @test B == -Jtest2
-            @test B * A ≈ Matrix(J) \ A
+            @test J \ A ≈ Matrix(J) \ A
         end
-        
+        @test iszero(diag(J))
+        @test iszero(tr(J))
     end
 end
 
