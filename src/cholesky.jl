@@ -15,12 +15,12 @@ end
 
 Construct a `SkewCholesky` structure from the `UpperTriangular`
 matrix `Rm` and the permutation vector `Pv`. A matrix `Jm` of type `JMatrix`
-is build calling this function. 
+is build calling this function.
 The `SkewCholesky` structure has three arguments: `Rm`,`Jm` and `Pv`.
 """
 function SkewCholesky(Rm::UpperTriangular{<:T},Pv::AbstractVector{<:Integer}) where {T<:Real}
     n = size(Rm, 1)
-    return SkewCholesky{T,UpperTriangular{<:T},JMatrix{<:T},AbstractVector{<:Integer}}(Rm, JMatrix(T, n), Pv)
+    return SkewCholesky{T,typeof(Rm),JMatrix{T,+1},typeof(Pv)}(Rm, JMatrix{T,+1}(n), Pv)
 
 end
 
@@ -48,24 +48,24 @@ function _skewchol!(A::SkewHermitian{<:Real})
 
         if ii != j2-1
             P[ii],P[j2-1] = P[j2-1],P[ii]
-            for t = 1:m 
+            for t = 1:m
                 B[t,ii], B[t,j2-1] = B[t,j2-1], B[t,ii]
             end
-            for t = 1:m 
+            for t = 1:m
                 B[ii,t], B[j2-1,t] = B[j2-1,t], B[ii,t]
             end
-            
+
         end
         if kk != j2
             P[kk],P[j2] = P[j2],P[kk]
-            for t = 1:m 
+            for t = 1:m
                 B[t,kk], B[t,j2] = B[t,j2], B[t,kk]
             end
-            for t = 1:m 
+            for t = 1:m
                 B[kk,t], B[j2,t] = B[j2,t], B[kk,t]
             end
         end
-        
+
         l = m-j2
         r = sqrt(B[j2-1,j2])
         B[j2-1,j2-1] = r
@@ -76,7 +76,7 @@ function _skewchol!(A::SkewHermitian{<:Real})
         B[j2-1:j2,j2+1:m] .*= (-1/r)
         @views mul!(tempM[:,1:l], J2, B[j2-1:j2,j2+1:m])
         @views mul!(B[j2+1:m,j2+1:m], transpose(B[j2-1:j2,j2+1:m]), tempM[:,1:l],-1,1)
-        
+
     end
     rank=2*(m÷2)
     return P,rank
@@ -95,13 +95,13 @@ skewchol!(A::AbstractMatrix) = @views  skewchol!(SkewHermitian(A))
     skewchol(A)
 
 Computes a Cholesky-like factorization of the real skew-symmetric matrix `A`.
-The function returns a `SkewCholesky` structure composed of three fields: 
-`Rm`,`Jm`,`Pv`. `Rm` is `UpperTriangular`, `Jm` is a `JMatrix`, 
-`Pv` is an array of integers. Let `S` be the returned structure, then the factorization 
+The function returns a `SkewCholesky` structure composed of three fields:
+`Rm`,`Jm`,`Pv`. `Rm` is `UpperTriangular`, `Jm` is a `JMatrix`,
+`Pv` is an array of integers. Let `S` be the returned structure, then the factorization
 is such that `S.Rm'*S.Jm*S.Rm = A[S.Pv,S.Pv]`
 
-This factorization (and the underlying algorithm) is described in from P. Benner et al, 
-"[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000). 
+This factorization (and the underlying algorithm) is described in from P. Benner et al,
+"[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000).
 """
 function skewchol(A::AbstractMatrix)
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
