@@ -81,7 +81,6 @@ end
             @test A[n, n-1] === T(3)
             @test A[n-1, n] === T(-3)
         end
-
         x = rand(T, n)
         y = zeros(T, n)
         mul!(y, A, x, T(2), T(0))
