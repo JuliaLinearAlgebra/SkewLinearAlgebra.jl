@@ -18,6 +18,8 @@ struct JMatrix{T<:Real, SGN} <: AbstractMatrix{T}
     end
 end
 
+JMatrix(n::Integer) = JMatrix{Int8,+1}(n) # default constructor using narrowest integer type
+
 Base.size(J::JMatrix) = (J.n, J.n)
 Base.size(J::JMatrix, n::Integer) = n in (1,2) ? J.n : 1
 
@@ -106,4 +108,9 @@ function LA.diag(J::JMatrix{T,SGN}, k::Integer=0) where {T,SGN}
         v[1:2:J.n-1] .= -SGN
     end
     return v
+end
+
+# show a "⋅" for structural zeros when printing
+function Base.replace_in_print_matrix(A::JMatrix, i::Integer, j::Integer, s::AbstractString)
+    (i == j+1 && iseven(i)) || (i+1 == j && iseven(j)) ? s : Base.replace_with_centered_mark(s)
 end
