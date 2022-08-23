@@ -123,7 +123,7 @@ end
         QR = qr(A)
         @test QR.Q * QR.R ≈ A.data
         if T<:Integer
-            A = SLA.skewhermitian(rand(T,n,n)*2)
+            A = SLA.skewhermitian(rand(T,n,n) * 2)
         else
             A = SLA.skewhermitian(randn(T,n,n))
         end
@@ -138,7 +138,7 @@ end
 end
 
 @testset "hessenberg.jl" begin
-    for T in (Int32,Float32,Float64,ComplexF32), n in [2, 10, 11]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
         if T<:Integer
             A = SLA.skewhermitian(rand(T(-10):T(10), n, n) * T(2))
         else
@@ -212,7 +212,7 @@ end
         @test sinh(B) ≈  Matrix(sinh(A))
         @test cosh(B) ≈  Matrix(cosh(A))
     end
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [ 2, 20, 153, 200]
+    for T in (Int32 ,Float32,Float64,ComplexF32), n in [2, 10, 11]
         if T<:Integer
             A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
         else
@@ -353,7 +353,7 @@ end
 end
 
 @testset "cholesky.jl" begin
-    for T in (Int32, Float32, Float64), n in [2, 10, 11]
+    for T in (Int32, Float32, Float64), n in [1, 2, 10, 11]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n)*T(2))
         else
@@ -368,8 +368,8 @@ end
 end
 
 @testset "jmatrix.jl" begin
-    for T in (Int32, Float32, Float64), n in [2, 10, 11], sgn in (+1,-1)
-        A = rand(T,n,n)
+    for T in (Int32, Float32, Float64), n in [1, 2, 10, 11], sgn in (+1,-1)
+        A = rand(T, n, n)
         J = SLA.JMatrix{T,sgn}(n)
         vec = zeros(T, n - 1)
         vec[1:2:n-1] .= -sgn

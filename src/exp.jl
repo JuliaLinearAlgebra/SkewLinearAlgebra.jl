@@ -2,7 +2,6 @@
 
 function skewexp!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A, 1)
-    
     if typeof(A) <:SkewHermitian
         vals, Qr, Qim = skeweigen!(A)
     else

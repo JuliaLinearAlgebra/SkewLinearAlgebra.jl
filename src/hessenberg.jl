@@ -146,10 +146,7 @@ end
     
     n = size(S.data,1)
     
-    if n == 1
-        return Hessenberg(Matrix(S.data),Vector{eltype(S.data)}(undef,0),LA.UpperHessenberg(S.data),'L')
-    end
-
+    n == 1 && hessenberg!(S.data)
     nb  = setnb(n)
     A   = S.data
     η   = similar(A, real(T), n - 1)
