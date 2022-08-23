@@ -372,11 +372,11 @@ end
 end
 
 @testset "jmatrix.jl" begin
-    for T in (Int32, Int64, Float32, Float64), n in [2, 20, 55, 78]
+    for T in (Int32, Int64, Float32, Float64), n in [2, 20, 55, 78], sgn in (+1,-1)
         A = rand(T,n,n)
-        J = SLA.JMatrix{T,+1}(n)
+        J = SLA.JMatrix{T,sgn}(n)
         vec = zeros(T, n - 1)
-        vec[1:2:n-1] .= -1
+        vec[1:2:n-1] .= -sgn
         Jtest = SLA.SkewHermTridiagonal(vec)
         @test size(J) == (n, n)
         @test size(J, 1) == n
