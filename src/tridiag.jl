@@ -601,7 +601,6 @@ LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
 
 @views function to_symtridiagonal(A::SkewHermTridiagonal{T}) where {T<:Complex}
     n = size(A, 1)
-    n == 1 && return SymTridiagonal(-A.dvim,real(T)[]), Diagonal(T[1])
     V = similar(A.ev, n - 1)
     Q = similar(A.ev, n)
     Q[1] = 1
@@ -614,9 +613,11 @@ LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
         V[i] = nm
         V[i+1] *= Q[i+1]
     end
-    nm = abs(V[n-1])
-    Q[n] = V[n-1] / nm
-    V[n-1] = nm
+    if n > 1
+        nm = abs(V[n-1])
+        Q[n] = V[n-1] / nm
+        V[n-1] = nm
+    end
     if A.dvim !== nothing
         SymTri = SymTridiagonal(-A.dvim, real(V))
     else

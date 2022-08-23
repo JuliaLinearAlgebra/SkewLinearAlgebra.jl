@@ -145,8 +145,6 @@ end
 @views function skewblockedhess!(S::SkewHermitian{T}) where {T}
     
     n = size(S.data,1)
-    
-    n == 1 && hessenberg!(S.data)
     nb  = setnb(n)
     A   = S.data
     η   = similar(A, real(T), n - 1)
