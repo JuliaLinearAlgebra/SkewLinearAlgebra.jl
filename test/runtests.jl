@@ -26,10 +26,8 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 end
 
 @testset "SkewLinearAlgebra.jl" begin
-    
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [1, 2, 20, 153, 200]
-        a = rand(T,1)
-        @test skewhermitian(a) == imag(a)
+
+    for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) * T(2))
         else
@@ -45,14 +43,7 @@ end
         @test similar(A) == SLA.SkewHermitian(zeros(T, n, n))
         @test similar(A,ComplexF64) == SLA.SkewHermitian(zeros(ComplexF64, n, n))
         @test A == copy(A)::SLA.SkewHermitian
-        @test Tridiagonal(A) == Tridiagonal(A.data)
-        @test AbstractMatrix{ComplexF64}(A::SkewHermitian) == SkewHermitian(AbstractMatrix{ComplexF64}(A.data))
-        dest = copy(4 * A)
-        copyto!(dest, A)
-        @test dest == A
-        dest = copy(4*A)
-        copyto!(dest, A.data)
-        @test dest == A
+        @test copyto!(copy(4 * A), A) == A
         @test size(A) == size(A.data)
         @test size(A, 1) == size(A.data, 1)
         @test size(A, 2) == size(A.data, 2)
@@ -85,10 +76,10 @@ end
         k = dot(A, A)
         @test k ≈ dot(A.data, A.data)
         if n > 1
-            @test getindex(A, 2, 1) == A.data[2,1]
-            setindex!(A,3, n, n-1)
-            @test getindex(A, n, n-1) == T(3)
-            @test getindex(A, n-1, n) == T(-3)
+            @test A[2,1] == A.data[2,1]
+            A[n, n-1] = 3
+            @test A[n, n-1] === T(3)
+            @test A[n-1, n] === T(-3)
         end
 
         x = rand(T, n)
@@ -147,9 +138,9 @@ end
 end
 
 @testset "hessenberg.jl" begin
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [2, 20,153,200]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [2, 10, 11]
         if T<:Integer
-            A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) *T(2))
+            A = SLA.skewhermitian(rand(T(-10):T(10), n, n) * T(2))
         else
             A = SLA.skewhermitian(randn(T, n, n))
         end
@@ -160,7 +151,7 @@ end
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
 
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64)
+    for T in (Int32,Float64,ComplexF32)
         A = zeros(T, 4, 4)
         A[2:4,1] = ones(T,3)
         A[1,2:4] = -ones(T,3)
@@ -170,11 +161,10 @@ end
         HB = hessenberg(B)
         @test Matrix(HA.H) ≈ Matrix(HB.H)
     end
-
 end
 
 @testset "eigen.jl" begin
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [1, 2, 20, 153, 200]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10),n,n)* T(2))
         else
@@ -205,8 +195,7 @@ end
 end
 
 @testset "exp.jl" begin
-
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [1, 2,20,153,200]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n)*T(2))
         else
@@ -247,7 +236,7 @@ end
 end
 
 @testset "tridiag.jl" begin
-    for T in (Int32, Int64, Float32, Float64, ComplexF32, ComplexF64), n in [ 2, 20, 153, 200]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [2, 10, 11]
         if T<:Integer
             C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
         else
@@ -256,7 +245,6 @@ end
         A = SLA.SkewHermTridiagonal(C)
         @test SLA.isskewhermitian(A) == true
         @test Tridiagonal(A) ≈ Tridiagonal(C)
-
 
         if T<:Integer
             A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
@@ -337,20 +325,19 @@ end
         @test Svd.U * Diagonal(Svd.S) * Svd.Vt ≈ B
         @test svdvals(A) ≈ svdvals(B)
 
-        setindex!(A, T(2), 2, 1)
-        @test A[2,1] == T(2)
+        A[2,1] = 2
+        @test A[2,1] === T(2)
         B = SLA.SkewHermTridiagonal([3,4,5])
         @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
         #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
         for f in (real, imag)
             @test Matrix(f(A)) == f(Matrix(A))
         end
-
     end
 end
 
 @testset "pfaffian.jl" begin
-    for n in [1, 2,3,4,5,6,8,10,20,40]
+    for n in [1, 2, 3, 10, 11]
         A = SLA.skewhermitian(rand(-10:10,n,n) * 2)
         Abig = BigInt.(A.data)
         @test SLA.pfaffian(A) ≈ SLA.pfaffian(Abig)  == SLA.pfaffian(SLA.SkewHermitian(Abig))
@@ -366,7 +353,7 @@ end
 end
 
 @testset "cholesky.jl" begin
-    for T in (Int32, Int64, Float32, Float64), n in [2, 20, 153, 200]
+    for T in (Int32, Float32, Float64), n in [2, 10, 11]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n)*T(2))
         else
@@ -381,7 +368,7 @@ end
 end
 
 @testset "jmatrix.jl" begin
-    for T in (Int32, Int64, Float32, Float64), n in [2, 20, 55, 78], sgn in (+1,-1)
+    for T in (Int32, Float32, Float64), n in [2, 10, 11], sgn in (+1,-1)
         A = rand(T,n,n)
         J = SLA.JMatrix{T,sgn}(n)
         vec = zeros(T, n - 1)

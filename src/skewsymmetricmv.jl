@@ -26,7 +26,7 @@ using VectorizationBase, LinearAlgebra, Static
       Nr = N ÷ $CU
       @assert Nr * $CU == N# "TODO: handle remainders!!!"
       r = 0
-      for ro = 1:Nr
+      for ro = 1:1
         # down rows
         # initialize accumulators
         Base.Cartesian.@nexprs $RUI u -> v_u = VectorizationBase.vzero($W, $T)
@@ -45,22 +45,25 @@ using VectorizationBase, LinearAlgebra, Static
             Base.Cartesian.@nexprs $RUI ri -> begin
               # rowind = MM($W, r + (ri-1)*$W)
               m = colind < rowind_ri
-              m1 = (ro == co ? colind < rowind_ri : 0<rowind_ri)
+              #m1 = (ro == co ? colind < rowind_ri : 0<rowind_ri)
               #@show colind rowind_ri
               vL = vload(pA, (rowind_ri, colind), m)
-              vL1 = vload(pA, (rowind_ri, colind), m1)
+              #vL1 = vload(pA, (rowind_ri, colind), m1)
               #@show  (rowind_ri, colind) vL
+            @show vL1
               v_ri = VectorizationBase.vfmadd(vL, cx_ci, v_ri)
-              s_ci = VectorizationBase.vfnmadd(vL1, sx_ri, s_ci)
+              s_ci = VectorizationBase.vfnmadd(vL, sx_ri, s_ci)
               #@show v_ri
               #@show s_ci
               #@show m
             end
           end
           Base.Cartesian.@nexprs $RUI ri -> begin
+          #@show sx_ri
              @show v_ri
           end
           Base.Cartesian.@nexprs $CUI ci -> begin
+          #@show cx_ci
             @show s_ci
           end
           c += $CUI
