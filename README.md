@@ -91,29 +91,29 @@ Real skew-symmetric matrices having zero diagonal elements, the constructor allo
 
 Here is a basic example to initialize a `SkewHermTridiagonal`
 ```jl
-julia> A=SkewHermTridiagonal(rand(ComplexF64,4), rand(5))
+julia> SkewHermTridiagonal(rand(ComplexF64,4), rand(5))
 5×5 SkewHermTridiagonal{ComplexF64, Vector{ComplexF64}, Vector{Float64}}:
-      0.0+0.150439im  -0.576265+0.23126im          0.0+0.0im             0.0+0.0im             0.0+0.0im
- 0.576265+0.23126im         0.0+0.0833022im  -0.896415+0.6846im          0.0+0.0im             0.0+0.0im
-      0.0+0.0im        0.896415+0.6846im           0.0+0.868229im  -0.593476+0.421484im        0.0+0.0im
-      0.0+0.0im             0.0+0.0im         0.593476+0.421484im        0.0+0.995528im  -0.491818+0.32038im
-      0.0+0.0im             0.0+0.0im              0.0+0.0im        0.491818+0.32038im         0.0+0.241177im
-      
-julia> SkewHermTridiagonal(randn(ComplexF32, 4))
+      0.0+0.212164im   -0.777173+0.0924578im             ⋅                     ⋅                     ⋅
+ 0.777173+0.0924578im        0.0+0.888208im   -0.0273224+0.325622im            ⋅                     ⋅
+          ⋅            0.0273224+0.325622im          0.0+0.279934im  -0.519579+0.955926im            ⋅
+          ⋅                      ⋅              0.519579+0.955926im        0.0+0.968514im  -0.890202+0.133881im
+          ⋅                      ⋅                       ⋅            0.890202+0.133881im        0.0+0.99143im
+
+julia> SkewHermTridiagonal(rand(ComplexF32,4))
 5×5 SkewHermTridiagonal{ComplexF32, Vector{ComplexF32}, Nothing}:
-       0.0+0.0im        0.343935+0.292369im         0.0+0.0im             0.0+0.0im             0.0+0.0im
- -0.343935+0.292369im        0.0+0.0im       -0.0961587-0.282884im        0.0+0.0im             0.0+0.0im
-       0.0+0.0im       0.0961587-0.282884im         0.0+0.0im       -0.397075+0.518492im        0.0+0.0im
-       0.0+0.0im             0.0+0.0im         0.397075+0.518492im        0.0+0.0im       -0.405492+0.679622im
-       0.0+0.0im             0.0+0.0im              0.0+0.0im        0.405492+0.679622im        0.0+0.0im
+          ⋅           -0.161591+0.627896im            ⋅                       ⋅                      ⋅
+ 0.161591+0.627896im            ⋅           -0.977677+0.231048im              ⋅                      ⋅
+          ⋅            0.977677+0.231048im            ⋅            -0.0442946+0.0463022im            ⋅
+          ⋅                     ⋅           0.0442946+0.0463022im             ⋅            -0.403058+0.575389im
+          ⋅                     ⋅                     ⋅              0.403058+0.575389im             ⋅
 
 julia> SkewHermTridiagonal(randn(4))
 5×5 SkewHermTridiagonal{Float64, Vector{Float64}, Nothing}:
-  0.0      1.93717    0.0        0.0       0.0
- -1.93717  0.0       -0.370536   0.0       0.0
-  0.0      0.370536   0.0       -0.964014  0.0
-  0.0      0.0        0.964014   0.0       1.33282
-  0.0      0.0        0.0       -1.33282   0.0
+  ⋅        -0.996363   ⋅         ⋅          ⋅
+ 0.996363    ⋅        2.22994    ⋅          ⋅
+  ⋅        -2.22994    ⋅       -0.43198     ⋅
+  ⋅          ⋅        0.43198    ⋅         0.0433825
+  ⋅          ⋅         ⋅       -0.0433825   ⋅
 ```
 
   The functions from the LinearAlgebra package can be used in the same fashion:
@@ -285,8 +285,6 @@ The function `skewchol` implements this factorization and returns a `SkewCholesk
 
 ```jl
 julia> R = skewchol(A)
-SkewCholesky{Float64, LinearAlgebra.UpperTriangular{var"#s24", S} where {var"#s24"<:Float64, S<:AbstractMatrix{var"#s24"}}, JMatrix{var"#s6", N, SGN} where {var"#s6"<:Float64, N<:Integer, SGN}, AbstractVector{var"#s3"} where var"#s3"<:Integer}([2.8284271247461903 0.0 0.7071067811865475 -1.0606601717798212; 0.0 2.8284271247461903 2.474873734152916 0.35355339059327373; 0.0 0.0 1.0606601717798216 0.0; 0.0 0.0 0.0 1.0606601717798216], [0.0 1.0 0.0 0.0; -1.0 0.0 0.0 0.0; 0.0 0.0 0.0 1.0; 0.0 0.0 -1.0 0.0], [3, 2, 1, 4])
-
 julia> R.Rm
 4×4 LinearAlgebra.UpperTriangular{Float64, Matrix{Float64}}:
  2.82843  0.0      0.707107  -1.06066
@@ -295,11 +293,11 @@ julia> R.Rm
   ⋅        ⋅        ⋅         1.06066
 
 julia> R.Jm
-4×4 JMatrix{Float64, Int64, Any}:
-  0.0  1.0   0.0  0.0
- -1.0  0.0   0.0  0.0
-  0.0  0.0   0.0  1.0
-  0.0  0.0  -1.0  0.0
+4×4 JMatrix{Float64, 1}:
+   ⋅   1.0    ⋅    ⋅
+ -1.0   ⋅     ⋅    ⋅
+   ⋅    ⋅     ⋅   1.0
+   ⋅    ⋅   -1.0   ⋅
 
 julia> R.Pv
 4-element Vector{Int64}:
@@ -315,10 +313,11 @@ true
 ## Pfaffian
 
 The determinant of a real skew-Hermitian maxtrix is a perfect square. 
-The pfaffian of A is a signed number such that `pfaffian(A)^2 = det(A)`.
-Since the pfaffian may overflow, it may be convenient to compute the logarithm
+The pfaffian of A is a signed number such that `pfaffian(A)^2 = det(A)` as defined in (https://en.wikipedia.org/wiki/Pfaffian).
+Since the computation of the pfaffian may overflow, it may be convenient to compute the logarithm
 of its absolute value. `logabspfaffian(A)` returns a tuple containing the logarithm 
-of the absolute value of the pfaffian and the sign of the pfaffian.
+of the absolute value of the pfaffian and the sign of the pfaffian. 
+An exact computation of the pfaffian is implemented for `BigInt` matrices.
 ```jl
 julia> A = skewhermitian(rand(4,4))
 4×4 SkewHermitian{Float64, Matrix{Float64}}:
