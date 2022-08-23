@@ -44,27 +44,39 @@ using VectorizationBase, LinearAlgebra, Static
             cx_ci = VectorizationBase.vbroadcast($W, VectorizationBase.vload(px, (colind,)))
             Base.Cartesian.@nexprs $RUI ri -> begin
               # rowind = MM($W, r + (ri-1)*$W)
-              m = colind < rowind_ri #(ro == co ? colind < rowind_ri : 0 < rowind_ri)
+              m = colind < rowind_ri
+              m1 = (ro == co ? colind < rowind_ri : 0<rowind_ri)
+              #@show colind rowind_ri
               vL = vload(pA, (rowind_ri, colind), m)
+              vL1 = vload(pA, (rowind_ri, colind), m1)
               #@show  (rowind_ri, colind) vL
-              @show s_ci
-              @show sx_ri
-              @show vL
               v_ri = VectorizationBase.vfmadd(vL, cx_ci, v_ri)
-              s_ci = VectorizationBase.vfnmadd(vL, sx_ri, s_ci)
+              s_ci = VectorizationBase.vfnmadd(vL1, sx_ri, s_ci)
+              #@show v_ri
+              #@show s_ci
+              #@show m
             end
+          end
+          Base.Cartesian.@nexprs $RUI ri -> begin
+             @show v_ri
+          end
+          Base.Cartesian.@nexprs $CUI ci -> begin
+            @show s_ci
           end
           c += $CUI
         end
+        println("####################################\n")
+        
         # we're storing and reloading, in hope that LLVM deletes the stores and reloads
         # because for now we're too lazy to implement a specialized method
         #TODO: don't be lazy
         # vus = VectorizationBase.VecUnroll( Base.Cartesian.@ntuple $CU u -> s_u)
         # VectorizationBase.vstore!(VectorizationBase.vsum, vy, vus, Unroll{$}((r,)))
         Base.Cartesian.@nexprs $RUI ri -> begin
+          
           vus = VectorizationBase.VecUnroll( Base.Cartesian.@ntuple $WI u -> s_{u+(ri-1)*$WI})
           svreduced = VectorizationBase.reduce_to_onevec(+, VectorizationBase.transpose_vecunroll(vus))
-          @show v_ri vus
+          @show v_ri vus svreduced
           v_to_store = @fastmath v_ri + svreduced
           @show v_to_store
           VectorizationBase.vstore!(py, v_to_store, (MM($W, r + (ri-1)*$W),))
