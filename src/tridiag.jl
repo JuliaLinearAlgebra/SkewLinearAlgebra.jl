@@ -186,9 +186,9 @@ end
 
 function LA.Tridiagonal(A::SkewHermTridiagonal)
     if A.dvim !== nothing
-        return Tridiagonal(A.ev,complex.(0, A.dvim),-conj.(A.ev))
+        return Tridiagonal(A.ev,complex.(0, A.dvim),.-conj.(A.ev))
     else
-        return Tridiagonal(A.ev,zeros(eltype(A.ev), length(A.ev) + 1),-conj.(A.ev))
+        return Tridiagonal(A.ev,zeros(eltype(A.ev), length(A.ev) + 1),.-conj.(A.ev))
     end
 end
 
@@ -284,33 +284,33 @@ Base.:\(A::SkewHermTridiagonal, B::AbstractVecOrMat) = Tridiagonal(A) \ B
 
 function Base.:*(A::SkewHermTridiagonal, B::T) where {T<:Complex}
     if A.dvim !== nothing
-        return Tridiagonal(A.ev * B, complex.(0, A.dvim)* B, -conj.(A.ev) * B)
+        return Tridiagonal(A.ev * B, complex.(0, A.dvim)* B, .-conj.(A.ev) .* B)
     else
-        return Tridiagonal(A.ev * B, zeros(eltype(A.ev), size(A, 1)), -conj.(A.ev) * B)
+        return Tridiagonal(A.ev * B, zeros(eltype(A.ev), size(A, 1)), .-conj.(A.ev) .* B)
     end
 end
 function Base.:*(B::T,A::SkewHermTridiagonal) where {T<:Complex}
     if A.dvim !== nothing
-        return Tridiagonal(B * A.ev, B * complex.(0, A.dvim) , -B * conj.(A.ev))
+        return Tridiagonal(B * A.ev, B * complex.(0, A.dvim) , .-B .* conj.(A.ev))
     else
-        return Tridiagonal(B * A.ev, zeros(eltype(A.ev), size(A, 1)), -B * conj.(A.ev))
+        return Tridiagonal(B * A.ev, zeros(eltype(A.ev), size(A, 1)), .-B .* conj.(A.ev))
     end
 end
 
 
 function Base.:/(A::SkewHermTridiagonal, B::T) where {T<:Complex}
     if A.dvim !== nothing
-        return Tridiagonal(A.ev / B, complex.(0, A.dvim)/ B, -conj.(A.ev) / B)
+        return Tridiagonal(A.ev / B, complex.(0, A.dvim)/ B, .-conj.(A.ev) ./ B)
     else
-        return Tridiagonal(A.ev / B, zeros(eltype(A.ev), size(A, 1)), -conj.(A.ev) / B)
+        return Tridiagonal(A.ev / B, zeros(eltype(A.ev), size(A, 1)), .-conj.(A.ev) ./ B)
     end
 end
 
 function Base.:\(B::T,A::SkewHermTridiagonal) where {T<:Complex}
     if A.dvim !== nothing
-        return Tridiagonal(B \ A.ev, B \ complex.(0, A.dvim), -B \ conj.(A.ev))
+        return Tridiagonal(B \ A.ev, B \ complex.(0, A.dvim), .-B .\ conj.(A.ev))
     else
-        return Tridiagonal(B \ A.ev, zeros(eltype(A.ev), size(A, 1)), -B \ conj.(A.ev))
+        return Tridiagonal(B \ A.ev, zeros(eltype(A.ev), size(A, 1)), .-B .\ conj.(A.ev))
     end
 end
 
