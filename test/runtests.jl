@@ -395,7 +395,7 @@ end
             @test diag(J, k) == diag(Jtest2, k)
         end
         @test iszero(tr(J))
-        @test iseven(n) == det(J) ≈ det(Jtest)
+        @test iseven(n) == det(J) ≈ det(Jtest2)
     end
 end
 
