@@ -198,12 +198,12 @@ Base.conj(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(conj.(M.ev),(
 Base.copy(M::SkewHermTridiagonal{<:Real}) = SkewHermTridiagonal(copy(M.ev))
 Base.copy(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(copy(M.ev), (M.dvim !==nothing ? copy(M.dvim) : nothing))
 
-function Base.imag(M::SkewHermTridiagonal)
+function Base.imag(M::SkewHermTridiagonal{T}) where T
     if M.dvim !== nothing
         LA.SymTridiagonal(M.dvim, imag.(M.ev))
     else
         n=size(M,1)
-        LA.SymTridiagonal(zeros(eltype(imag(M.ev[1])), n), imag.(M.ev))
+        LA.SymTridiagonal(zeros(real(T), n), imag.(M.ev))
     end
 end
 Base.real(M::SkewHermTridiagonal) = SkewHermTridiagonal(real.(M.ev))

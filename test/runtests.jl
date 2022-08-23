@@ -22,7 +22,7 @@ Random.seed!(314159) # use same pseudorandom stream for every test
     @test eigvals(A, 1:3) ≈ [iλ₁,iλ₂,-iλ₂]*im
     @test svdvals(A) ≈ [iλ₁,iλ₁,iλ₂,iλ₂]
     C = SLA.skewchol(A)
-    @test transpose(C.Rm)*C.Jm*C.Rm≈A[C.Pv,C.Pv]
+    @test transpose(C.R)*C.J*C.R≈A[C.p,C.p]
 end
 
 @testset "SkewLinearAlgebra.jl" begin
@@ -236,11 +236,7 @@ end
 end
 
 @testset "tridiag.jl" begin
-<<<<<<< HEAD
     for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
-=======
-    for T in (Int32,Float32,Float64,ComplexF32), n in [ 2, 10, 11]
->>>>>>> bf34119cb8c243c448a6a7dee4d2bd503cbeb96f
         if T<:Integer
             C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
         else
@@ -312,9 +308,6 @@ end
         @test A * x ≈ B * x
         @test yb * A ≈ yb * B
         @test B * A ≈ A * B ≈ B * B
-        if n>1
-            @test A[1,2] == B[1,2]
-        end
         @test size(A,1) == n
 
         EA = eigen(A)
@@ -338,13 +331,12 @@ end
             @test A[2,1] === T(2) === -A[1,2]'
         end
     end
-
     B = SLA.SkewHermTridiagonal([3,4,5])
     @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
     @test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}, Nothing}:\n ⋅  -3   ⋅   ⋅\n 3   ⋅  -4   ⋅\n ⋅   4   ⋅  -5\n ⋅   ⋅   5   ⋅"
     C = SLA.SkewHermTridiagonal(complex.([3,4,5]), [6,7,8,9])
     @test C == [6im -3 0 0; 3 7im -4 0; 0 4 8im -5; 0 0 5 9im]
-    @test repr("text/plain", C) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{Complex{$Int}, Vector{Complex{$Int}}, Vector{$Int}}:\n 0+6im  -3+0im     ⋅       ⋅  \n 3+0im   0+7im  -4+0im     ⋅  \n   ⋅     4+0im   0+8im  -5+0im\n   ⋅       ⋅     5+0im   0+9im"
+    @test repr("text/plain", C) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{Complex{$Int}, Vector{Complex{$Int}}, Vector{$Int}}:\n 0+6im  -3+0im     ⋅       ⋅  \n 3+0im   0+7im  -4+0im     ⋅  \n   ⋅     4+0im   0+8im  -5+0im\n   ⋅       ⋅     5+0im   0+9im"    
 end
 
 @testset "pfaffian.jl" begin
@@ -371,10 +363,10 @@ end
             A = SLA.skewhermitian(randn(T, n, n))
         end
         C = SLA.skewchol(A)
-        @test transpose(C.Rm) * C.Jm *C.Rm ≈ A.data[C.Pv, C.Pv]
+        @test transpose(C.R) * C.J *C.R ≈ A.data[C.p, C.p]
         B = Matrix(A)
         C = SLA.skewchol(B)
-        @test transpose(C.Rm)* C.Jm *C.Rm ≈ B[C.Pv, C.Pv]
+        @test transpose(C.R)* C.J *C.R ≈ B[C.p, C.p]
     end
 end
 
