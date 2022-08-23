@@ -1,5 +1,5 @@
 using LinearAlgebra, Random
-import .SkewLinearAlgebra as SLA
+import SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
@@ -236,7 +236,7 @@ end
 end
 
 @testset "tridiag.jl" begin
-    for T in (Int32,Float32,Float64,ComplexF32), n in [2, 10, 11]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
         if T<:Integer
             C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
         else
@@ -308,7 +308,9 @@ end
         @test A * x ≈ B * x
         @test yb * A ≈ yb * B
         @test B * A ≈ A * B ≈ B * B
-        @test A[1,2] == B[1,2]
+        if n>1
+            @test A[1,2] == B[1,2]
+        end
         @test size(A,1) == n
 
         EA = eigen(A)
@@ -324,9 +326,10 @@ end
         Svd = svd(A)
         @test Svd.U * Diagonal(Svd.S) * Svd.Vt ≈ B
         @test svdvals(A) ≈ svdvals(B)
-
-        A[2,1] = 2
-        @test A[2,1] === T(2)
+        if n > 1
+            A[2,1] = 2
+            @test A[2,1] === T(2)
+        end
         B = SLA.SkewHermTridiagonal([3,4,5])
         @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
         #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"

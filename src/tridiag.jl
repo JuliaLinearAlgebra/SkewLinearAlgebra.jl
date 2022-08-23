@@ -601,6 +601,7 @@ LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
 
 @views function to_symtridiagonal(A::SkewHermTridiagonal{T}) where {T<:Complex}
     n = size(A, 1)
+    n == 1 && return SymTridiagonal(-A.dvim,real(T)[]), Diagonal(T[1])
     V = similar(A.ev, n - 1)
     Q = similar(A.ev, n)
     Q[1] = 1
