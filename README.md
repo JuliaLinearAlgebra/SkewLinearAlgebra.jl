@@ -279,13 +279,13 @@ julia> cosh(A)
 ## Cholesky-like factorization
 
 The package provides a Cholesky-like factorization for real skew-symmetric matrices as presented in P. Benner et al, "[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000). 
-Every real skew-symmetric matrix $A$ can be factorized as $A=P^TR^TJRP$ where $P$ is a permutation matrix, $R$ is an `UpperTriangular` matrix and J is is tridiagonal skew-symmetric matrix composed of diagonal blocks of the form $B=[0, 1; -1, 0]$.
-The function `skewchol`implements this factorization and returns a `SkewCholesky` structure composed of the matrices `Rm` and `Jm` of type `UpperTriangular` and `SkewHermTridiagonal` respectively. The permutation matrix $P$ is encoded as a permutation vector `Pv`.
+Every real skew-symmetric matrix $A$ can be factorized as $A=P^TR^TJRP$ where $P$ is a permutation matrix, $R$ is an `UpperTriangular` matrix and J is of a special type called `JMatrix` that is a tridiagonal skew-symmetric matrix composed of diagonal blocks of the form $B=[0, 1; -1, 0]$. The `JMatrix` type implements efficient operations related to the shape of the matrix as matrix-matrix/vector multiplication and inversion. 
+The function `skewchol` implements this factorization and returns a `SkewCholesky` structure composed of the matrices `Rm` and `Jm` of type `UpperTriangular` and `JMatrix` respectively. The permutation matrix $P$ is encoded as a permutation vector `Pv`.
 
 
 ```jl
-julia> R=skewchol(A)
-SkewCholesky{Float64, LinearAlgebra.UpperTriangular{var"#s6", S} where {var"#s6"<:Float64, S<:AbstractMatrix{var"#s6"}}, SkewHermTridiagonal{var"#s3", V, Vim} where {var"#s3"<:Float64, V<:AbstractVector{var"#s3"}, Vim<:Union{Nothing, AbstractVector{var"#s6"} where var"#s6"<:Real}}, AbstractVector{var"#s2"} where var"#s2"<:Integer}([2.8284271247461903 0.0 0.7071067811865475 -1.0606601717798212; 0.0 2.8284271247461903 2.474873734152916 0.35355339059327373; 0.0 0.0 1.0606601717798216 0.0; 0.0 0.0 0.0 1.0606601717798216], [0.0 1.0 0.0 0.0; -1.0 0.0 -0.0 0.0; 0.0 0.0 0.0 1.0; 0.0 0.0 -1.0 0.0], [3, 2, 1, 4])
+julia> R = skewchol(A)
+SkewCholesky{Float64, LinearAlgebra.UpperTriangular{var"#s24", S} where {var"#s24"<:Float64, S<:AbstractMatrix{var"#s24"}}, JMatrix{var"#s6", N, SGN} where {var"#s6"<:Float64, N<:Integer, SGN}, AbstractVector{var"#s3"} where var"#s3"<:Integer}([2.8284271247461903 0.0 0.7071067811865475 -1.0606601717798212; 0.0 2.8284271247461903 2.474873734152916 0.35355339059327373; 0.0 0.0 1.0606601717798216 0.0; 0.0 0.0 0.0 1.0606601717798216], [0.0 1.0 0.0 0.0; -1.0 0.0 0.0 0.0; 0.0 0.0 0.0 1.0; 0.0 0.0 -1.0 0.0], [3, 2, 1, 4])
 
 julia> R.Rm
 4×4 LinearAlgebra.UpperTriangular{Float64, Matrix{Float64}}:
@@ -295,9 +295,9 @@ julia> R.Rm
   ⋅        ⋅        ⋅         1.06066
 
 julia> R.Jm
-4×4 SkewHermTridiagonal{Float64, Vector{Float64}, Nothing}:
+4×4 JMatrix{Float64, Int64, Any}:
   0.0  1.0   0.0  0.0
- -1.0  0.0  -0.0  0.0
+ -1.0  0.0   0.0  0.0
   0.0  0.0   0.0  1.0
   0.0  0.0  -1.0  0.0
 
@@ -308,7 +308,7 @@ julia> R.Pv
  1
  4
  
- julia> transpose(R.Rm)*R.Jm*R.Rm≈A[R.Pv,R.Pv]
+ julia> transpose(R.Rm) * R.Jm * R.Rm ≈ A[R.Pv,R.Pv]
 true
 ```
 
@@ -322,14 +322,14 @@ of the absolute value of the pfaffian and the sign of the pfaffian.
 ```jl
 julia> A = skewhermitian(rand(4,4))
 4×4 SkewHermitian{Float64, Matrix{Float64}}:
-  0.0         0.0308807   0.190193   -0.0601449
- -0.0308807   0.0        -0.251285    0.224804
- -0.190193    0.251285    0.0         0.0202728
-  0.0601449  -0.224804   -0.0202728   0.0
+ 0.0       -0.133862  -0.356458  -0.405602
+ 0.133862   0.0        0.164159   0.117686
+ 0.356458  -0.164159   0.0        0.144498
+ 0.405602  -0.117686  -0.144498   0.0
 
 julia> pfaffian(A)
--0.027016439325052065
+-0.043975773548597816
 
 julia> logabspfaffian(A)
-(-2.6113097343694056, -1.0)
+(-3.124116397868594, -1.0)
 ```
