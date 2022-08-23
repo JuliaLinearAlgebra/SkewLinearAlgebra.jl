@@ -28,6 +28,7 @@ function _skewchol!(A::SkewHermitian{<:Real})
     @views B = A.data
     tol = 1e-15 * norm(B)
     m = size(B,1)
+    m == 1 && return [1]
     J2 = similar(B,2,2)
     J2[1,1] = 0; J2[2,1] = -1; J2[1,2] = 1; J2[2,2] = 0
     ii = 0; jj = 0; kk = 0
@@ -39,10 +40,7 @@ function _skewchol!(A::SkewHermitian{<:Real})
         ii = M[2][1] + j2 - 2
         jj = M[2][2] + j2 - 2
 
-        if abs(B[ii,jj])<tol
-            rank = j2-2
-            return P, rank
-        end
+        abs(B[ii,jj])<tol && return P
 
         kk= (jj == j2-1 ? ii : jj)
 
@@ -78,13 +76,12 @@ function _skewchol!(A::SkewHermitian{<:Real})
         @views mul!(B[j2+1:m,j2+1:m], transpose(B[j2-1:j2,j2+1:m]), tempM[:,1:l],-1,1)
 
     end
-    rank=2*(m÷2)
-    return P,rank
+    return P
 end
 copyeigtype(A::AbstractMatrix) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
 
 @views function skewchol!(A::SkewHermitian)
-    P = _skewchol!(A)[1]
+    P = _skewchol!(A)
     return SkewCholesky(UpperTriangular(A.data), P)
 end
 

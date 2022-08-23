@@ -26,6 +26,7 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 end
 
 @testset "SkewLinearAlgebra.jl" begin
+
     for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) * T(2))
@@ -46,7 +47,7 @@ end
         @test size(A) == size(A.data)
         @test size(A, 1) == size(A.data, 1)
         @test size(A, 2) == size(A.data, 2)
-        @test Matrix(A) == A.data
+        @test Array(A) == A.data
         @test tr(A) == tr(A.data)
         @test tril(A) == tril(A.data)
         @test tril(A, 1) == tril(A.data, 1)
@@ -85,6 +86,8 @@ end
         y = zeros(T, n)
         mul!(y, A, x, T(2), T(0))
         @test y == T(2) * A.data * x
+        mul!(y, A, x)
+        @test y == A * x
         k = dot(y, A, x)
         @test k ≈ adjoint(y) * A.data * x
         k = copy(y)
@@ -103,11 +106,14 @@ end
         B = SLA.SkewHermitian(B)
         mul!(C, B, A, T(2), T(0))
         @test C == T(2) * B.data * A.data
+        B = Matrix(A)
+        @test kron(A, B) ≈ kron(A.data, B)
         A.data[n,n] = T(4)
         @test SLA.isskewhermitian(A.data) == false
         A.data[n,n] = T(0)
         A.data[n,1] = T(4)
         @test SLA.isskewhermitian(A.data) == false
+        
         LU = lu(A)
         @test LU.L * LU.U ≈ A.data[LU.p,:]
         if !(T<:Integer)
@@ -117,7 +123,7 @@ end
         QR = qr(A)
         @test QR.Q * QR.R ≈ A.data
         if T<:Integer
-            A = SLA.skewhermitian(rand(T,n,n)*2)
+            A = SLA.skewhermitian(rand(T,n,n) * 2)
         else
             A = SLA.skewhermitian(randn(T,n,n))
         end
@@ -132,7 +138,7 @@ end
 end
 
 @testset "hessenberg.jl" begin
-    for T in (Int32,Float32,Float64,ComplexF32), n in [2, 10, 11]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
         if T<:Integer
             A = SLA.skewhermitian(rand(T(-10):T(10), n, n) * T(2))
         else
@@ -206,7 +212,7 @@ end
         @test sinh(B) ≈  Matrix(sinh(A))
         @test cosh(B) ≈  Matrix(cosh(A))
     end
-    for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64), n in [ 2, 20, 153, 200]
+    for T in (Int32 ,Float32,Float64,ComplexF32), n in [2, 10, 11]
         if T<:Integer
             A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
         else
@@ -230,7 +236,7 @@ end
 end
 
 @testset "tridiag.jl" begin
-    for T in (Int32,Float32,Float64,ComplexF32), n in [2, 10, 11]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [ 2, 10, 11]
         if T<:Integer
             C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
         else
@@ -300,8 +306,9 @@ end
         @test A * x ≈ B * x
         @test yb * A ≈ yb * B
         @test B * A ≈ A * B ≈ B * B
-
-        @test A[1,2] == B[1,2]
+        if n>1
+            @test A[1,2] == B[1,2]
+        end
         @test size(A,1) == n
 
         EA = eigen(A)
@@ -350,7 +357,7 @@ end
 end
 
 @testset "cholesky.jl" begin
-    for T in (Int32, Float32, Float64), n in [2, 10, 11]
+    for T in (Int32, Float32, Float64), n in [1, 2, 10, 11]
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n)*T(2))
         else
@@ -365,8 +372,8 @@ end
 end
 
 @testset "jmatrix.jl" begin
-    for T in (Int32, Float32, Float64), n in [2, 10, 11], sgn in (+1,-1)
-        A = rand(T,n,n)
+    for T in (Int32, Float32, Float64), n in [1, 2, 10, 11], sgn in (+1,-1)
+        A = rand(T, n, n)
         J = SLA.JMatrix{T,sgn}(n)
         vec = zeros(T, n - 1)
         vec[1:2:n-1] .= -sgn
@@ -392,3 +399,4 @@ end
     end
     @test repr("text/plain", SLA.JMatrix(4)) == "4×4 SkewLinearAlgebra.JMatrix{Int8, 1}:\n  ⋅  1   ⋅  ⋅\n -1  ⋅   ⋅  ⋅\n  ⋅  ⋅   ⋅  1\n  ⋅  ⋅  -1  ⋅"
 end
+

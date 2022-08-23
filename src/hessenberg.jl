@@ -145,11 +145,6 @@ end
 @views function skewblockedhess!(S::SkewHermitian{T}) where {T}
     
     n = size(S.data,1)
-    
-    if n == 1
-        return Hessenberg(Matrix(S.data),Vector{eltype(S.data)}(undef,0),LA.UpperHessenberg(S.data),'L')
-    end
-
     nb  = setnb(n)
     A   = S.data
     η   = similar(A, real(T), n - 1)

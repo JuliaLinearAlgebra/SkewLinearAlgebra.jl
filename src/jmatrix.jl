@@ -90,6 +90,7 @@ Base.:/(A::StridedVecOrMat, J::JMatrix) =  A * inv(J)
 
 Base.:-(J::JMatrix{T,+1}) where T = JMatrix{T,-1}(J.n)
 Base.:-(J::JMatrix{T,-1}) where T = JMatrix{T,+1}(J.n)
+
 LA.transpose(J::JMatrix) = -J
 LA.adjoint(J::JMatrix) = -J
 function LA.inv(J::JMatrix)
