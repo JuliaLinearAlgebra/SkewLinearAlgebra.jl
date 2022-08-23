@@ -236,7 +236,7 @@ end
 end
 
 @testset "tridiag.jl" begin
-    for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [ 2, 10, 11]
         if T<:Integer
             C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
         else
