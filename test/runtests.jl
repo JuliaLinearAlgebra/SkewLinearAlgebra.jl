@@ -1,5 +1,5 @@
 using LinearAlgebra, Random
-import SkewLinearAlgebra as SLA
+import .SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
@@ -236,7 +236,7 @@ end
 end
 
 @testset "tridiag.jl" begin
-    for T in (Int32,Float32,Float64,ComplexF32), n in [ 2, 10, 11]
+    for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
         if T<:Integer
             C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
         else
@@ -286,7 +286,9 @@ end
         @test Matrix(A)/2 == Matrix(A / 2)
         @test Matrix(A + A) == Matrix(A * 2)
         @test Matrix(A- 2 * A) == Matrix(-A)
-        @test dot(x, A, y) ≈ dot(x, Matrix(A), y)
+        if n>1
+            @test dot(x, A, y) ≈ dot(x, Matrix(A), y)
+        end
         if T<:Complex
             z = rand(T)
             @test A * z ≈ Tridiagonal(A) * z
@@ -327,9 +329,10 @@ end
         for f in (real, imag)
             @test Matrix(f(A)) == f(B)
         end
-
-        A[2,1] = 2
-        @test A[2,1] === T(2) === -A[1,2]'
+        if n > 1
+            A[2,1] = 2
+            @test A[2,1] === T(2) === -A[1,2]'
+        end
     end
 
     B = SLA.SkewHermTridiagonal([3,4,5])
