@@ -1,5 +1,5 @@
 using LinearAlgebra, Random
-import .SkewLinearAlgebra as SLA
+import SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
@@ -236,11 +236,7 @@ end
 end
 
 @testset "tridiag.jl" begin
-<<<<<<< HEAD
     for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
-=======
-    for T in (Int32,Float32,Float64,ComplexF32), n in [ 2, 10, 11]
->>>>>>> bf34119cb8c243c448a6a7dee4d2bd503cbeb96f
         if T<:Integer
             C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
         else
