@@ -1,5 +1,5 @@
 using LinearAlgebra, Random
-import SkewLinearAlgebra as SLA
+import .SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
@@ -26,7 +26,10 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 end
 
 @testset "SkewLinearAlgebra.jl" begin
+    
     for T in (Int32,Int64,Float32,Float64,ComplexF32,ComplexF64),n in [1, 2, 20, 153, 200]
+        a = rand(T,1)
+        @test skewhermitian(a) == imag(a)
         if T<:Integer
             A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) * T(2))
         else
@@ -42,6 +45,8 @@ end
         @test similar(A) == SLA.SkewHermitian(zeros(T, n, n))
         @test similar(A,ComplexF64) == SLA.SkewHermitian(zeros(ComplexF64, n, n))
         @test A == copy(A)::SLA.SkewHermitian
+        @test Tridiagonal(A) == Tridiagonal(A.data)
+        @test AbstractMatrix{ComplexF64}(A::SkewHermitian) == SkewHermitian(AbstractMatrix{ComplexF64}(A.data))
         dest = copy(4 * A)
         copyto!(dest, A)
         @test dest == A
@@ -51,7 +56,7 @@ end
         @test size(A) == size(A.data)
         @test size(A, 1) == size(A.data, 1)
         @test size(A, 2) == size(A.data, 2)
-        @test Matrix(A) == A.data
+        @test Array(A) == A.data
         @test tr(A) == tr(A.data)
         @test tril(A) == tril(A.data)
         @test tril(A, 1) == tril(A.data, 1)
@@ -90,6 +95,8 @@ end
         y = zeros(T, n)
         mul!(y, A, x, T(2), T(0)) 
         @test y == T(2) * A.data * x
+        mul!(y, A, x)
+        @test y == A * x
         k = dot(y, A, x)
         @test k ≈ adjoint(y) * A.data * x
         k = copy(y)
@@ -108,11 +115,14 @@ end
         B = SLA.SkewHermitian(B)
         mul!(C, B, A, T(2), T(0))
         @test C == T(2) * B.data * A.data
+        B = Matrix(A)
+        @test kron(A, B) ≈ kron(A.data, B)
         A.data[n,n] = T(4)
         @test SLA.isskewhermitian(A.data) == false
         A.data[n,n] = T(0)
         A.data[n,1] = T(4)
         @test SLA.isskewhermitian(A.data) == false
+        
         LU = lu(A)
         @test LU.L * LU.U ≈ A.data[LU.p,:]
         if !(T<:Integer)
@@ -386,8 +396,8 @@ end
         @test A*Jtest ≈ A*J
         @test Jtest*A ≈ J*A
         Jtest2 = Matrix(J)
-        @test Matrix(-J) == -Jtest2
-        @test Matrix(transpose(J)) == -Jtest2
+        @test Matrix(-copy(J)) == -Jtest2
+        @test Array(transpose(J)) == -Jtest2
         if  iszero(n%2)
             B = inv(J)
             @test B == -Jtest2
@@ -397,4 +407,5 @@ end
         @test iszero(tr(J))
     end
 end
+
 

@@ -26,7 +26,6 @@ using VectorizationBase, LinearAlgebra, Static
       Nr = N ÷ $CU
       @assert Nr * $CU == N# "TODO: handle remainders!!!"
       r = 0
-      @show Nr
       for ro = 1:Nr
         # down rows
         # initialize accumulators
@@ -35,11 +34,9 @@ using VectorizationBase, LinearAlgebra, Static
         c = 0
         for co = 1:Nr
           # across columns
-          @show co
           Base.Cartesian.@nexprs $RUI ri -> begin
             rowind_ri = MM($W, r + (ri-1)*$W)
             sx_ri = VectorizationBase.vload(px, (rowind_ri,))
-            @show rowind_ri
           end
 
           Base.Cartesian.@nexprs $CUI ci -> begin

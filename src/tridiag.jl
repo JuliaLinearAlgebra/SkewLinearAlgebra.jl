@@ -518,18 +518,10 @@ end
 @views function skewtrieigen!(S::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
 
     n = size(S, 1)
-    unshiftedH = SymTridiagonal(zeros(T, n), S.ev)
-    shift = norm(unshiftedH)
-    #shiftedH = SymTridiagonal(ones(T, n) .* (shift*shift), S.ev)
-    #trisol = eigen!(shiftedH)
-    #trisol.values ./= shift
-    #trisol.values .-= shift*shift
-    trisol = eigen!(unshiftedH.*shift)
-    trisol.values ./= shift
-    vals  = trisol.values*1im
-    vals .*= -1
-    Qdiag = complex(similar(trisol.vectors,n,n))
-
+    H = SymTridiagonal(zeros(T, n), S.ev)
+    trisol = eigen!(H)
+    vals  = complex.(0, -trisol.values)
+    Qdiag = complex(zeros(T,n,n))
     c = 1
     @inbounds for j=1:n
         c = 1
@@ -560,9 +552,7 @@ end
 @views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
     n=size(A,1)
     S, Q = to_symtridiagonal(A)
-    shift = norm(S)
-    Eig=eigen!(S.*shift)
-    Eig.values ./= shift
+    Eig=eigen!(S)
     Vec = similar(A.ev,n,n)
     mul!(Vec,Q,Eig.vectors)
     return Eigen(Eig.values.*(-1im),Vec)
