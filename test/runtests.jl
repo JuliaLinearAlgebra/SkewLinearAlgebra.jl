@@ -290,9 +290,7 @@ end
         end
         B = Matrix(A)
         @test tr(A) ≈ tr(B)
-        B = copy(A)
-        @test B == A
-        B = Matrix(A)
+        @test B == copy(A) == A
         yb = rand(T, 1, n)
         if !iszero(det(Tridiagonal(A)))
             @test A \ x ≈ B \ x
@@ -319,16 +317,17 @@ end
         Svd = svd(A)
         @test Svd.U * Diagonal(Svd.S) * Svd.Vt ≈ B
         @test svdvals(A) ≈ svdvals(B)
+        for f in (real, imag)
+            @test Matrix(f(A)) == f(B)
+        end
 
         A[2,1] = 2
-        @test A[2,1] === T(2)
-        B = SLA.SkewHermTridiagonal([3,4,5])
-        @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
-        #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}}:\n 0  -3   ⋅   ⋅\n 3   0  -4   ⋅\n ⋅   4   0  -5\n ⋅   ⋅   5   0"
-        for f in (real, imag)
-            @test Matrix(f(A)) == f(Matrix(A))
-        end
+        @test A[2,1] === T(2) === -A[1,2]'
     end
+
+    B = SLA.SkewHermTridiagonal([3,4,5])
+    @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
+    @test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}, Nothing}:\n ⋅  -3   ⋅   ⋅\n 3   ⋅  -4   ⋅\n ⋅   4   ⋅  -5\n ⋅   ⋅   5   ⋅"
 end
 
 @testset "pfaffian.jl" begin
@@ -388,5 +387,5 @@ end
         @test iszero(tr(J))
         @test iseven(n) == det(J) ≈ det(Jtest2)
     end
+    @test repr("text/plain", SLA.JMatrix(4)) == "4×4 SkewLinearAlgebra.JMatrix{Int8, 1}:\n  ⋅  1   ⋅  ⋅\n -1  ⋅   ⋅  ⋅\n  ⋅  ⋅   ⋅  1\n  ⋅  ⋅  -1  ⋅"
 end
-

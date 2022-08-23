@@ -641,6 +641,10 @@ end
 #det(A::SkewHermTridiagonal; shift::Number=false) = det_usmani(A.ev, A.dv, A.ev, shift)
 #logabsdet(A::SkewHermTridiagonal; shift::Number=false) = logabsdet(ldlt(A; shift=shift))
 
+# show a "⋅" for structural zeros when printing
+function Base.replace_in_print_matrix(A::SkewHermTridiagonal, i::Integer, j::Integer, s::AbstractString)
+    i==j-1 || i==j+1 ? s : Base.replace_with_centered_mark(s)
+end
 
 Base.@propagate_inbounds function Base.getindex(A::SkewHermTridiagonal{T}, i::Integer, j::Integer) where T
 
