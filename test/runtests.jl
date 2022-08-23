@@ -85,10 +85,10 @@ end
             @test getindex(A, n, n-1) == T(3)
             @test getindex(A, n-1, n) == T(-3)
         end
-      
+
         x = rand(T, n)
         y = zeros(T, n)
-        mul!(y, A, x, T(2), T(0)) 
+        mul!(y, A, x, T(2), T(0))
         @test y == T(2) * A.data * x
         k = dot(y, A, x)
         @test k ≈ adjoint(y) * A.data * x
@@ -160,7 +160,7 @@ end
         HB = hessenberg(B)
         @test Matrix(HA.H) ≈ Matrix(HB.H)
     end
-    
+
 end
 
 @testset "eigen.jl" begin
@@ -217,7 +217,7 @@ end
         if T<:Integer
             A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
         else
-            if T<:Complex 
+            if T<:Complex
                 A = SLA.SkewHermTridiagonal(rand(T, n - 1), rand(real(T), n))
             else
                 A = SLA.SkewHermTridiagonal(rand(T, n - 1))
@@ -236,7 +236,7 @@ end
     end
 end
 
-@testset "tridiag.jl" begin 
+@testset "tridiag.jl" begin
     for T in (Int32, Int64, Float32, Float64, ComplexF32, ComplexF64), n in [ 2, 20, 153, 200]
         if T<:Integer
             C = SLA.skewhermitian(rand(convert(Array{T},-20:20), n, n) * T(2))
@@ -246,24 +246,24 @@ end
         A = SLA.SkewHermTridiagonal(C)
         @test SLA.isskewhermitian(A) == true
         @test Tridiagonal(A) ≈ Tridiagonal(C)
-        
-        
+
+
         if T<:Integer
             A = SLA.SkewHermTridiagonal(rand(convert(Array{T},-20:20), n - 1) * T(2))
             C = rand(convert(Array{T},-10:10), n, n)
             D1 =  rand(convert(Array{T},-10:10), n, n)
             x = rand(convert(Array{T},-10:10), n)
-            y = rand(convert(Array{T},-10:10), n) 
+            y = rand(convert(Array{T},-10:10), n)
         else
-            if T<:Complex 
+            if T<:Complex
                 A = SLA.SkewHermTridiagonal(rand(T, n - 1), rand(real(T), n))
             else
                 A = SLA.SkewHermTridiagonal(rand(T, n - 1))
             end
             C = randn(T, n, n)
-            D1 = randn(T, n, n) 
+            D1 = randn(T, n, n)
             x = randn(T, n)
-            y = randn(T, n) 
+            y = randn(T, n)
         end
         D2 = copy(D1)
         B = Matrix(A)
@@ -272,7 +272,7 @@ end
         mul!(D1, A, C, T(2), T(0))
         @test size(A) == (n, n)
         @test size(A,1) == n
-        if A.dvim !== nothing 
+        if A.dvim !== nothing
             @test conj(A) == SLA.SkewHermTridiagonal(conj.(A.ev),-A.dvim)
             @test copy(A) == SLA.SkewHermTridiagonal(copy(A.ev),copy(A.dvim))
         else
@@ -294,7 +294,7 @@ end
             @test A * z ≈ Tridiagonal(A) * z
             @test z * A ≈ z * Tridiagonal(A)
             @test A / z ≈ Tridiagonal(A) / z
-            @test z \ A ≈ z \ Tridiagonal(A)   
+            @test z \ A ≈ z \ Tridiagonal(A)
         end
         B = Matrix(A)
         @test tr(A) ≈ tr(B)
@@ -310,7 +310,7 @@ end
         @test A * x ≈ B * x
         @test yb * A ≈ yb * B
         @test B * A ≈ A * B ≈ B * B
-        
+
         @test A[1,2] == B[1,2]
         @test size(A,1) == n
 
@@ -327,7 +327,7 @@ end
         Svd = svd(A)
         @test Svd.U * Diagonal(Svd.S) * Svd.Vt ≈ B
         @test svdvals(A) ≈ svdvals(B)
-        
+
         setindex!(A, T(2), 2, 1)
         @test A[2,1] == T(2)
         B = SLA.SkewHermTridiagonal([3,4,5])
@@ -374,27 +374,28 @@ end
 @testset "jmatrix.jl" begin
     for T in (Int32, Int64, Float32, Float64), n in [2, 20, 55, 78]
         A = rand(T,n,n)
-        J = SLA.JMatrix(T, n)
+        J = SLA.JMatrix{T,+1}(n)
         vec = zeros(T, n - 1)
-        for i = 1 : 2 : n - 1
-            vec[i] = -1
-        end
+        vec[1:2:n-1] .= -1
         Jtest = SLA.SkewHermTridiagonal(vec)
         @test size(J) == (n, n)
         @test size(J, 1) == n
-        @test Matrix(J) == Matrix(Jtest)
+        @test J == Matrix(J) == Matrix(Jtest) == SLA.SkewHermTridiagonal(J)
         @test A*Jtest ≈ A*J
         @test Jtest*A ≈ J*A
         Jtest2 = Matrix(J)
-        @test Matrix(-J) == -Jtest2
-        @test Matrix(transpose(J)) == -Jtest2
-        if  iszero(n%2)
-            B = inv(J)
-            @test B == -Jtest2
+        @test -J == -Jtest2
+        @test transpose(J) == -Jtest2 == J'
+        if iseven(n)
+            @test inv(J) == -Jtest2
             @test J \ A ≈ Matrix(J) \ A
+            @test A / J ≈ A / Matrix(J)
         end
-        @test iszero(diag(J))
+        for k in [-4:4; n; n+1]
+            @test diag(J, k) == diag(Jtest2, k)
+        end
         @test iszero(tr(J))
+        @test iseven(n) == det(J) ≈ det(Jtest)
     end
 end
 

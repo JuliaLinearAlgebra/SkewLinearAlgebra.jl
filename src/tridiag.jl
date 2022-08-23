@@ -17,7 +17,7 @@ struct SkewHermTridiagonal{T, V<:AbstractVector{T}, Vim<:Union{AbstractVector{<:
 end
 """
     SkewHermTridiagonal(ev::V, dvim::Vim) where {V <: AbstractVector, Vim <: AbstractVector{<:Real}}
-Construct a skewhermitian tridiagonal matrix from the subdiagonal (`ev`) 
+Construct a skewhermitian tridiagonal matrix from the subdiagonal (`ev`)
 and the imaginary part of the main diagonal (`dvim`). The result is of type `SkewHermTridiagonal`
 and provides efficient specialized eigensolvers, but may be converted into a
 regular matrix with `convert(Array, _)` (or `Array(_)` for short).
@@ -122,7 +122,7 @@ function SkewHermTridiagonal(A::SkewHermitian{T}) where T
     end
 end
 
-function Base.AbstractMatrix{T}(S::SkewHermTridiagonal) where {T} 
+function Base.AbstractMatrix{T}(S::SkewHermTridiagonal) where {T}
     if S.dvim !== nothing
         SkewHermTridiagonal(convert(AbstractVector{T}, S.ev)::AbstractVector{T},convert(AbstractVector{<:real(T)}, S.dvim)::AbstractVector{<:real(T)})
     else
@@ -166,7 +166,7 @@ function Base.size(A::SkewHermTridiagonal, d::Integer)
 end
 
 
-function Base.similar(S::SkewHermTridiagonal{<:Complex{T}}, ::Type{Complex{T}}) where {T} 
+function Base.similar(S::SkewHermTridiagonal{<:Complex{T}}, ::Type{Complex{T}}) where {T}
     if S.dvim !== nothing
         return SkewHermTridiagonal(similar(S.ev, Complex{T}), similar(S.dvim,T))
     else
@@ -198,7 +198,7 @@ Base.conj(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(conj.(M.ev),(
 Base.copy(M::SkewHermTridiagonal{<:Real}) = SkewHermTridiagonal(copy(M.ev))
 Base.copy(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(copy(M.ev), (M.dvim !==nothing ? copy(M.dvim) : nothing))
 
-function Base.imag(M::SkewHermTridiagonal) 
+function Base.imag(M::SkewHermTridiagonal)
     if M.dvim !== nothing
         LA.SymTridiagonal(M.dvim, imag.(M.ev))
     else
@@ -215,7 +215,7 @@ Base.adjoint(S::SkewHermTridiagonal) = -S
 function LA.tr(S::SkewHermTridiagonal{T}) where T
     if T<:Real || S.dvim === nothing
         return zero(eltype(S.ev))
-    else 
+    else
         return complex(zero(eltype(S.dvim)), sum(S.dvim))
     end
 end
@@ -224,28 +224,28 @@ Base.copy(S::LA.Adjoint{<:Any,<:SkewHermTridiagonal}) = SkewHermTridiagonal(map(
 
 isskewhermitian(S::SkewHermTridiagonal) = true
 
-@views function LA.rdiv!(A::SkewHermTridiagonal, b::Number) 
+@views function LA.rdiv!(A::SkewHermTridiagonal, b::Number)
     rdiv!(A.ev, checkreal(b))
     if A.dvim !== nothing
         rdiv!(A.dvim, checkreal(b))
     end
     return A
 end
-@views function LA.ldiv!(b::Number,A::SkewHermTridiagonal) 
+@views function LA.ldiv!(b::Number,A::SkewHermTridiagonal)
     ldiv!(checkreal(b), A.ev)
     if A.dvim !== nothing
         ldiv!(checkreal(b), A.dvim)
     end
     return A
 end
-@views function LA.rmul!(A::SkewHermTridiagonal, b::Number) 
+@views function LA.rmul!(A::SkewHermTridiagonal, b::Number)
     rmul!(A.ev, checkreal(b))
     if A.dvim !== nothing
         rmul!(A.dvim, checkreal(b))
     end
     return A
 end
-@views function LA.lmul!(b::Number,A::SkewHermTridiagonal) 
+@views function LA.lmul!(b::Number,A::SkewHermTridiagonal)
     lmul!(checkreal(b), A.ev)
     if A.dvim !== nothing
         lmul!(checkreal(b), A.dvim)
@@ -253,20 +253,20 @@ end
     return A
 end
 
-@views function LA.rdiv!(A::SkewHermTridiagonal, B::AbstractMatrix) 
+@views function LA.rdiv!(A::SkewHermTridiagonal, B::AbstractMatrix)
     return Tridiagonal(A) / B
 end
-@views function LA.ldiv!(B::AbstractVecOrMat,A::SkewHermTridiagonal) 
+@views function LA.ldiv!(B::AbstractVecOrMat,A::SkewHermTridiagonal)
     return B / Tridiagonal(A)
 end
 
-@views function LA.rmul!(A::SkewHermTridiagonal, b::StridedVecOrMat) 
+@views function LA.rmul!(A::SkewHermTridiagonal, b::StridedVecOrMat)
     y = similar(A, size(A,1), size(b,2))
     return mul!(y,Tridiagonal(A),b)
 end
 
 @views function LA.lmul!(b::StridedVecOrMat,A::SkewHermTridiagonal)
-    y = similar(A, size(b,1), size(A,2)) 
+    y = similar(A, size(b,1), size(A,2))
     return mul!(y, b, Tridiagonal(A))
 end
 
@@ -283,14 +283,14 @@ Base.:\(B::StridedVecOrMat, A::SkewHermTridiagonal) = ldiv!(B, A)
 Base.:\(A::SkewHermTridiagonal, B::AbstractVecOrMat) = Tridiagonal(A) \ B
 
 function Base.:*(A::SkewHermTridiagonal, B::T) where {T<:Complex}
-    if A.dvim !== nothing 
+    if A.dvim !== nothing
         return Tridiagonal(A.ev * B, complex.(0, A.dvim)* B, -conj.(A.ev) * B)
     else
         return Tridiagonal(A.ev * B, zeros(eltype(A.ev), size(A, 1)), -conj.(A.ev) * B)
     end
 end
 function Base.:*(B::T,A::SkewHermTridiagonal) where {T<:Complex}
-    if A.dvim !== nothing 
+    if A.dvim !== nothing
         return Tridiagonal(B * A.ev, B * complex.(0, A.dvim) , -B * conj.(A.ev))
     else
         return Tridiagonal(B * A.ev, zeros(eltype(A.ev), size(A, 1)), -B * conj.(A.ev))
@@ -299,7 +299,7 @@ end
 
 
 function Base.:/(A::SkewHermTridiagonal, B::T) where {T<:Complex}
-    if A.dvim !== nothing 
+    if A.dvim !== nothing
         return Tridiagonal(A.ev / B, complex.(0, A.dvim)/ B, -conj.(A.ev) / B)
     else
         return Tridiagonal(A.ev / B, zeros(eltype(A.ev), size(A, 1)), -conj.(A.ev) / B)
@@ -307,14 +307,14 @@ function Base.:/(A::SkewHermTridiagonal, B::T) where {T<:Complex}
 end
 
 function Base.:\(B::T,A::SkewHermTridiagonal) where {T<:Complex}
-    if A.dvim !== nothing 
+    if A.dvim !== nothing
         return Tridiagonal(B \ A.ev, B \ complex.(0, A.dvim), -B \ conj.(A.ev))
     else
         return Tridiagonal(B \ A.ev, zeros(eltype(A.ev), size(A, 1)), -B \ conj.(A.ev))
     end
 end
 
-function Base. ==(A::SkewHermTridiagonal, B::SkewHermTridiagonal) 
+function Base. ==(A::SkewHermTridiagonal, B::SkewHermTridiagonal)
     if A.dvim !== nothing && B.dvim!== nothing
         return (A.ev==B.ev) &&(A.dvim==B.dvim)
     elseif A.dvim === nothing && B.dvim === nothing
@@ -324,7 +324,7 @@ function Base. ==(A::SkewHermTridiagonal, B::SkewHermTridiagonal)
     end
 end
 
-function Base.:+(A::SkewHermTridiagonal, B::SkewHermTridiagonal) 
+function Base.:+(A::SkewHermTridiagonal, B::SkewHermTridiagonal)
     if A.dvim !== nothing && B.dvim !== nothing
         return SkewHermTridiagonal(A.ev + B.ev, A.dvim + B.dvim)
     elseif A.dvim === nothing && B.dvim !== nothing
@@ -335,7 +335,7 @@ function Base.:+(A::SkewHermTridiagonal, B::SkewHermTridiagonal)
         return SkewHermTridiagonal(A.ev + B.ev)
     end
 end
-function Base.:-(A::SkewHermTridiagonal, B::SkewHermTridiagonal) 
+function Base.:-(A::SkewHermTridiagonal, B::SkewHermTridiagonal)
     if A.dvim !== nothing && B.dvim !== nothing
         return SkewHermTridiagonal(A.ev - B.ev, A.dvim - B.dvim)
     elseif A.dvim === nothing && B.dvim !== nothing
@@ -346,8 +346,8 @@ function Base.:-(A::SkewHermTridiagonal, B::SkewHermTridiagonal)
         return SkewHermTridiagonal(A.ev - B.ev)
     end
 end
-function Base.:-(A::SkewHermTridiagonal) 
-    if A.dvim !== nothing 
+function Base.:-(A::SkewHermTridiagonal)
+    if A.dvim !== nothing
         return SkewHermTridiagonal(-A.ev, -A.dvim)
     else
         return SkewHermTridiagonal(-A.ev)
@@ -568,7 +568,7 @@ end
     return Eigen(Eig.values.*(-1im),Vec)
 end
 
-function copyeigtype(A::SkewHermTridiagonal) 
+function copyeigtype(A::SkewHermTridiagonal)
     B = similar(A , LA.eigtype( eltype(A.ev) ))
     copyto!(B, A)
     return B
@@ -585,7 +585,7 @@ end
 
 LA.svdvals(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}=svdvals!(copyeigtype(A))
 
-@views function LA.svd!(A::SkewHermTridiagonal) 
+@views function LA.svd!(A::SkewHermTridiagonal)
     n = size(A, 1)
     E = eigen!(A)
     U = E.vectors
@@ -615,17 +615,17 @@ LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
     Q[1] = 1
     V .= A.ev
     V.*= 1im
-    
+
     for i=1:n-2
         nm = abs(V[i])
         Q[i+1] = V[i] / nm
-        V[i] = nm 
+        V[i] = nm
         V[i+1] *= Q[i+1]
     end
     nm = abs(V[n-1])
     Q[n] = V[n-1] / nm
-    V[n-1] = nm 
-    if A.dvim !== nothing 
+    V[n-1] = nm
+    if A.dvim !== nothing
         SymTri = SymTridiagonal(-A.dvim, real(V))
     else
         SymTri = SymTridiagonal(zeros(real(T), n), real(V))
@@ -671,6 +671,3 @@ end
     end
     return x
 end
-
-
-
