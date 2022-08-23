@@ -315,10 +315,11 @@ true
 ## Pfaffian
 
 The determinant of a real skew-Hermitian maxtrix is a perfect square. 
-The pfaffian of A is a signed number such that `pfaffian(A)^2 = det(A)`.
-Since the pfaffian may overflow, it may be convenient to compute the logarithm
+The pfaffian of A is a signed number such that `pfaffian(A)^2 = det(A)` as defined in (https://en.wikipedia.org/wiki/Pfaffian).
+Since the computation of the pfaffian may overflow, it may be convenient to compute the logarithm
 of its absolute value. `logabspfaffian(A)` returns a tuple containing the logarithm 
-of the absolute value of the pfaffian and the sign of the pfaffian.
+of the absolute value of the pfaffian and the sign of the pfaffian. 
+An exact computation of the pfaffian is implemented for `BigInt` matrices.
 ```jl
 julia> A = skewhermitian(rand(4,4))
 4×4 SkewHermitian{Float64, Matrix{Float64}}:
