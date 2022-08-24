@@ -424,8 +424,8 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
     dv = S.dvim
     ev = S.ev
     x₀ = x[1]
-    x₊ = x[2]
-    sub = ev[1]
+    x₊ = (nx > 1 ? x[2] : zero(x[1]))
+    sub = (nx > 1 ? ev[1] : zero(x[1]))
     if dv !== nothing
         r = dot( adjoint(sub)*x₊+complex(zero(dv[1]),-dv[1])*x₀, y[1])
         @inbounds for j in 2:nx-1
