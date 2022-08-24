@@ -370,7 +370,6 @@ end
     if n != size(C, 2)
         throw(DimensionMismatch("second dimension of B, $n, doesn't match second dimension of C, $(size(C,2))"))
     end
-
     if m == 0
         return C
     elseif iszero(_add.alpha)
@@ -378,7 +377,6 @@ end
     end
     α = S.dvim
     β = S.ev
-
     if α === nothing
         @inbounds begin
             for j = 1:n
@@ -391,7 +389,7 @@ end
                     β₋, β₀ = β₀, β[i]
                     LA._modify!(_add, β₋*x₋ - adjoint(β₀) * x₊, C, (i, j))
                 end
-                LA._modify!(_add, β[m-1] * x₀ , C, (m, j))
+                LA._modify!(_add, β₀  * x₀ , C, (m, j))
             end
         end
     else
@@ -406,7 +404,7 @@ end
                     β₋, β₀ = β₀, β[i]
                     LA._modify!(_add, β₋*x₋ +α[i]*x₀*1im -adjoint(β₀)*x₊, C, (i, j))
                 end
-                LA._modify!(_add, β[m-1]*x₀+α[m]*x₊*1im , C, (m, j))
+                LA._modify!(_add, β₀*x₀+α[m]*x₊*1im , C, (m, j))
             end
         end
     end
