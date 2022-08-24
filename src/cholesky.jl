@@ -1,26 +1,26 @@
 
 struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:JMatrix{<:T},P<:AbstractVector{<:Integer}}
-    Rm::R #Uppertriangular matrix
-    Jm::J # Block diagonal skew-symmetric matrix of type JMatrix
-    Pv::P #Permutation vector
+    R::R #Uppertriangular matrix
+    J::J # Block diagonal skew-symmetric matrix of type JMatrix
+    p::P #Permutation vector
 
-    function SkewCholesky{T,R,J,P}(Rm,Jm,Pv) where {T,R,J,P}
+    function SkewCholesky{T,R,J,P}(Rm,Jm,pv) where {T,R,J,P}
         LA.require_one_based_indexing(Rm)
-        new{T,R,J,P}(Rm,Jm,Pv)
+        new{T,R,J,P}(Rm,Jm,pv)
     end
 end
 
 """
-    SkewCholesky(Rm,Pv)
+    SkewCholesky(R,p)
 
 Construct a `SkewCholesky` structure from the `UpperTriangular`
-matrix `Rm` and the permutation vector `Pv`. A matrix `Jm` of type `JMatrix`
+matrix `R` and the permutation vector `p`. A matrix `J` of type `JMatrix`
 is build calling this function.
-The `SkewCholesky` structure has three arguments: `Rm`,`Jm` and `Pv`.
+The `SkewCholesky` structure has three arguments: `R`,`J` and `p`.
 """
-function SkewCholesky(Rm::UpperTriangular{<:T},Pv::AbstractVector{<:Integer}) where {T<:Real}
-    n = size(Rm, 1)
-    return SkewCholesky{T,typeof(Rm),JMatrix{T,+1},typeof(Pv)}(Rm, JMatrix{T,+1}(n), Pv)
+function SkewCholesky(R::UpperTriangular{<:T},p::AbstractVector{<:Integer}) where {T<:Real}
+    n = size(R, 1)
+    return SkewCholesky{T,typeof(R),JMatrix{T,+1},typeof(p)}(R, JMatrix{T,+1}(n), p)
 
 end
 
@@ -93,9 +93,9 @@ skewchol!(A::AbstractMatrix) = @views  skewchol!(SkewHermitian(A))
 
 Computes a Cholesky-like factorization of the real skew-symmetric matrix `A`.
 The function returns a `SkewCholesky` structure composed of three fields:
-`Rm`,`Jm`,`Pv`. `Rm` is `UpperTriangular`, `Jm` is a `JMatrix`,
-`Pv` is an array of integers. Let `S` be the returned structure, then the factorization
-is such that `S.Rm'*S.Jm*S.Rm = A[S.Pv,S.Pv]`
+`R`,`J`,`p`. `R` is `UpperTriangular`, `J` is a `JMatrix`,
+`p` is an array of integers. Let `S` be the returned structure, then the factorization
+is such that `S.R'*S.J*S.R = A[S.p,S.p]`
 
 This factorization (and the underlying algorithm) is described in from P. Benner et al,
 "[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000).

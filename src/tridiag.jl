@@ -198,12 +198,12 @@ Base.conj(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(conj.(M.ev),(
 Base.copy(M::SkewHermTridiagonal{<:Real}) = SkewHermTridiagonal(copy(M.ev))
 Base.copy(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(copy(M.ev), (M.dvim !==nothing ? copy(M.dvim) : nothing))
 
-function Base.imag(M::SkewHermTridiagonal)
+function Base.imag(M::SkewHermTridiagonal{T}) where T
     if M.dvim !== nothing
         LA.SymTridiagonal(M.dvim, imag.(M.ev))
     else
         n=size(M,1)
-        LA.SymTridiagonal(zeros(eltype(imag(M.ev[1])), n), imag.(M.ev))
+        LA.SymTridiagonal(zeros(real(T), n), imag.(M.ev))
     end
 end
 Base.real(M::SkewHermTridiagonal) = SkewHermTridiagonal(real.(M.ev))
@@ -370,7 +370,6 @@ end
     if n != size(C, 2)
         throw(DimensionMismatch("second dimension of B, $n, doesn't match second dimension of C, $(size(C,2))"))
     end
-
     if m == 0
         return C
     elseif iszero(_add.alpha)
@@ -378,7 +377,6 @@ end
     end
     α = S.dvim
     β = S.ev
-
     if α === nothing
         @inbounds begin
             for j = 1:n
@@ -391,7 +389,7 @@ end
                     β₋, β₀ = β₀, β[i]
                     LA._modify!(_add, β₋*x₋ - adjoint(β₀) * x₊, C, (i, j))
                 end
-                LA._modify!(_add, β[m-1] * x₀ , C, (m, j))
+                LA._modify!(_add, β₀  * x₀ , C, (m, j))
             end
         end
     else
@@ -406,7 +404,7 @@ end
                     β₋, β₀ = β₀, β[i]
                     LA._modify!(_add, β₋*x₋ +α[i]*x₀*1im -adjoint(β₀)*x₊, C, (i, j))
                 end
-                LA._modify!(_add, β[m-1]*x₀+α[m]*x₊*1im , C, (m, j))
+                LA._modify!(_add, β₀*x₀+α[m]*x₊*1im , C, (m, j))
             end
         end
     end
@@ -426,8 +424,8 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
     dv = S.dvim
     ev = S.ev
     x₀ = x[1]
-    x₊ = x[2]
-    sub = ev[1]
+    x₊ = (nx > 1 ? x[2] : zero(x[1]))
+    sub = (nx > 1 ? ev[1] : zero(x[1]))
     if dv !== nothing
         r = dot( adjoint(sub)*x₊+complex(zero(dv[1]),-dv[1])*x₀, y[1])
         @inbounds for j in 2:nx-1
