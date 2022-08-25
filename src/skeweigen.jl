@@ -5,7 +5,7 @@
 end 
 
 @views function implicit_step(ev::AbstractVector{T} , n::Integer ) where T
-    buldge = zero(T)
+    bulge = zero(T)
     shift = ev[n]^2
     for i=1:n-1
 
@@ -14,13 +14,13 @@ end
         γ = ev[i+1]
 
         x1 = - α * α - β * β + shift
-        x2 = - α * buldge + β * γ 
+        x2 = - α * bulge + β * γ 
         nm = sqrt(x1 * x1 + x2 * x2)
         c = x1/nm
         s = x2/nm
 
         if i > 1
-            ev[i-1] = -c*α-s*buldge
+            ev[i-1] = -c*α-s*bulge
         end
 
         ev[i] = -c*β+s*γ
@@ -29,7 +29,7 @@ end
         if i < n-1
             ζ = ev[i+2]
             ev[i+2] *= c
-            buldge = -s*ζ
+            bulge = -s*ζ
         end
     end
     return
