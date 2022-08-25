@@ -1,4 +1,31 @@
 
+@views function ridofzero(ev::AbstractVector{T}, n::Integer) where T
+    bulge = zero(T)
+    #kill last row
+    α = ev[n-2]
+    β = ev[n-1]
+    γ = ev[n]
+    nm =  sqrt(β * β + γ * γ)
+    c = -β / nm
+    s = γ / nm 
+    ev[n-2] *= c
+    ev[n-1] = c * β - s * γ
+    ev[n] = 0
+    bulge  = -s * α
+
+    #Chase the bulge 
+    for i = n-2:-2:4
+        α = ev[i-2]
+        β = ev[i-1]
+        nm =  sqrt(β * β + bulge * bulge)
+        c = -β / nm
+        s = bulge / nm 
+        ev[i-2] *= c
+        ev[i-1] = c*β-s*bulge
+        bulge  = - s * α
+    end
+    ev[1] =  - sqrt(ev[1] * ev[1] + bulge * bulge)
+end
 @views function eig_of_skew_block(k::Number, val::AbstractVector)
     val[1] = complex(0, -k)
     val[2] = complex(0, k)
@@ -40,6 +67,10 @@ end
     n = size(A, 1)
 
     ev = A.ev
+    if isodd(n)
+        n -= 1
+        ridofzero(ev, n)
+    end
     if T<:Float32
         tol = T(1e-6) * norm(ev)
     else
