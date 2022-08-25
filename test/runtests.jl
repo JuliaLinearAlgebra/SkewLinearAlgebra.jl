@@ -285,9 +285,7 @@ end
         @test Matrix(A)/2 == Matrix(A / 2)
         @test Matrix(A + A) == Matrix(A * 2)
         @test Matrix(A- 2 * A) == Matrix(-A)
-        if n>1
-            @test dot(x, A, y) ≈ dot(x, Matrix(A), y)
-        end
+        @test dot(x, A, y) ≈ dot(x, Matrix(A), y)
         if T<:Complex
             z = rand(T)
             @test A * z ≈ Tridiagonal(A) * z

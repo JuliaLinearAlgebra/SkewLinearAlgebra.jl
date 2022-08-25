@@ -94,7 +94,7 @@ end
     Qr   = similar(A, n, (n+1)÷2)
     Qim  = similar(A, n, n÷2)
     temp = similar(A, n, n)
-    Q=Matrix(H1.Q)
+    Q = Matrix(H1.Q)
     Q1 = similar(A, (n+1)÷2, n)
     Q2 = similar(A, n÷2, n)
 
