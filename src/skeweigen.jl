@@ -40,7 +40,11 @@ end
     n = size(A, 1)
 
     ev = A.ev
-    tol = T(1e-10) * norm(ev)
+    if T<:Float32
+        tol = T(1e-6) * norm(ev)
+    else
+        tol = T(1e-15) * norm(ev)
+    end
     max_iter = 16 * n
     iter = 0 ; n_converged = 0
     values = complex(zeros(T, n))
