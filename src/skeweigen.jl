@@ -1,13 +1,16 @@
+function getgivens(a,b)
+    nm = sqrt(a * a + b * b)
+    return a / nm , b / nm 
+end
 
-@views function ridofzero(ev::AbstractVector{T}, n::Integer) where T
+@views function reducetozero(ev::AbstractVector{T}, G::AbstractVector{T}, n::Integer) where T
     bulge = zero(T)
     #kill last row
     α = ev[n-2]
     β = ev[n-1]
     γ = ev[n]
-    nm =  sqrt(β * β + γ * γ)
-    c = -β / nm
-    s = γ / nm 
+    c, s = getgivens(-β, γ)
+    G[n-1] = c ; G[n] = -s;  
     ev[n-2] *= c
     ev[n-1] = c * β - s * γ
     ev[n] = 0
@@ -17,93 +20,195 @@
     for i = n-2:-2:4
         α = ev[i-2]
         β = ev[i-1]
-        nm =  sqrt(β * β + bulge * bulge)
-        c = -β / nm
-        s = bulge / nm 
+        c, s = getgivens(-β, bulge)
+        G[i-1] = c; G[i] = -s
         ev[i-2] *= c
         ev[i-1] = c*β-s*bulge
         bulge  = - s * α
     end
-    ev[1] =  - sqrt(ev[1] * ev[1] + bulge * bulge)
+
+    #Make the bulge disappear
+    α = ev[1]
+    c, s = getgivens(-α, bulge)
+    G[1] = c; G[2] = -s
+    ev[1] = c * α -s * bulge
 end
-@views function eig_of_skew_block(k::Number, val::AbstractVector)
-    val[1] = complex(0, -k)
-    val[2] = complex(0, k)
+@views function getoddvectors(Qodd::AbstractMatrix{T}, G::AbstractVector{T}, n::Integer) where T
+    nn = div(n, 2) + 1
+    for i = 1:2:n-1
+        c = G[i]
+        s = G[i+1]
+        ii = div(i+1,2)
+        for j = 1:nn
+            σ = Qodd[ii, j]
+            ω = Qodd[nn, j]
+            Qodd[ii, j] = c*σ + s*ω
+            Qodd[nn, j] = -s*σ + c*ω
+        end
+    end
+end
+
+
+@views function eigofblock(k::Number, val::AbstractVector)
+    val[1] = complex(0, k)
+    val[2] = complex(0, -k)
 end 
 
-@views function implicit_step(ev::AbstractVector{T} , n::Integer ) where T
-    bulge = zero(T)
+@views function implicitstep_novec(ev::AbstractVector{T} , n::Integer ) where T
+    buldge = zero(T)
     shift = ev[n]^2
-    for i=1:n-1
-
+    @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
         γ = ev[i+1]
 
         x1 = - α * α - β * β + shift
-        x2 = - α * bulge + β * γ 
-        nm = sqrt(x1 * x1 + x2 * x2)
-        c = x1/nm
-        s = x2/nm
-
+        x2 = - α * buldge + β * γ 
+        c, s = getgivens(x1, x2)
         if i > 1
-            ev[i-1] = -c*α-s*bulge
+            ev[i-1] = c*α+s*buldge
         end
 
-        ev[i] = -c*β+s*γ
+        ev[i] = c*β-s*γ
         ev[i+1] = s*β+c*γ
 
         if i < n-1
             ζ = ev[i+2]
             ev[i+2] *= c
-            bulge = -s*ζ
+            buldge = s*ζ
         end
-    end
+    end)
     return
 
 end
 
-@views function QR_with_shifts(A::SkewHermTridiagonal{T}) where {T<:Real}
+@views function skeweigvals2!(A::SkewHermTridiagonal{T}) where {T<:Real}
     n = size(A, 1)
-
+    values = complex(zeros(T, n))
     ev = A.ev
+
     if isodd(n)
         n -= 1
-        ridofzero(ev, n)
+        Ginit = similar(A, T, n)
+        reducetozero(ev, Ginit, n)
     end
-    if T<:Float32
-        tol = T(1e-6) * norm(ev)
-    else
-        tol = T(1e-15) * norm(ev)
-    end
-    max_iter = 16 * n
-    iter = 0 ; n_converged = 0
-    values = complex(zeros(T, n))
-    N = n
 
-    while n_converged < N && iter < max_iter
-        implicit_step(ev, n - 1)
+    nrm = norm(ev)
+    tol = (T<:Float32 ? 1f-7*nrm : 1e-15*nrm)
+
+    max_iter = 16*n
+    iter = 0 ;
+    N = n 
+    while n > 0 && iter < max_iter
+        implicitstep_novec(ev, n - 1)
         if abs(ev[n - 2]) < tol
-            n_converged += 2
-            eig_of_skew_block(ev[n - 1], values[n_converged-1:n_converged] )
+            eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
         if n == 2
-            eig_of_skew_block(ev[1], values[end-1:end])
-            return values
+            eigofblock(ev[1], values[1:2])
+            return values, vectors
+        end
+        iter += 1
+    end    
+end
+@views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer) where T
+    buldge = zero(T)
+    shift = ev[n]^2
+    @inbounds(for i=1:n-1
+        α = (i > 1 ? ev[i-1] : zero(ev[i]))
+        β = ev[i]
+        γ = ev[i+1]
+
+        x1 = - α * α - β * β + shift
+        x2 = - α * buldge + β * γ 
+        c, s = getgivens(x1, x2)
+        if i > 1
+            ev[i-1] = c*α+s*buldge
+        end
+
+        ev[i] = c*β-s*γ
+        ev[i+1] = s*β+c*γ
+
+        if i < n-1
+            ζ = ev[i+2]
+            ev[i+2] *= c
+            buldge = s*ζ
+        end
+
+        Q = (isodd(i) ? Qodd : Qeven)
+        k = div(i+1, 2)
+        for j = 1:N
+            σ = Q[j, k]
+            ω = Q[j, k+1]
+            Q[j, k] = c*σ + s*ω
+            Q[j, k+1] = -s*σ + c*ω
+        end
+    end)
+    return
+end
+
+@views function skeweigen2!(A::SkewHermTridiagonal{T}) where {T<:Real}
+    n = size(A, 1)
+    values = complex(zeros(T, n))
+    vectors = similar(A, Complex{T}, n, n)
+    Qodd = diagm(ones(T, div(n+1,2)))
+    Qeven = diagm(ones(T, div(n,2)))
+    ev = A.ev
+    N = n 
+    if isodd(n)
+        vectors[n,n] = 1
+        n -= 1
+        Ginit = similar(A, T, n)
+        reducetozero(ev,Ginit, n)
+    end
+    
+    nrm = norm(ev)
+    tol = (T<:Float32 ? 1f-7*nrm : 1e-15*nrm)
+
+    max_iter = 16*n
+    iter = 0 ;
+    halfN = div(n,2)
+    while n > 0 && iter < max_iter
+        implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
+        if abs(ev[n - 2]) < tol
+            eigofblock(ev[n - 1], values[n-1:n])
+            n -= 2
+        end
+        if n == 2
+            eigofblock(ev[1], values[1:2])
+            if isodd(N)
+                getoddvectors(Qodd, Ginit, N - 1)
+            end
+            
+            s2 = T(1/sqrt(2))
+            zero = T(0)
+            @inbounds(for i = 1:2:N-1
+                ii = div(i+1,2)
+                for j = 1:2:N-1
+                    jj = div(j+1,2)
+                    vectors[j,i] = complex(s2*Qodd[jj,ii],zero)
+                    vectors[j+1,i] = complex(zero,-s2*Qeven[jj,ii])
+                    vectors[j,i+1] = complex(zero,s2*Qodd[jj,ii])
+                    vectors[j+1,i+1] = complex(-s2*Qeven[jj,ii],zero)
+                end
+                
+                if isodd(N)
+                    vectors[N, i] = complex(s2*Qodd[halfN+1,ii],zero)
+                    vectors[N, i+1] = complex(zero,s2*Qodd[halfN+1,ii])
+                end
+                
+            end)
+            
+            if isodd(N)
+                for j = 1: 2: N-1
+                    jj = div(j+1,2)
+                    vectors[j,N] = complex(Qodd[jj, halfN+1],zero)
+                end
+                vectors[N, N] = complex(Qodd[end,end],zero)
+            end
+            return values, vectors
         end
         iter += 1
     end   
 end
-
-#=
-BLAS.set_num_threads(1)
-n = 999 #n must be kept odd for the moment
-
-v = rand(n)
-A = SkewHermTridiagonal(v)
-@btime QR_with_shifts(copy(A)) 
-@btime eigvals(A) 
-a=1
-
-=#
