@@ -173,7 +173,7 @@ end
     end
 
     tol = eps(T) * norm(ev)
-    max_iter = 30 * n
+    max_iter = 100 * n
     iter = 0 ;
     halfN = div(n,2)
 
