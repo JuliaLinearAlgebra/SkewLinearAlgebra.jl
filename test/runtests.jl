@@ -1,9 +1,9 @@
 using LinearAlgebra, Random
-import .SkewLinearAlgebra as SLA
+import SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
-#=
+
 @testset "README.md" begin # test from the README examples
     A = [0 2 -7 4; -2 0 -8 3; 7 8 0 1;-4 -3 -1 0]
     @test SLA.isskewhermitian(A)
@@ -399,18 +399,4 @@ end
     end
     @test repr("text/plain", SLA.JMatrix(4)) == "4×4 SkewLinearAlgebra.JMatrix{Int8, 1}:\n  ⋅  1   ⋅  ⋅\n -1  ⋅   ⋅  ⋅\n  ⋅  ⋅   ⋅  1\n  ⋅  ⋅  -1  ⋅"
 end
-=#
 
-n = 3000
-v = rand(Float32, n)
-A = SLA.skewhermitian(rand(n, n))
-S = Symmetric(rand(n, n))
-E = eigen(A)
-
-
-@testset "eigen" begin
-    @test E.vectors * Diagonal(E.values)* E.vectors' ≈ A
-end
-
-eigen(S)
-a=1

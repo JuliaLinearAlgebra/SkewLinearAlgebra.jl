@@ -5,7 +5,6 @@ To use this package, using the `LinearAlgebra` standard library is required.
 using LinearAlgebra
 using SkewLinearAlgebra
 ```
-WARNING: Package still in development!
 ## SkewHermitian and SkewHermTridiagonal types
 
 This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$ and complex skew-hermitian matrices i.e $A=-A^*$.
@@ -169,7 +168,7 @@ H factor:
 
  ## Eigenvalues and eigenvectors
 
-The package also provides eigensolvers for  `SkewHermitian` and `SkewHermTridiagonal` matrices. The method to solve the eigenvalue problem is based on the algorithm described in Penke et al, "[High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem](https://arxiv.org/abs/1912.04062)" (2020).
+The package also provides eigensolvers for  `SkewHermitian` and `SkewHermTridiagonal` matrices. A fast and sparse specialized QR algorithm is implemented for `SkewHermTridiagonal` matrices and also for `SkewHermitian` matrices using the `hessenberg` reduction.
 
 The function `eigen` returns a `Eigen`structure as the LinearAlgebra standard library:
 ```jl
