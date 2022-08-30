@@ -1,8 +1,5 @@
-
-
 """
 JMatrix{T, ±1}(n)
-
 Creates an `AbstractMatrix{T}` of size `n x n`, representing a
 block-diagonal matrix whose diagonal blocks are `±[0 1; -1 0]`.
 If `n` is odd, then the last block is the `1 x 1` zero block.

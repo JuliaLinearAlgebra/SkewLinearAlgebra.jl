@@ -1,5 +1,5 @@
 using LinearAlgebra, Random
-import SkewLinearAlgebra as SLA
+import .SkewLinearAlgebra as SLA
 using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
@@ -16,7 +16,9 @@ Random.seed!(314159) # use same pseudorandom stream for every test
     v = [8.306623862918073, 8.53382018538718, -1.083472677771923]
     @test hessenberg(A).H ≈ Tridiagonal(v,[0,0,0,0.],-v)
     iλ₁,iλ₂ = 11.93445871397423, 0.7541188264752862
-    @test eigvals(A) ≈ [iλ₁,iλ₂,-iλ₂,-iλ₁]*im
+    l = imag.(eigvals(A))
+    sort!(l)
+    @test l ≈ sort!([iλ₁,iλ₂,-iλ₂,-iλ₁])
     @test Matrix(hessenberg(A).Q) ≈ [1.0 0.0 0.0 0.0; 0.0 -0.2407717061715382 -0.9592700375676934 -0.14774972261267352; 0.0 0.8427009716003843 -0.2821382463434394 0.4585336219014009; 0.0 -0.48154341234307674 -0.014106912317171805 0.8763086996337883]
     @test eigvals(A, 0,15) ≈ [iλ₁,iλ₂]*im
     @test eigvals(A, 1:3) ≈ [iλ₁,iλ₂,-iλ₂]*im

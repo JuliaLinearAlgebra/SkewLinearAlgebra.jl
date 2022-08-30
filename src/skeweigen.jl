@@ -1,3 +1,5 @@
+# This file is a part of Julia. License is MIT: https://julialang.org/license
+
 function getgivens(a,b)
     nm = hypot(a, b)
     return a / nm , b / nm 
@@ -7,7 +9,7 @@ end
     n == 0 && return
     bulge = zero(T)
     if n > 2 
-        #kill last row
+        #Kill last row
         α = ev[n-2]
         β = ev[n-1]
         γ = ev[n]
@@ -40,6 +42,7 @@ end
         ev[2] = s * α + β * c
     end
 end
+
 @views function getoddvectors(Qodd::AbstractMatrix{T}, G::AbstractVector{T}, n::Integer) where T
     nn = div(n, 2) + 1
     @inbounds( for i = 1:2:n-1
@@ -49,12 +52,11 @@ end
         for j = 1:nn
             σ = Qodd[ii, j]
             ω = Qodd[nn, j]
-            Qodd[ii, j] = c*σ + s*ω
-            Qodd[nn, j] = -s*σ + c*ω
+            Qodd[ii, j] = c * σ + s * ω
+            Qodd[nn, j] = - s * σ + c * ω
         end
     end)
 end
-
 
 @views function eigofblock(k::Number, val::AbstractVector)
     val[1] = complex(0, k)
@@ -73,16 +75,16 @@ end
         x2 = - α * buldge + β * γ 
         c, s = getgivens(x1, x2)
         if i > 1
-            ev[i-1] = c*α+s*buldge
+            ev[i-1] = c * α + s * buldge
         end
 
-        ev[i] = c*β-s*γ
-        ev[i+1] = s*β+c*γ
+        ev[i] = c * β - s * γ
+        ev[i+1] = s * β + c * γ
 
         if i < n-1
             ζ = ev[i+2]
             ev[i+2] *= c
-            buldge = s*ζ
+            buldge = s * ζ
         end
     end)
     return
@@ -93,15 +95,13 @@ end
     n = size(A, 1)
     values = complex(zeros(T, n))
     ev = A.ev
-
     if isodd(n)
         n -= 1
         Ginit = similar(A, T, n)
         reducetozero(ev, Ginit, n)
     end
-
     tol = eps(T) * norm(ev)
-    max_iter = 16*n
+    max_iter = 16 * n
     iter = 0 ;
     N = n 
 
@@ -124,6 +124,7 @@ end
 
 
 end
+
 @views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer) where T
     buldge = zero(T)
     shift = ev[n]^2
@@ -136,18 +137,15 @@ end
         x2 = - α * buldge + β * γ 
         c, s = getgivens(x1, x2)
         if i > 1
-            ev[i-1] = c*α+s*buldge
+            ev[i-1] = c * α + s * buldge
         end
-
-        ev[i] = c*β-s*γ
-        ev[i+1] = s*β+c*γ
-
+        ev[i] = c * β - s * γ
+        ev[i+1] = s * β + c * γ
         if i < n-1
             ζ = ev[i+2]
             ev[i+2] *= c
-            buldge = s*ζ
+            buldge = s * ζ
         end
-
         Q = (isodd(i) ? Qodd : Qeven)
         k = div(i+1, 2)
         for j = 1:N
@@ -198,22 +196,22 @@ end
         @inbounds(for i = 1:2:N-1
             ii = div(i+1,2)
             for j = 1:2:N-1
-                jj = div(j+1,2)
-                vectors[j,i] = complex(s2*Qodd[jj,ii],zero)
-                vectors[j+1,i] = complex(zero,-s2*Qeven[jj,ii])
-                vectors[j,i+1] = complex(zero,s2*Qodd[jj,ii])
-                vectors[j+1,i+1] = complex(-s2*Qeven[jj,ii],zero)
+                jj = div(j+1, 2)
+                vectors[j, i] = complex(s2 * Qodd[jj, ii], zero)
+                vectors[j+1, i] = complex(zero, - s2 * Qeven[jj, ii])
+                vectors[j, i+1] = complex(zero,s2 * Qodd[jj, ii])
+                vectors[j+1, i+1] = complex(- s2 * Qeven[jj,ii], zero)
             end
             if isodd(N)
-                vectors[N, i] = complex(s2*Qodd[halfN+1,ii],zero)
-                vectors[N, i+1] = complex(zero,s2*Qodd[halfN+1,ii])
+                vectors[N, i] = complex(s2 * Qodd[halfN+1, ii],zero)
+                vectors[N, i+1] = complex(zero, s2 * Qodd[halfN+1, ii])
             end
         end)
         
         if isodd(N)
             @inbounds(for j = 1: 2: N
                 jj = div(j+1,2)
-                vectors[j,N] = complex(Qodd[jj, halfN+1],zero)
+                vectors[j, N] = complex(Qodd[jj, halfN+1], zero)
             end)
         end
         return Eigen(values, vectors)
@@ -237,13 +235,13 @@ end
     if isodd(n)
         n -= 1
         Ginit = similar(A, T, n)
-        reducetozero(ev,Ginit, n)
+        reducetozero(ev, Ginit, n)
     end
     tol = eps(T) * norm(ev)
 
     max_iter = 16*n
     iter = 0 ;
-    halfN = div(n,2)
+    halfN = div(n, 2)
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
         if abs(ev[n - 2]) < tol
@@ -264,14 +262,14 @@ end
             ii = div(i+1,2)
             for j = 1:2:N-1
                 jj = div(j+1,2)
-                vectorsreal[j,i] = s2*Qodd[jj,ii]
-                vectorsreal[j+1,i+1] = -s2*Qeven[jj,ii]
-                vectorsim[j,i+1] = vectorsreal[j,i]
-                vectorsim[j+1,i] = vectorsreal[j+1,i+1] 
+                vectorsreal[j, i] = s2*Qodd[jj, ii]
+                vectorsreal[j+1, i+1] = -s2*Qeven[jj, ii]
+                vectorsim[j, i+1] = vectorsreal[j, i]
+                vectorsim[j+1, i] = vectorsreal[j+1, i+1] 
             end
             
             if isodd(N)
-                vectorsreal[N, i] = s2*Qodd[halfN+1,ii]
+                vectorsreal[N, i] = s2 * Qodd[halfN+1, ii]
                 vectorsim[N, i+1] = vectorsreal[N, i]
             end
         end)

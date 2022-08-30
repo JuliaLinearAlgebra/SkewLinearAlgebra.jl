@@ -1,3 +1,5 @@
+# This file is a part of Julia. License is MIT: https://julialang.org/license
+
 struct SkewHermitian{T<:Number,S<:AbstractMatrix{<:T}} <: AbstractMatrix{T}
     data::S
 

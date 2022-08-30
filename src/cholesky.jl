@@ -1,3 +1,4 @@
+# This file is a part of Julia. License is MIT: https://julialang.org/license
 
 struct SkewCholesky{T,R<:UpperTriangular{<:T},J<:JMatrix{<:T},P<:AbstractVector{<:Integer}}
     R::R #Uppertriangular matrix
