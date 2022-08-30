@@ -172,7 +172,7 @@ end
         reducetozero(ev, Ginit, n)
     end
 
-    tol = eps(T) * norm(ev)
+    tol = eps(T) * norm(ev)* T(10)
     max_iter = 100 * n
     iter = 0 ;
     halfN = div(n,2)
