@@ -1,5 +1,3 @@
-
-
 # This file is a part of Julia. License is MIT: https://julialang.org/license
 
 #### Specialized matrix types ####
@@ -28,7 +26,6 @@ julia> ev = complex.([7, 8, 9] , [7, 8, 9])
  7 + 7im
  8 + 8im
  9 + 9im
-
  julia> dvim =  [1, 2, 3, 4]
  4-element Vector{Int64}:
   1
@@ -198,12 +195,12 @@ Base.conj(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(conj.(M.ev),(
 Base.copy(M::SkewHermTridiagonal{<:Real}) = SkewHermTridiagonal(copy(M.ev))
 Base.copy(M::SkewHermTridiagonal{<:Complex}) = SkewHermTridiagonal(copy(M.ev), (M.dvim !==nothing ? copy(M.dvim) : nothing))
 
-function Base.imag(M::SkewHermTridiagonal)
+function Base.imag(M::SkewHermTridiagonal{T}) where T
     if M.dvim !== nothing
         LA.SymTridiagonal(M.dvim, imag.(M.ev))
     else
         n=size(M,1)
-        LA.SymTridiagonal(zeros(eltype(imag(M.ev[1])), n), imag.(M.ev))
+        LA.SymTridiagonal(zeros(real(T), n), imag.(M.ev))
     end
 end
 Base.real(M::SkewHermTridiagonal) = SkewHermTridiagonal(real.(M.ev))
@@ -370,7 +367,6 @@ end
     if n != size(C, 2)
         throw(DimensionMismatch("second dimension of B, $n, doesn't match second dimension of C, $(size(C,2))"))
     end
-
     if m == 0
         return C
     elseif iszero(_add.alpha)
@@ -378,7 +374,6 @@ end
     end
     α = S.dvim
     β = S.ev
-
     if α === nothing
         @inbounds begin
             for j = 1:n
@@ -391,7 +386,7 @@ end
                     β₋, β₀ = β₀, β[i]
                     LA._modify!(_add, β₋*x₋ - adjoint(β₀) * x₊, C, (i, j))
                 end
-                LA._modify!(_add, β[m-1] * x₀ , C, (m, j))
+                LA._modify!(_add, β₀  * x₀ , C, (m, j))
             end
         end
     else
@@ -406,7 +401,7 @@ end
                     β₋, β₀ = β₀, β[i]
                     LA._modify!(_add, β₋*x₋ +α[i]*x₀*1im -adjoint(β₀)*x₊, C, (i, j))
                 end
-                LA._modify!(_add, β[m-1]*x₀+α[m]*x₊*1im , C, (m, j))
+                LA._modify!(_add, β₀*x₀+α[m]*x₊*1im , C, (m, j))
             end
         end
     end
@@ -426,8 +421,8 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
     dv = S.dvim
     ev = S.ev
     x₀ = x[1]
-    x₊ = x[2]
-    sub = ev[1]
+    x₊ = (nx > 1 ? x[2] : zero(x[1]))
+    sub = (nx > 1 ? ev[1] : zero(x[1]))
     if dv !== nothing
         r = dot( adjoint(sub)*x₊+complex(zero(dv[1]),-dv[1])*x₀, y[1])
         @inbounds for j in 2:nx-1
@@ -449,7 +444,7 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
 end
 
 @views function LA.eigvals!(A::SkewHermTridiagonal{T,V,Vim}, sortby::Union{Function,Nothing}=nothing) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
-    vals = skewtrieigvals!(A)
+    vals = imag.(skewtrieigvals!(A))
     !isnothing(sortby) && sort!(vals, by=sortby)
     return complex.(0, vals)
 end
@@ -494,14 +489,6 @@ LA.eigvals(A::SkewHermTridiagonal{T,V,Vim}, vl::Real,vh::Real)  where {T,V,Vim}=
     LA.eigvals!(copyeigtype(A), vl,vh)
 
 
-
-@views function skewtrieigvals!(S::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
-    n = size(S,1)
-    H = SymTridiagonal(zeros(eltype(S.ev), n), S.ev)
-    vals = eigvals!(H)
-    return vals .= .-vals
-end
-
 @views function skewtrieigvals!(S::SkewHermTridiagonal{T,V,Vim},irange::UnitRange) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
     n = size(S,1)
     H = SymTridiagonal(zeros(eltype(S.ev), n), S.ev)
@@ -516,30 +503,7 @@ end
     return vals .= .-vals
 end
 
-@views function skewtrieigen!(S::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
-
-    n = size(S, 1)
-    H = SymTridiagonal(zeros(T, n), S.ev)
-    trisol = eigen!(H)
-    vals  = complex.(0, -trisol.values)
-    Qdiag = complex(zeros(T,n,n))
-    c = 1
-    @inbounds for j=1:n
-        c = 1
-        @simd for i=1:2:n-1
-            Qdiag[i,j]  = trisol.vectors[i,j] * c
-            Qdiag[i+1,j] = complex(0, trisol.vectors[i+1,j] * c)
-            c *= (-1)
-        end
-    end
-    if n%2==1
-        Qdiag[n,:] = trisol.vectors[n,:] * c
-    end
-    return Eigen(vals, Qdiag)
-end
-
-
-LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}= skewtrieigen!(A)
+LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}= skewtrieigen_merged!(A)
 
 @views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
     n = size(A, 1)
@@ -547,15 +511,6 @@ LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},V
     Eig = eigen!(S)
     Vec = similar(A.ev, n, n)
     mul!(Vec, Q, Eig.vectors)
-    return Eigen(Eig.values.*(-1im),Vec)
-end
-
-@views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
-    n=size(A,1)
-    S, Q = to_symtridiagonal(A)
-    Eig=eigen!(S)
-    Vec = similar(A.ev,n,n)
-    mul!(Vec,Q,Eig.vectors)
     return Eigen(Eig.values.*(-1im),Vec)
 end
 
@@ -569,7 +524,7 @@ LA.eigen(A::SkewHermTridiagonal) = LA.eigen!(copyeigtype(A))
 LA.eigvecs(A::SkewHermTridiagonal) = eigen(A).vectors
 
 @views function LA.svdvals!(A::SkewHermTridiagonal)
-    vals = eigvals!(A)
+    vals = imag.(eigvals!(A))
     vals .= abs.(vals)
     return sort!(real(vals); rev=true)
 end
@@ -598,6 +553,7 @@ end
 
 
 LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
+
 
 @views function to_symtridiagonal(A::SkewHermTridiagonal{T}) where {T<:Complex}
     n = size(A, 1)
