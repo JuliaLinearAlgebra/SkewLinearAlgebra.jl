@@ -101,7 +101,7 @@ end
         reducetozero(ev, Ginit, n)
     end
     tol = eps(T) * norm(ev)
-    max_iter = 16 * n
+    max_iter = 30 * n
     iter = 0 ;
     N = n 
 
@@ -173,7 +173,7 @@ end
     end
 
     tol = eps(T) * norm(ev)
-    max_iter = 16*n
+    max_iter = 30 * n
     iter = 0 ;
     halfN = div(n,2)
 
@@ -239,7 +239,7 @@ end
     end
     tol = eps(T) * norm(ev)
 
-    max_iter = 16*n
+    max_iter = 30 * n
     iter = 0 ;
     halfN = div(n, 2)
     while n > 2 && iter < max_iter
