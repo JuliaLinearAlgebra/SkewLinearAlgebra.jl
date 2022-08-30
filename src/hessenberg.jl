@@ -1,3 +1,5 @@
+# This file is a part of Julia. License is MIT: https://julialang.org/license
+
 LA.HessenbergQ(F::Hessenberg{<:Any,<:SkewHermTridiagonal,S,W}) where {S,W} = LA.HessenbergQ{eltype(F.factors),S,W,true}(F.uplo, F.factors, F.τ)
 
 @views function LA.hessenberg!(A::SkewHermitian{T}) where {T}

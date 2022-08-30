@@ -227,4 +227,3 @@ function hermitian!(A::AbstractMatrix{<:Number})
     end
     return LA.Hermitian(A)
 end
-

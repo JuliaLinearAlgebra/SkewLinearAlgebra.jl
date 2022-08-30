@@ -1,5 +1,3 @@
-
-
 # This file is a part of Julia. License is MIT: https://julialang.org/license
 
 #### Specialized matrix types ####
@@ -28,7 +26,6 @@ julia> ev = complex.([7, 8, 9] , [7, 8, 9])
  7 + 7im
  8 + 8im
  9 + 9im
-
  julia> dvim =  [1, 2, 3, 4]
  4-element Vector{Int64}:
   1
@@ -447,7 +444,7 @@ function LA.dot(x::AbstractVector, S::SkewHermTridiagonal, y::AbstractVector)
 end
 
 @views function LA.eigvals!(A::SkewHermTridiagonal{T,V,Vim}, sortby::Union{Function,Nothing}=nothing) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
-    vals = skewtrieigvals!(A)
+    vals = imag.(skewtrieigvals!(A))
     !isnothing(sortby) && sort!(vals, by=sortby)
     return complex.(0, vals)
 end
@@ -492,14 +489,6 @@ LA.eigvals(A::SkewHermTridiagonal{T,V,Vim}, vl::Real,vh::Real)  where {T,V,Vim}=
     LA.eigvals!(copyeigtype(A), vl,vh)
 
 
-
-@views function skewtrieigvals!(S::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
-    n = size(S,1)
-    H = SymTridiagonal(zeros(eltype(S.ev), n), S.ev)
-    vals = eigvals!(H)
-    return vals .= .-vals
-end
-
 @views function skewtrieigvals!(S::SkewHermTridiagonal{T,V,Vim},irange::UnitRange) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
     n = size(S,1)
     H = SymTridiagonal(zeros(eltype(S.ev), n), S.ev)
@@ -514,30 +503,7 @@ end
     return vals .= .-vals
 end
 
-@views function skewtrieigen!(S::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
-
-    n = size(S, 1)
-    H = SymTridiagonal(zeros(T, n), S.ev)
-    trisol = eigen!(H)
-    vals  = complex.(0, -trisol.values)
-    Qdiag = complex(zeros(T,n,n))
-    c = 1
-    @inbounds for j=1:n
-        c = 1
-        @simd for i=1:2:n-1
-            Qdiag[i,j]  = trisol.vectors[i,j] * c
-            Qdiag[i+1,j] = complex(0, trisol.vectors[i+1,j] * c)
-            c *= (-1)
-        end
-    end
-    if n%2==1
-        Qdiag[n,:] = trisol.vectors[n,:] * c
-    end
-    return Eigen(vals, Qdiag)
-end
-
-
-LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}= skewtrieigen!(A)
+LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}= skewtrieigen_merged!(A)
 
 @views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
     n = size(A, 1)
@@ -545,15 +511,6 @@ LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},V
     Eig = eigen!(S)
     Vec = similar(A.ev, n, n)
     mul!(Vec, Q, Eig.vectors)
-    return Eigen(Eig.values.*(-1im),Vec)
-end
-
-@views function LA.eigen!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Complex,V<:AbstractVector{T},Vim<:Union{AbstractVector{<:Real},Nothing}}
-    n=size(A,1)
-    S, Q = to_symtridiagonal(A)
-    Eig=eigen!(S)
-    Vec = similar(A.ev,n,n)
-    mul!(Vec,Q,Eig.vectors)
     return Eigen(Eig.values.*(-1im),Vec)
 end
 
@@ -567,7 +524,7 @@ LA.eigen(A::SkewHermTridiagonal) = LA.eigen!(copyeigtype(A))
 LA.eigvecs(A::SkewHermTridiagonal) = eigen(A).vectors
 
 @views function LA.svdvals!(A::SkewHermTridiagonal)
-    vals = eigvals!(A)
+    vals = imag.(eigvals!(A))
     vals .= abs.(vals)
     return sort!(real(vals); rev=true)
 end
@@ -596,6 +553,7 @@ end
 
 
 LA.svd(A::SkewHermTridiagonal) = svd!(copyeigtype(A))
+
 
 @views function to_symtridiagonal(A::SkewHermTridiagonal{T}) where {T<:Complex}
     n = size(A, 1)

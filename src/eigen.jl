@@ -1,6 +1,6 @@
 # Based on eigen.jl in Julia. License is MIT: https://julialang.org/license
 @views function LA.eigvals!(A::SkewHermitian{<:Real}, sortby::Union{Function,Nothing}=nothing)
-    vals = skeweigvals!(A)
+    vals = imag.(skeweigvals!(A))
     !isnothing(sortby) && sort!(vals, by = sortby)
     return complex.(0, vals)
 end
@@ -40,10 +40,9 @@ end
     return complex.(0, vals)
 end
 
-LA.eigvals(A::SkewHermitian, irange::UnitRange) =
-    LA.eigvals!(copyeigtype(A), irange)
-LA.eigvals(A::SkewHermitian, vl::Real,vh::Real) =
-    LA.eigvals!(copyeigtype(A), vl,vh)
+LA.eigvals(A::SkewHermitian, sortby::Union{Function,Nothing}) = eigvals!(copyeigtype(A), sortby)
+LA.eigvals(A::SkewHermitian, irange::UnitRange) = eigvals!(copyeigtype(A), irange)
+LA.eigvals(A::SkewHermitian, vl::Real,vh::Real) = eigvals!(copyeigtype(A), vl,vh)
 
 # no need to define LA.eigen(...) since the generic methods should work
 
@@ -51,9 +50,8 @@ LA.eigvals(A::SkewHermitian, vl::Real,vh::Real) =
     n = size(S.data, 1)
     n == 1 && return [S.data[1,1]]
     E = skewblockedhess!(S)[2]
-    H = SymTridiagonal(zeros(eltype(E), n), E)
-    vals = eigvals!(H)
-    return vals .= .-vals
+    H = SkewHermTridiagonal(E)
+    return skewtrieigvals!(H)
 end
 
 @views function skeweigvals!(S::SkewHermitian{<:Real},irange::UnitRange)
@@ -79,60 +77,23 @@ end
     if n == 1
         return [S.data[1,1]], ones(T,1,1), zeros(T,1,1)
     end
-    tau,E = skewblockedhess!(S)
+    tau, E = skewblockedhess!(S)
     Tr = SkewHermTridiagonal(E)
-    H1 = Hessenberg{typeof(zero(eltype(S.data))),typeof(Tr),typeof(S.data),typeof(tau),typeof(false)}(Tr, 'L', S.data, tau, false)
-    A = S.data
-    H = SymTridiagonal(zeros(eltype(E), n), E)
-    shift = norm(H)
-    trisol = eigen!(H.*shift)
-    trisol.values ./= shift
-    vals  = trisol.values * 1im
-    vals .*= -1
-    Qdiag = trisol.vectors
+    H1 = Hessenberg{typeof(zero(eltype(S.data))),typeof(Tr),typeof(S.data),typeof(tau),typeof(false)}(Tr, 'L', S.data, tau, false)   
+    vectorsreal = similar(S, T, n, n)
+    vectorsim = similar(S, T, n, n)
+    Q = Matrix(H1.Q)
 
-    Qr   = similar(A, n, (n+1)÷2)
-    Qim  = similar(A, n, n÷2)
-    temp = similar(A, n, n)
-    Q=Matrix(H1.Q)
-    Q1 = similar(A, (n+1)÷2, n)
-    Q2 = similar(A, n÷2, n)
-
-    @inbounds for j = 1:n
-        @simd for i = 1:2:n-1
-            k = (i+1)÷2
-            Q1[k,j] = Qdiag[i,j]
-            Q2[k,j] = Qdiag[i+1,j]
-        end
-    end
-
-    c = 1
-    @inbounds for i=1:2:n-1
-        k1 = (i+1)÷2
-        @simd for j=1:n
-            Qr[j,k1] = Q[j,i] * c
-            Qim[j,k1] = Q[j,i+1] * c
-        end
-        c *= (-1)
-    end
-    if n%2==1
-        k=(n+1)÷2
-        @simd for j=1:n
-            Qr[j,k] = Q[j,n] * c
-        end
-        Q1[k,:] = Qdiag[n,:]
-    end
-
-    mul!(temp,Qr,Q1) #temp is Qr
-    mul!(Qdiag,Qim,Q2) #Qdiag is Qim
-    
-    return vals,temp,Qdiag
+    vals, Qr, Qim = skewtrieigen_divided!(Tr)
+    mul!(vectorsreal, Q, Qr)
+    mul!(vectorsim, Q, Qim)
+    return vals, vectorsreal, vectorsim
 end
 
 
 @views function LA.eigen!(A::SkewHermitian{<:Real})
      vals, Qr, Qim = skeweigen!(A)
-     return Eigen(vals,complex.(Qr,Qim))
+     return Eigen(vals,complex.(Qr, Qim))
 end
 
 copyeigtype(A::SkewHermitian) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
@@ -147,9 +108,9 @@ end
 LA.eigen(A::SkewHermitian) = LA.eigen!(copyeigtype(A))
 
 @views function LA.svdvals!(A::SkewHermitian{<:Real})
-    vals = skeweigvals!(A)
+    vals = imag.(skeweigvals!(A))
     vals .= abs.(vals)
-    return sort!(vals; rev=true)
+    return sort!(vals; rev = true)
 end
 
 LA.svdvals!(A::SkewHermitian{<:Complex}) = svdvals!(Hermitian(A.data.*1im))

@@ -1,3 +1,5 @@
+# This file is a part of Julia. License is MIT: https://julialang.org/license
+
 struct SkewHermitian{T<:Number,S<:AbstractMatrix{<:T}} <: AbstractMatrix{T}
     data::S
 
@@ -213,7 +215,7 @@ LA.kron(A::SkewHermitian,B::StridedMatrix) = kron(A.data,B)
 LA.kron(A::StridedMatrix,B::SkewHermitian) = kron(A,B.data)
 
 @views function LA.schur!(A::SkewHermitian{<:Real})
-    F=eigen!(A)
+    F = eigen!(A)
     return Schur(typeof(F.vectors)(Diagonal(F.values)), F.vectors, F.values)
 
 end
