@@ -171,8 +171,8 @@ end
         Ginit = similar(A, T, n)
         reducetozero(ev, Ginit, n)
     end
-
-    tol = eps(T) * norm(ev)* T(10)
+    lim = (T<: Float32 ? 2f-7 : 3e-16)
+    tol = lim * norm(ev)
     max_iter = 100 * n
     iter = 0 ;
     halfN = div(n,2)
