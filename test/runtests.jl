@@ -151,7 +151,6 @@ end
         @test Matrix(HA.H) ≈ Matrix(HB.H)
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
-
     for T in (Int32,Float64,ComplexF32)
         A = zeros(T, 4, 4)
         A[2:4,1] = ones(T,3)
