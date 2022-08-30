@@ -5,7 +5,6 @@ To use this package, using the `LinearAlgebra` standard library is required.
 using LinearAlgebra
 using SkewLinearAlgebra
 ```
-WARNING: Package still in development!
 ## SkewHermitian and SkewHermTridiagonal types
 
 This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$ and complex skew-hermitian matrices i.e $A=-A^*$.
