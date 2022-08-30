@@ -22,7 +22,7 @@ Random.seed!(314159) # use same pseudorandom stream for every test
     @test eigvals(A, 1:3) ≈ [iλ₁,iλ₂,-iλ₂]*im
     @test svdvals(A) ≈ [iλ₁,iλ₁,iλ₂,iλ₂]
     C = SLA.skewchol(A)
-    @test transpose(C.Rm)*C.Jm*C.Rm≈A[C.Pv,C.Pv]
+    @test transpose(C.R)*C.J*C.R≈A[C.p,C.p]
 end
 
 @testset "SkewLinearAlgebra.jl" begin
@@ -81,7 +81,6 @@ end
             @test A[n, n-1] === T(3)
             @test A[n-1, n] === T(-3)
         end
-
         x = rand(T, n)
         y = zeros(T, n)
         mul!(y, A, x, T(2), T(0))
@@ -308,9 +307,6 @@ end
         @test A * x ≈ B * x
         @test yb * A ≈ yb * B
         @test B * A ≈ A * B ≈ B * B
-        if n>1
-            @test A[1,2] == B[1,2]
-        end
         @test size(A,1) == n
 
         EA = eigen(A)
@@ -334,7 +330,6 @@ end
             @test A[2,1] === T(2) === -A[1,2]'
         end
     end
-
     B = SLA.SkewHermTridiagonal([3,4,5])
     @test B == [0 -3 0 0; 3 0 -4 0; 0 4 0 -5; 0 0 5 0]
     #@test repr("text/plain", B) == "4×4 SkewLinearAlgebra.SkewHermTridiagonal{$Int, Vector{$Int}, Nothing}:\n ⋅  -3   ⋅   ⋅\n 3   ⋅  -4   ⋅\n ⋅   4   ⋅  -5\n ⋅   ⋅   5   ⋅"
@@ -367,10 +362,10 @@ end
             A = SLA.skewhermitian(randn(T, n, n))
         end
         C = SLA.skewchol(A)
-        @test transpose(C.Rm) * C.Jm *C.Rm ≈ A.data[C.Pv, C.Pv]
+        @test transpose(C.R) * C.J *C.R ≈ A.data[C.p, C.p]
         B = Matrix(A)
         C = SLA.skewchol(B)
-        @test transpose(C.Rm)* C.Jm *C.Rm ≈ B[C.Pv, C.Pv]
+        @test transpose(C.R)* C.J *C.R ≈ B[C.p, C.p]
     end
 end
 
