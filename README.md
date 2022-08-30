@@ -169,7 +169,7 @@ H factor:
 
  ## Eigenvalues and eigenvectors
 
-The package also provides eigensolvers for  `SkewHermitian` and `SkewHermTridiagonal` matrices. The method to solve the eigenvalue problem is based on the algorithm described in Penke et al, "[High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving Bethe-Salpeter Eigenvalue Problem](https://arxiv.org/abs/1912.04062)" (2020).
+The package also provides eigensolvers for  `SkewHermitian` and `SkewHermTridiagonal` matrices. A fast and sparse specialized QR algorithm is implemented for `SkewHermTridiagonal` matrices and also for `SkewHermitian` matrices using the `hessenberg` reduction.
 
 The function `eigen` returns a `Eigen`structure as the LinearAlgebra standard library:
 ```jl
