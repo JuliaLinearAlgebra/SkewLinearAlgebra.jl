@@ -10,7 +10,7 @@ makedocs(
     sitename = "SkewLinearAlgebra Documentation",
     authors = "Simon Mataigne, Steven G. Johnson, and contributors.",
     pages = [
-        "Overview" => "index.md",
+        "Home" => "index.md",
         "Matrix Types" => "types.md",
         "Eigenproblems" => "eigen.md",
         "Exponential/Trigonometric functions" => "trig.md",
