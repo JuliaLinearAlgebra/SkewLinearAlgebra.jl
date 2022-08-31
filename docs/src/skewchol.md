@@ -1,8 +1,8 @@
 ## Skew-Cholesky factorization
 
 The package provides a Cholesky-like factorization for real skew-symmetric matrices as presented in P. Benner et al, "[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000).
-Every real skew-symmetric matrix $A$ can be factorized as $A=P^TR^TJRP$ where $P$ is a permutation matrix, $R$ is an `UpperTriangular` matrix and J is of a special type called `JMatrix` that is a tridiagonal skew-symmetric matrix composed of diagonal blocks of the form $B=[0, 1; -1, 0]$. The `JMatrix` type implements efficient operations related to the shape of the matrix as matrix-matrix/vector multiplication and inversion.
-The function `skewchol` implements this factorization and returns a `SkewCholesky` structure composed of the matrices `Rm` and `Jm` of type `UpperTriangular` and `JMatrix` respectively. The permutation matrix $P$ is encoded as a permutation vector `Pv`.
+Every real skew-symmetric matrix ``A`` can be factorized as ``A=P^TR^TJRP`` where ``P`` is a permutation matrix, ``R`` is an `UpperTriangular` matrix and J is of a special type called `JMatrix` that is a tridiagonal skew-symmetric matrix composed of diagonal blocks of the form ``B=[0, 1; -1, 0]``. The `JMatrix` type implements efficient operations related to the shape of the matrix as matrix-matrix/vector multiplication and inversion.
+The function `skewchol` implements this factorization and returns a `SkewCholesky` structure composed of the matrices `Rm` and `Jm` of type `UpperTriangular` and `JMatrix` respectively. The permutation matrix ``P`` is encoded as a permutation vector `Pv`.
 
 ```jl
 julia> R = skewchol(A)

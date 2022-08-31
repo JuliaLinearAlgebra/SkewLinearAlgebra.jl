@@ -4,9 +4,9 @@ The `SkewLinearAlgebra` package provides specialized matrix types, optimized met
 
 ## Introduction
 
-A skew-Hermitian matrix $A$ is a square matrix that equals its conjugate-transpose: $A=-\overline{A^{T}}=-A^{*}$, equivalent to `A == -A'` in Julia.  (In the real skew-symmetric case, this is simply $A=-A^T$.)   Such matrices have special computational properties: orthogonal eigenvectors and purely imaginary eigenvalues, "skew-Cholesky" factorizations, and a relative of the determinant called the [Pfaffian](https://en.wikipedia.org/wiki/Pfaffian).
+A skew-Hermitian matrix ``A`` is a square matrix that equals its conjugate-transpose: ``A=-\overline{A^{T}}=-A^{*}``, equivalent to `A == -A'` in Julia.  (In the real skew-symmetric case, this is simply ``A=-A^T``.)   Such matrices have special computational properties: orthogonal eigenvectors and purely imaginary eigenvalues, "skew-Cholesky" factorizations, and a relative of the determinant called the [Pfaffian](https://en.wikipedia.org/wiki/Pfaffian).
 
-Although any skew-Hermitian matrix $A$ can be transformed into a Hermitian matrix $H=iA$, this transformation converts real matrices $A$ into complex-Hermitian matrices $H$, which entails at least a factor of two loss in performance and memory usage compared to the real case.   (And certain operations, like the Pfaffian, are *only* defined for the skew-symmetric case.)  `SkewLinearAlgebra` gives you access to the greater performance and functionality that are possible for purely real skew-symmetric matrices.
+Although any skew-Hermitian matrix ``A`` can be transformed into a Hermitian matrix ``H=iA``, this transformation converts real matrices ``A`` into complex-Hermitian matrices ``H``, which entails at least a factor of two loss in performance and memory usage compared to the real case.   (And certain operations, like the Pfaffian, are *only* defined for the skew-symmetric case.)  `SkewLinearAlgebra` gives you access to the greater performance and functionality that are possible for purely real skew-symmetric matrices.
 
 To achieve this `SkewLinearAlgebra` defines a new matrix type, [`SkewHermitian`](@ref SkewLinearAlgebra.SkewHermitian) (analogous to the [`LinearAlgebra.Hermitian`](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Hermitian) type in the Julia standard library) that gives you access to optimized methods and specialized functionality for skew-Hermitian matrices, especially in the real case.  It also provides a more specialized [`SkewHermTridiagonal`](@ref SkewLinearAlgebra.SkewHermTridiagonal) for skew-Hermitian tridiagonal matrices (analogous to the [`LinearAlgebra.SymTridiagonal`](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.SymTridiagonal) type in the Julia standard library) .
 
@@ -60,7 +60,7 @@ The `SkewLinearAlgebra` package was initially created by [Simon Mataigne](https:
 
 ## SkewHermitian and SkewHermTridiagonal types
 
-This package provides specialized algorithms for dense real skew-symmetric matrices i.e $A=-A^T$ and complex skew-hermitian matrices i.e $A=-A^*$.
+This package provides specialized algorithms for dense real skew-symmetric matrices i.e ``A=-A^T`` and complex skew-hermitian matrices i.e ``A=-A^*``.
 It provides the matrix types [`SkewHermitian`](@ref) and [`SkewHermTridiagonal`](@ref) and implements the usual linear operations on such
 matrices by extending functions from Julia's `LinearAlgebra` standard library, including optimized
 algorithms that exploit this special matrix structure.
@@ -78,7 +78,7 @@ Only for `SkewHermitian` matrices:
 
 (Currently, we only provide specialized algorithms for real skew-Hermitian/skew-symmetric matrices.
 Methods for complex skew-Hermitian matrices transform these at negligible cost in complex `Hermitian`
-matrices by multiplying by $i$. This allows to use efficient LAPACK algorithms for hermitian matrices.
+matrices by multiplying by ``i``. This allows to use efficient LAPACK algorithms for hermitian matrices.
 Note, however that for real skew-Hermitian matrices this would force you to use complex arithmetic.
 Hence, the benefits of specialized algorithms are greatest for real skew-Hermitian matrices.)
 
@@ -196,7 +196,7 @@ H factor:
 
 ## Hessenberg/Tridiagonal reduction
 
-The Hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$ is an orthonormal matrix.
+The Hessenberg reduction performs a reduction ``A=QHQ^T`` where ``Q=\prod_i I-\tau_i v_iv_i^T`` is an orthonormal matrix.
 The `hessenberg` function computes the Hessenberg decomposition of `A` and returns a `Hessenberg` object. If `F` is the
 factorization object, the unitary matrix can be accessed with `F.Q` (of type `LinearAlgebra.HessenbergQ`)
 and the Hessenberg matrix with `F.H` (of type `SkewHermTridiagonal`), either of
@@ -241,7 +241,7 @@ vectors:
  -0.00717668-0.299303im  0.00692804-0.640561im   -0.00692804-0.640561im   0.00717668-0.299303im
 ```
 
- The function `eigvals` provides the eigenvalues of $A$. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
+ The function `eigvals` provides the eigenvalues of ``A``. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
 ```jl
  julia> eigvals(A)
 4-element Vector{ComplexF64}:
@@ -331,8 +331,8 @@ julia> cosh(A)
 ## Cholesky-like factorization
 
 The package provides a Cholesky-like factorization for real skew-symmetric matrices as presented in P. Benner et al, "[Cholesky-like factorizations of skew-symmetric matrices](https://etna.ricam.oeaw.ac.at/vol.11.2000/pp85-93.dir/pp85-93.pdf)"(2000).
-Every real skew-symmetric matrix $A$ can be factorized as $A=P^TR^TJRP$ where $P$ is a permutation matrix, $R$ is an `UpperTriangular` matrix and J is is tridiagonal skew-symmetric matrix composed of diagonal blocks of the form $B=[0, 1; -1, 0]$.
-The function `skewchol`implements this factorization and returns a `SkewCholesky` structure composed of the matrices `Rm` and `Jm` of type `UpperTriangular` and `SkewHermTridiagonal` respectively. The permutation matrix $P$ is encoded as a permutation vector `Pv`.
+Every real skew-symmetric matrix ``A`` can be factorized as ``A=P^TR^TJRP`` where ``P`` is a permutation matrix, ``R`` is an `UpperTriangular` matrix and J is is tridiagonal skew-symmetric matrix composed of diagonal blocks of the form ``B=[0, 1; -1, 0]``.
+The function `skewchol`implements this factorization and returns a `SkewCholesky` structure composed of the matrices `Rm` and `Jm` of type `UpperTriangular` and `SkewHermTridiagonal` respectively. The permutation matrix ``P`` is encoded as a permutation vector `Pv`.
 
 
 ```jl

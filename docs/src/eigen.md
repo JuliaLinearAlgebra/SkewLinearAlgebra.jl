@@ -1,14 +1,14 @@
 ## Skew-Hermitian eigenproblems
 
-A skew-Hermitian matrix $A = -A^*$ is very special with respect to its eigenvalues/vectors and related properties:
+A skew-Hermitian matrix ``A = -A^*`` is very special with respect to its eigenvalues/vectors and related properties:
 
-* It has **purely imaginary** eigenvalues.  (If $A$ is real, these come in **± pairs** or are zero.)
-* We can always find [orthonormal](https://en.wikipedia.org/wiki/Orthonormality) eigenvectors ($A$ is [normal](https://en.wikipedia.org/wiki/Normal_matrix)).
+* It has **purely imaginary** eigenvalues.  (If ``A`` is real, these come in **± pairs** or are zero.)
+* We can always find [orthonormal](https://en.wikipedia.org/wiki/Orthonormality) eigenvectors (``A`` is [normal](https://en.wikipedia.org/wiki/Normal_matrix)).
 
 By wrapping a matrix in the [`SkewHermitian`](@ref) or [`SkewHermTridiagonal`](@ref) types, you can exploit optimized methods
 for eigenvalue calculations (extending the functions defined in Julia's `LinearAlgebra` standard library).   Especially for *real*
-skew-symmetric $A=-A^T$, these optimized methods are generally *much faster* than the alternative of forming the complex-Hermitian
-matrix $iA$, computing its diagonalization, and multiplying the eigenvalues by $-i$.
+skew-symmetric ``A=-A^T``, these optimized methods are generally *much faster* than the alternative of forming the complex-Hermitian
+matrix ``iA``, computing its diagonalization, and multiplying the eigenvalues by ``-i``.
 
 In particular, optimized methods are provided for [`eigen`](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.eigen) (returning a factorization object storing both eigenvalues and eigenvectors), [`eigvals`](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.eigvals) (just eigenvalues), [`eigvecs`](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.eigvecs) (just eigenvectors), and their in-place variants [`eigen!`](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.eigen!)/[`eigvals!`] (which overwrite the matrix data).
 
@@ -42,7 +42,7 @@ vectors:
  -0.00717668-0.299303im  0.00692804-0.640561im   -0.00692804-0.640561im   0.00717668-0.299303im
 ```
 
- The function `eigvals` provides the eigenvalues of $A$. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
+ The function `eigvals` provides the eigenvalues of ``A``. The eigenvalues can be sorted and found partially with imaginary part in some given real range or by order.
 ```jl
  julia> eigvals(A)
 4-element Vector{ComplexF64}:
@@ -103,7 +103,7 @@ Vt factor:
 
 ### Hessenberg tridiagonalization
 
-The Hessenberg reduction performs a reduction $A=QHQ^T$ where $Q=\prod_i I-\tau_i v_iv_i^T$ is an orthonormal matrix.
+The Hessenberg reduction performs a reduction ``A=QHQ^T`` where ``Q=\prod_i I-\tau_i v_iv_i^T`` is an orthonormal matrix.
 The `hessenberg` function computes the Hessenberg decomposition of `A` and returns a `Hessenberg` object. If `F` is the
 factorization object, the unitary matrix can be accessed with `F.Q` (of type `LinearAlgebra.HessenbergQ`)
 and the Hessenberg matrix with `F.H` (of type `SkewHermTridiagonal`), either of

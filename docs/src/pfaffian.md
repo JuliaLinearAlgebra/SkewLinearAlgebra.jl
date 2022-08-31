@@ -1,7 +1,7 @@
 # Pfaffian calculations
 
-A real skew-symmetrix matrix $A = -A^T$ has a special property: its determinant is the square of a polynomial function of the
-matrix entries, called the [Pfaffian](https://en.wikipedia.org/wiki/Pfaffian).   That is, $\mathrm{det}(A) = \mathrm{Pf}(A)^2$, but
+A real skew-symmetrix matrix ``A = -A^T`` has a special property: its determinant is the square of a polynomial function of the
+matrix entries, called the [Pfaffian](https://en.wikipedia.org/wiki/Pfaffian).   That is, ``\mathrm{det}(A) = \mathrm{Pf}(A)^2``, but
 knowing the Pfaffian itself (and its sign, which is lost in the determinant) is useful for a number of applications.
 
 We provide a function `pfaffian(A)` to compute the Pfaffian of a real skew-symmetric matrix `A`.

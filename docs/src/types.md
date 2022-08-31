@@ -86,11 +86,11 @@ We also define the following *new* functions for real skew-symmetric matrices on
 ## Skew-Hermitian tridiagonal matrices
 
 In the special case of a [tridiagonal](https://en.wikipedia.org/wiki/Tridiagonal_matrix) skew-Hermitian matrix,
-many calculations can be performed very quickly, typically with $O(n)$ operations for an $n\times n$ matrix.
+many calculations can be performed very quickly, typically with ``O(n)`` operations for an ``n\times n`` matrix.
 Such optimizations are supported by the `SkewLinearAlgebra` package using the `SkewHermTridiagonal` matrix type.
 
 A complex tridiagonal skew-Hermitian matrix is of the form:
-$
+```math
 A=\left(\begin{array}{ccccc}
 id_{1} & -e_{1}^{*}\\
 e_{1} & id_{2} & -e_{2}^{*}\\
@@ -98,9 +98,9 @@ e_{1} & id_{2} & -e_{2}^{*}\\
  &  & \ddots & \ddots & -e_{n-1}^{*}\\
  &  &  & e_{n-1} & id_{n}
 \end{array}\right)=-A^{*}
-$
-with purely imaginary diagonal entries $id_k$.   This s represented in the `SkewLinearAlgebra` by calling the `SkewHermTridiagonal(ev,dvim)` constructor, where `ev` is the (complex) vector of $n-1$ subdiagonal entries $e_k$
-and `dvim` is the (real) vector of $n$ diagonal imaginary parts $d_k$:
+```
+with purely imaginary diagonal entries ``id_k``.   This s represented in the `SkewLinearAlgebra` by calling the `SkewHermTridiagonal(ev,dvim)` constructor, where `ev` is the (complex) vector of ``n-1`` subdiagonal entries ``e_k``
+and `dvim` is the (real) vector of ``n`` diagonal imaginary parts ``d_k``:
 ```jl
 julia> SkewHermTridiagonal([1+2im,3+4im],[5,6,7])
 3×3 SkewHermTridiagonal{Complex{Int64}, Vector{Complex{Int64}}, Vector{Int64}}:
@@ -109,7 +109,7 @@ julia> SkewHermTridiagonal([1+2im,3+4im],[5,6,7])
    ⋅     3+4im   0+7im
 ```
 In the case of a *real* matrix, the diagonal entries are zero, and the matrix takes the form:
-$
+```math
 \text{real }A=\left(\begin{array}{ccccc}
 0 & -e_{1}\\
 e_{1} & 0 & -e_{2}\\
@@ -117,9 +117,9 @@ e_{1} & 0 & -e_{2}\\
  &  & \ddots & \ddots & -e_{n-1}\\
  &  &  & e_{n-1} & 0
 \end{array}\right)=-A^{T}
-$
+```
 In this case, you need not store the zero diagonal entries, and can simply call `SkewHermTridiagonal(ev)`
-with the *real* vector `ev` of the $n-1$ subdiagonal entries:
+with the *real* vector `ev` of the ``n-1`` subdiagonal entries:
 ```jl
 julia> A = SkewHermTridiagonal([1,2,3])
 4×4 SkewHermTridiagonal{Int64, Vector{Int64}, Nothing}:

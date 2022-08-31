@@ -16,7 +16,7 @@ julia> Q = exp(A)
 0.279941  -0.559925     0.555524  -0.547275
 ```
 
-Note that the exponential of a skew-Hermitian matrix is very special: it is unitary.  That is, if $A^* = -A$, then $(e^A)^* = (e^A)^{-1}$:
+Note that the exponential of a skew-Hermitian matrix is very special: it is unitary.  That is, if ``A^* = -A``, then ``(e^A)^* = (e^A)^{-1}``:
 ```jl
 julia> Q' ≈ Q^-1
 true
