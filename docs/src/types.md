@@ -99,7 +99,7 @@ e_{1} & id_{2} & -e_{2}^{*}\\
  &  &  & e_{n-1} & id_{n}
 \end{array}\right)=-A^{*}
 ```
-with purely imaginary diagonal entries ``id_k``.   This s represented in the `SkewLinearAlgebra` by calling the `SkewHermTridiagonal(ev,dvim)` constructor, where `ev` is the (complex) vector of ``n-1`` subdiagonal entries ``e_k``
+with purely imaginary diagonal entries ``id_k``.   This is represented in the `SkewLinearAlgebra` package by calling the `SkewHermTridiagonal(ev,dvim)` constructor, where `ev` is the (complex) vector of ``n-1`` subdiagonal entries ``e_k``
 and `dvim` is the (real) vector of ``n`` diagonal imaginary parts ``d_k``:
 ```jl
 julia> SkewHermTridiagonal([1+2im,3+4im],[5,6,7])
