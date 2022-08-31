@@ -2,8 +2,8 @@
 [![CI](https://github.com/JuliaLinearAlgebra
 /SkewLinearAlgebra.jl/workflows/CI/badge.svg)](https://github.com/JuliaMath/SkewLinearAlgebra.jl/actions?query=workflow%3ACI)
 [![Coverage Status](https://coveralls.io/repos/github/JuliaLinearAlgebra
-/SkewLinearAlgebra.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaLinearAlgebra
-/SkewLinearAlgebra.jl?branch=master)
+/SkewLinearAlgebra.jl/badge.svg?branch=main)](https://coveralls.io/github/JuliaLinearAlgebra
+/SkewLinearAlgebra.jl?branch=main)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://julialinearalgebra.github.io/SkewLinearAlgebra.jl/dev/)
 
 # SkewLinearAlgebra
