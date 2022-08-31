@@ -5,7 +5,7 @@ in the `SkewHermitian` type (a subtype of `AbstractMatrix`), which supports fast
 can use the function [`isskewhermitian(A)`](@ref) to check whether `A` is skew-Hermitian (`A == -A'`).
 
 `SkewHermitian(A)` *requires* that `A == -A'` and throws an error if it is not.
-Alternatively, you can use the funcition (`skewhermitian(A)`](@ref) to take the skew-Hermitian *part*
+Alternatively, you can use the funcition [`skewhermitian(A)`](@ref) to take the skew-Hermitian *part*
 of `A`, defined by `(A - A')/2`, and wrap it in a `SkewHermitian` view.  The
 function [`skewhermitian!(A)`](@ref) does the same operation in-place on `A` (overwriting `A` with its
 skew-Hermitian part).
