@@ -1,9 +1,7 @@
 
-[![CI](https://github.com/JuliaLinearAlgebra
-/SkewLinearAlgebra.jl/workflows/CI/badge.svg)](https://github.com/JuliaMath/SkewLinearAlgebra.jl/actions?query=workflow%3ACI)
-[![Coverage Status](https://coveralls.io/repos/github/JuliaLinearAlgebra
-/SkewLinearAlgebra.jl/badge.svg?branch=main)](https://coveralls.io/github/JuliaLinearAlgebra
-/SkewLinearAlgebra.jl?branch=main)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/JuliaLinearAlgebra/SkewLinearAlgebra.jl/blob/main/LICENSE)
+[![Build Status](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl/workflows/CI/badge.svg)](https://github.com/JuliaLinearAlgebra/SkewLinearAlgebra.jl/actions)
+[![Codecov](http://codecov.io/github/JuliaLinearAlgebra/SkewLinearAlgebra.jl/coverage.svg?branch=main)](http://codecov.io/github/JuliaLinearAlgebra/SkewLinearAlgebra.jl?branch=main)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://julialinearalgebra.github.io/SkewLinearAlgebra.jl/dev/)
 
 # SkewLinearAlgebra
