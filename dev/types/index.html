@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>- · SkewLinearAlgebra Documentation</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">SkewLinearAlgebra Documentation</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">SkewLinearAlgebra</a></li><li><a class="tocitem" href="../eigen/">-</a></li><li><a class="tocitem" href="../pfaffian/">Pfaffian calculations</a></li><li><a class="tocitem" href="../skewchol/">-</a></li><li><a class="tocitem" href="../trig/">-</a></li><li class="is-active"><a class="tocitem" href>-</a><ul class="internal"><li><a class="tocitem" href="#Skew-Hermitian-matrices"><span>Skew-Hermitian matrices</span></a></li><li><a class="tocitem" href="#Skew-Hermitian-tridiagonal-matrices"><span>Skew-Hermitian tridiagonal matrices</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>-</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>-</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaLinearAlgebra/SkewLinearAlgebra.jl/blob/main/docs/src/types.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="Skew-Hermitian-matrices"><a class="docs-heading-anchor" href="#Skew-Hermitian-matrices">Skew-Hermitian matrices</a><a id="Skew-Hermitian-matrices-1"></a><a class="docs-heading-anchor-permalink" href="#Skew-Hermitian-matrices" title="Permalink"></a></h2><p><a href="../#SkewLinearAlgebra.SkewHermitian"><code>SkewHermitian(A)</code></a> wraps an existing matrix <code>A</code>, which <em>must</em> already be skew-Hermitian, in the <code>SkewHermitian</code> type (a subtype of <code>AbstractMatrix</code>), which supports fast specialized operations noted below.  You can use the function <a href="../#SkewLinearAlgebra.isskewhermitian"><code>isskewhermitian(A)</code></a> to check whether <code>A</code> is skew-Hermitian (<code>A == -A&#39;</code>).</p><p><code>SkewHermitian(A)</code> <em>requires</em> that <code>A == -A&#39;</code> and throws an error if it is not. Alternatively, you can use the funcition (<code>skewhermitian(A)</code>](@ref) to take the skew-Hermitian <em>part</em> of <code>A</code>, defined by <code>(A - A&#39;)/2</code>, and wrap it in a <code>SkewHermitian</code> view.  The function <a href="../#SkewLinearAlgebra.skewhermitian!"><code>skewhermitian!(A)</code></a> does the same operation in-place on <code>A</code> (overwriting <code>A</code> with its skew-Hermitian part).</p><p>Here is a basic example to initialize a <code>SkewHermitian</code> matrix:</p><pre><code class="language-jl hljs">julia&gt; using SkewLinearAlgebra, LinearAlgebra
+
+julia&gt; A = [0 2 -7 4; -2 0 -8 3; 7 8 0 1;-4 -3 -1 0]
+3×3 Matrix{Int64}:
+  0  2 -7  4
+ -2  0 -8  3
+  7  8  0  1
+  -4 -3 -1 0
+
+julia&gt; isskewhermitian(A)
+true
+
+julia&gt; A = SkewHermitian(A)
+4×4 SkewHermitian{Int64, Matrix{Int64}}:
+  0   2  -7  4
+ -2   0  -8  3
+  7   8   0  1
+ -4  -3  -1  0</code></pre><p>Basic linear-algebra operations are supported:</p><pre><code class="language-jl hljs">julia&gt; tr(A)
+0
+
+julia&gt; det(A)
+81.0
+
+julia&gt; inv(A)
+4×4 SkewHermitian{Float64, Matrix{Float64}}:
+  0.0        0.111111  -0.333333  -0.888889
+ -0.111111   0.0        0.444444   0.777778
+  0.333333  -0.444444   0.0        0.222222
+  0.888889  -0.777778  -0.222222   0.0
+
+julia&gt; x=[1;2;3;4]
+4-element Vector{Int64}:
+ 1
+ 2
+ 3
+ 4
+
+julia&gt; A\x
+4-element Vector{Float64}:
+ -4.333333333333334
+  4.333333333333334
+  0.3333333333333336
+ -1.3333333333333333</code></pre><p>A <code>SkewHermitian</code> matrix <code>A</code> is simply a wrapper around an underlying matrix (in which both the upper and lower triangles are stored, despite the redundancy, to support fast matrix operations).  You can extract this underlying matrix with the Julia <a href="https://docs.julialang.org/en/v1/base/arrays/#Base.parent"><code>parent(A)</code></a> function (this does <em>not</em> copy the data: mutating the parent will modify <code>A</code>).  Alternatively, you can <em>copy</em> the data to an ordinary <code>Matrix</code> (<a href="https://docs.julialang.org/en/v1/manual/arrays/">2d <code>Array</code></a>) with <code>Matrix(A)</code>.</p><h3 id="Operations-on-SkewHermitian"><a class="docs-heading-anchor" href="#Operations-on-SkewHermitian">Operations on <code>SkewHermitian</code></a><a id="Operations-on-SkewHermitian-1"></a><a class="docs-heading-anchor-permalink" href="#Operations-on-SkewHermitian" title="Permalink"></a></h3><p>The <code>SkewHermitian</code> type supports the basic operations for any Julia <code>AbstractMatrix</code> (indexing, iteration, multiplication, addition, scaling, and so on).   Matrix–matrix and matrix–vector multiplications are performed using the underlying parent matrix, so they are fast.</p><p>We try to preserve the <code>SkewHermitian</code> wrapper, if possible.  For example, adding two <code>SkewHermitian</code> matrices or scaling by a real number yields another <code>SkewHermitian</code> matrix.  Similarly for <code>real(A)</code>, <code>conj(A)</code>, <code>inv(A)</code>, or <code>-A</code>.</p><p>The package provides several optimized methods for <code>SkewHermitian</code> matrices, based on the functions defined by the Julia <code>LinearAlgebra</code> package:</p><ul><li>Tridiagonal reduction: <code>hessenberg</code></li><li>Eigensolvers: <code>eigen</code>, <code>eigvals</code> (also <code>schur</code>, <code>svd</code>, <code>svdvals</code>)</li><li>Trigonometric functions:<code>exp</code>, <code>cis</code>,<code>cos</code>,<code>sin</code>,<code>sinh</code>,<code>cosh</code>,<code>sincos</code></li></ul><p>We also define the following <em>new</em> functions for real skew-symmetric matrices only:</p><ul><li>Cholesky-like factorization: <a href="../#SkewLinearAlgebra.skewchol"><code>skewchol</code></a></li><li>Pfaffian: <a href="../#SkewLinearAlgebra.pfaffian"><code>pfaffian</code></a>, <a href="../#SkewLinearAlgebra.logabspfaffian"><code>logabspfaffian</code></a></li></ul><h2 id="Skew-Hermitian-tridiagonal-matrices"><a class="docs-heading-anchor" href="#Skew-Hermitian-tridiagonal-matrices">Skew-Hermitian tridiagonal matrices</a><a id="Skew-Hermitian-tridiagonal-matrices-1"></a><a class="docs-heading-anchor-permalink" href="#Skew-Hermitian-tridiagonal-matrices" title="Permalink"></a></h2><p>In the special case of a <a href="https://en.wikipedia.org/wiki/Tridiagonal_matrix">tridiagonal</a> skew-Hermitian matrix, many calculations can be performed very quickly, typically with <span>$O(n)$</span> operations for an <span>$n\times n$</span> matrix. Such optimizations are supported by the <code>SkewLinearAlgebra</code> package using the <code>SkewHermTridiagonal</code> matrix type.</p><p>A complex tridiagonal skew-Hermitian matrix is of the form: $ A=\left(\begin{array}{ccccc} id<em>{1} &amp; -e</em>{1}^{<em>}\
+e<em>{1} &amp; id</em>{2} &amp; -e_{2}^{</em>}\
+ &amp; e<em>{2} &amp; id</em>{3} &amp; \ddots\
+ &amp;  &amp; \ddots &amp; \ddots &amp; -e<em>{n-1}^{*}\
+ &amp;  &amp;  &amp; e</em>{n-1} &amp; id<em>{n} \end{array}\right)=-A^{*} $ with purely imaginary diagonal entries id</em>k<span>$.   This s represented in the `SkewLinearAlgebra` by calling the `SkewHermTridiagonal(ev,dvim)` constructor, where `ev` is the (complex) vector of $n-1$</span> subdiagonal entries <span>$e_k$</span> and <code>dvim</code> is the (real) vector of <span>$n$</span> diagonal imaginary parts <span>$d_k$</span>:</p><pre><code class="language-jl hljs">julia&gt; SkewHermTridiagonal([1+2im,3+4im],[5,6,7])
+3×3 SkewHermTridiagonal{Complex{Int64}, Vector{Complex{Int64}}, Vector{Int64}}:
+ 0+5im  -1+2im     ⋅
+ 1+2im   0+6im  -3+4im
+   ⋅     3+4im   0+7im</code></pre><p>In the case of a <em>real</em> matrix, the diagonal entries are zero, and the matrix takes the form: $ \text{real }A=\left(\begin{array}{ccccc} 0 &amp; -e<em>{1}\
+e</em>{1} &amp; 0 &amp; -e<em>{2}\
+ &amp; e</em>{2} &amp; 0 &amp; \ddots\
+ &amp;  &amp; \ddots &amp; \ddots &amp; -e<em>{n-1}\
+ &amp;  &amp;  &amp; e</em>{n-1} &amp; 0 \end{array}\right)=-A^{T} $ In this case, you need not store the zero diagonal entries, and can simply call <code>SkewHermTridiagonal(ev)</code> with the <em>real</em> vector <code>ev</code> of the <span>$n-1$</span> subdiagonal entries:</p><pre><code class="language-jl hljs">julia&gt; A = SkewHermTridiagonal([1,2,3])
+4×4 SkewHermTridiagonal{Int64, Vector{Int64}, Nothing}:
+ ⋅  -1   ⋅   ⋅
+ 1   ⋅  -2   ⋅
+ ⋅   2   ⋅  -3
+ ⋅   ⋅   3   ⋅</code></pre><p>(Notice that zero values that are not stored (“structural zeros”) are shown as a <code>⋅</code>.)</p><p>A <code>SkewHermTridiagonal</code> matrix can also be converted to the <a href="https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.SymTridiagonal"><code>LinearAlgebra.Tridiagonal</code></a> type in the Julia standard library:</p><pre><code class="language-jl hljs">julia&gt; Tridiagonal(A)
+4×4 Tridiagonal{Int64, Vector{Int64}}:
+ 0  -1   ⋅   ⋅
+ 1   0  -2   ⋅
+ ⋅   2   0  -3
+ ⋅   ⋅   3   0
+ ```
+ which may support a wider range of linear-algebra functions, but does not optimized for the skew-Hermitian structure.
+
+
+### Operations on `SkewHermTridiagonal`
+
+The `SkewHermTridiagonal` type is modeled on the [`LinearAlgebra.SymTridiagonal`](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.SymTridiagonal) type in the Julia standard library) and supports typical matrix operations
+(indexing, iteration, scaling, and so on).
+
+The package provides several optimized methods for `SkewHermTridiagonal` matrices,
+based on the functions defined by the Julia `LinearAlgebra` package:
+
+- Matrix-vector `A*x` and `dot(x,A,y)` products; also solves `A\x` (via conversion to `Tridiagonal`)
+- Eigensolvers: `eigen`, `eigvals` (also `svd`, `svdvals`)
+- Trigonometric functions:`exp`, `cis`,`cos`,`sin`,`sinh`,`cosh`,`sincos`
+
+## Types Reference
+</code></pre><p>@docs SkewLinearAlgebra.SkewHermitian SkewLinearAlgebra.skewhermitian SkewLinearAlgebra.skewhermitian! SkewLinearAlgebra.SkewHermTridiagonal ```</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../trig/">« -</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 31 August 2022 19:28">Wednesday 31 August 2022</span>. Using Julia version 1.8.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
