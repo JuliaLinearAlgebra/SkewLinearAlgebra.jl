@@ -54,9 +54,10 @@ function exactpfaffian!(A::AbstractMatrix)
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
     return _exactpfaffian!(A)
 end
+exactpfaffian!(A::SkewHermitian) = _exactpfaffian!(A.data)
+exactpfaffian(A::AbstractMatrix) = exactpfaffian!(copyto!(similar(A), A))
 
 const ExactRational = Union{BigInt,Rational{BigInt}}
-exactpfaffian!(A::SkewHermitian{<:ExactRational}) = _exactpfaffian!(A.data)
 pfaffian!(A::SkewHermitian{<:ExactRational}) = _exactpfaffian!(A.data)
 pfaffian(A::SkewHermitian{<:ExactRational}) = pfaffian!(copy(A))
 pfaffian!(A::AbstractMatrix{<:ExactRational}) = exactpfaffian!(A)
