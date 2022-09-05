@@ -28,13 +28,13 @@ Random.seed!(314159) # use same pseudorandom stream for every test
 end
 
 @testset "SkewLinearAlgebra.jl" begin
-
     for T in (Int32,Float32,Float64,ComplexF32), n in [1, 2, 10, 11]
         if T<:Integer
-            A = SLA.skewhermitian(rand(convert(Array{T},-10:10), n, n) * T(2))
+            A = SLA.skewhermitian!(rand(convert(Array{T},-10:10), n, n) * T(2))
         else
-            A = SLA.skewhermitian(randn(T, n, n))
+            A = SLA.skewhermitian!(randn(T, n, n))
         end
+        @test eltype(A) === T
         @test SLA.isskewhermitian(A)
         @test SLA.isskewhermitian(A.data)
         B = T(2) * Matrix(A)
@@ -114,7 +114,7 @@ end
         A.data[n,n] = T(0)
         A.data[n,1] = T(4)
         @test SLA.isskewhermitian(A.data) == false
-        
+
         LU = lu(A)
         @test LU.L * LU.U ≈ A.data[LU.p,:]
         if !(T<:Integer)
@@ -136,6 +136,9 @@ end
             @test f(A) == f(Matrix(A))
         end
     end
+
+    # issue #98
+    @test SLA.skewhermitian([1 2; 3 4]) == [0.0 -0.5; 0.5 0.0]
 end
 
 @testset "hessenberg.jl" begin

@@ -31,7 +31,7 @@ end
 Returns the skew-Hermitian part of A, i.e. `(A-A')/2`.  See also
 [`skewhermitian!`](@ref), which does this in-place.
 """
-skewhermitian(A::AbstractMatrix) = skewhermitian!(Base.copymutable(A))
+skewhermitian(A::AbstractMatrix) = skewhermitian!(copyto!(similar(A, typeof(zero(eltype(A))/2)), A))
 skewhermitian(a::Number) = imag(a)
 
 Base.@propagate_inbounds Base.getindex(A::SkewHermitian, i::Integer, j::Integer) = A.data[i,j]
@@ -141,7 +141,7 @@ function LA.dot(A::SkewHermitian, B::SkewHermitian)
         throw(DimensionMismatch("A has size $(size(A)) but B has size $(size(B))"))
     end
     dotprod = zero(dot(first(A), first(B)))
-    @inbounds for j = 1:n 
+    @inbounds for j = 1:n
         for i = 1:j-1
             dotprod += two * dot(A.data[i, j], B.data[i, j])
         end
