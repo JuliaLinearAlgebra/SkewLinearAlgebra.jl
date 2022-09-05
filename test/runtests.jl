@@ -357,6 +357,13 @@ end
     end
     # issue #49
     @test pfaffian(big.([0 14 7 -10 0 10 0 -11; -14 0 -10 7 13 -9 -12 -13; -7 10 0 -4 6 -17 -1 18; 10 -7 4 0 -2 -4 0 11; 0 -13 -6 2 0 -8 -18 17; -10 9 17 4 8 0 -8 12; 0 12 1 0 18 8 0 0; 11 13 -18 -11 -17 -12 0 0])) == -119000
+
+    # test a few 4x4 Pfaffians against the analytical formula
+    for i = 1:10
+        a,b,c,d,e,f = rand(-10:10,6)
+        A = [0 a b c; -a 0 d e; -b -d 0 f; -c -e -f 0]
+        @test SkewLinearAlgebra.exactpfaffian(A) == c*d - b*e + a*f ≈ pfaffian(A)
+    end
 end
 
 @testset "cholesky.jl" begin
