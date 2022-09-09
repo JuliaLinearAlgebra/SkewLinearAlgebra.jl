@@ -62,10 +62,16 @@ end
     val[1] = complex(0, k)
     val[2] = complex(0, -k)
 end 
+function getshift(ev::AbstractVector{T}) where T
+    if ev[2] < T(1000) * eps(T)
+        return ev[1]^2
+    end
+    return ev[2]^2
+end
 
 @views function implicitstep_novec(ev::AbstractVector{T} , n::Integer ) where T
     buldge = zero(T)
-    shift = ev[n]^2
+    shift = getshift(ev[n-1:n])
     @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
@@ -121,13 +127,11 @@ end
     else
         throw("Maximum number of iterations reached, the algorithm didn't converge")
     end
-
-
 end
 
 @views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer) where T
     buldge = zero(T)
-    shift = ev[n]^2
+    shift = getshift(ev[n-1:n])
     @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
@@ -173,11 +177,13 @@ end
     end
     
     tol = eps(T)*T(100)
-    max_iter = 100 * n
+    max_iter = 20
     iter = 0 ;
     halfN = div(n,2)
 
     while n > 2 && iter < max_iter
+        display(n - 1)
+        display(ev)
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
         while n > 2 && abs(ev[n - 2]) < tol*abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n])
