@@ -312,7 +312,9 @@ end
         @test yb * A ≈ yb * B
         @test B * A ≈ A * B ≈ B * B
         @test size(A,1) == n
-
+        if T<:Int32
+            display(A)
+        end
         EA = eigen(A)
         EB = eigen(B)
         Q = EA.vectors
