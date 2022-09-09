@@ -107,7 +107,7 @@ end
 
     while n > 2 && iter < max_iter
         implicitstep_novec(ev, n - 1)
-        while abs(ev[n - 2]) < tol * abs(ev[n - 1])
+        while abs(ev[n - 2]) < tol * abs(ev[n - 1]) && n > 2
             eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
@@ -179,7 +179,7 @@ end
 
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        while abs(ev[n - 2]) < tol*abs(ev[n - 1])
+        while abs(ev[n - 2]) < tol*abs(ev[n - 1]) && n > 2
             eigofblock(ev[n - 1], values[n-1:n])
             n -= 2
         end
@@ -244,7 +244,7 @@ end
     halfN = div(n, 2)
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        while abs(ev[n - 2]) < tol*abs(ev[n - 1])
+        while abs(ev[n - 2]) < tol*abs(ev[n - 1]) && n > 2
             eigofblock(ev[n - 1], values[n-1:n])
             n -= 2
         end
