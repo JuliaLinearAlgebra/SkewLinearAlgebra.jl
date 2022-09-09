@@ -100,14 +100,14 @@ end
         Ginit = similar(A, T, n)
         reducetozero(ev, Ginit, n)
     end
-    tol = eps(T) * norm(ev)
+    tol = eps(T) * T(10)
     max_iter = 30 * n
     iter = 0 ;
     N = n 
 
     while n > 2 && iter < max_iter
         implicitstep_novec(ev, n - 1)
-        if abs(ev[n - 2]) < tol
+        while abs(ev[n - 2]) < tol * abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
@@ -172,14 +172,14 @@ end
         reducetozero(ev, Ginit, n)
     end
     
-    tol = eps(T)*T(10)
+    tol = eps(T)*T(100)
     max_iter = 100 * n
     iter = 0 ;
     halfN = div(n,2)
 
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        if abs(ev[n - 2]) < tol*abs(ev[n - 1])
+        while abs(ev[n - 2]) < tol*abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n])
             n -= 2
         end
@@ -237,14 +237,14 @@ end
         Ginit = similar(A, T, n)
         reducetozero(ev, Ginit, n)
     end
-    tol = eps(T) * norm(ev)
+    tol = eps(T)*T(10)
 
     max_iter = 30 * n
     iter = 0 ;
     halfN = div(n, 2)
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        if abs(ev[n - 2]) < tol
+        while abs(ev[n - 2]) < tol*abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n])
             n -= 2
         end
