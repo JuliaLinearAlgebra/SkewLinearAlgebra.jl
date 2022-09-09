@@ -154,7 +154,6 @@ end
         @test Matrix(HA.H) ≈ Matrix(HB.H)
         @test Matrix(HA.Q) ≈ Matrix(HB.Q)
     end
-
     for T in (Int32,Float64,ComplexF32)
         A = zeros(T, 4, 4)
         A[2:4,1] = ones(T,3)
@@ -313,7 +312,9 @@ end
         @test yb * A ≈ yb * B
         @test B * A ≈ A * B ≈ B * B
         @test size(A,1) == n
-
+        if T<:Int32
+            display(A)
+        end
         EA = eigen(A)
         EB = eigen(B)
         Q = EA.vectors
@@ -409,3 +410,4 @@ end
     end
     @test repr("text/plain", JMatrix(4)) == "4×4 JMatrix{Int8, 1}:\n  ⋅  1   ⋅  ⋅\n -1  ⋅   ⋅  ⋅\n  ⋅  ⋅   ⋅  1\n  ⋅  ⋅  -1  ⋅"
 end
+

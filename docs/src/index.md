@@ -56,4 +56,4 @@ julia> pfaffian(A) # the Pfaffian (always zero for odd-size skew matrices)
 
 ## Acknowledgements
 
-The `SkewLinearAlgebra` package was initially created by [Simon Mataigne](https://github.com/smataigne) and [Steven G. Johnson](https://math.mit.edu/~stevenj/), with support from [UCLouvaine](https://uclouvain.be/) and the [MIT–Belgium program](https://misti.mit.edu/mit-belgium).
+The `SkewLinearAlgebra` package was initially created by [Simon Mataigne](https://github.com/smataigne) and [Steven G. Johnson](https://math.mit.edu/~stevenj/), with support from [UCLouvain](https://uclouvain.be/) and the [MIT–Belgium program](https://misti.mit.edu/mit-belgium).

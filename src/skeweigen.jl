@@ -62,10 +62,17 @@ end
     val[1] = complex(0, k)
     val[2] = complex(0, -k)
 end 
+function getshift(ev::AbstractVector{T}, lim::Real) where T
+    if abs(ev[2]) < lim
+        return ev[1]^2
+    end
+    return ev[2]^2
+end
 
 @views function implicitstep_novec(ev::AbstractVector{T} , n::Integer ) where T
     buldge = zero(T)
-    shift = ev[n]^2
+    lim = T(10^(div(log(10, eps(T)), 2)))
+    shift = getshift(ev[n-1:n], lim)
     @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
@@ -100,14 +107,14 @@ end
         Ginit = similar(A, T, n)
         reducetozero(ev, Ginit, n)
     end
-    tol = eps(T) * norm(ev)
-    max_iter = 16 * n
+    tol = eps(T) * T(10)
+    max_iter = 30 * n
     iter = 0 ;
     N = n 
 
     while n > 2 && iter < max_iter
         implicitstep_novec(ev, n - 1)
-        if abs(ev[n - 2]) < tol
+        while n > 2 && abs(ev[n - 2]) < tol * abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
@@ -121,13 +128,12 @@ end
     else
         throw("Maximum number of iterations reached, the algorithm didn't converge")
     end
-
-
 end
 
 @views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer) where T
     buldge = zero(T)
-    shift = ev[n]^2
+    lim = T(10^(div(log(10, eps(T)), 2)))
+    shift = getshift(ev[n-1:n], lim)
     @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
@@ -171,15 +177,15 @@ end
         Ginit = similar(A, T, n)
         reducetozero(ev, Ginit, n)
     end
-
-    tol = eps(T) * norm(ev)
-    max_iter = 16*n
+    
+    tol = eps(T)*T(10)
+    max_iter = 30 * n
     iter = 0 ;
     halfN = div(n,2)
 
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        if abs(ev[n - 2]) < tol
+        while n > 2 && abs(ev[n - 2]) < tol*abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n])
             n -= 2
         end
@@ -237,14 +243,14 @@ end
         Ginit = similar(A, T, n)
         reducetozero(ev, Ginit, n)
     end
-    tol = eps(T) * norm(ev)
+    tol = eps(T)*T(10)
 
-    max_iter = 16*n
+    max_iter = 30 * n
     iter = 0 ;
     halfN = div(n, 2)
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        if abs(ev[n - 2]) < tol
+        while n > 2 && abs(ev[n - 2]) < tol*abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n])
             n -= 2
         end
