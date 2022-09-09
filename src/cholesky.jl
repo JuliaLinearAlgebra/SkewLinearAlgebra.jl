@@ -87,6 +87,12 @@ copyeigtype(A::AbstractMatrix) = copyto!(similar(A, LA.eigtype(eltype(A))), A)
 end
 
 skewchol(A::SkewHermitian) = skewchol!(copyeigtype(A))
+
+"""
+skewchol!(A)
+
+Similar to [`skewchol!`](@ref), but overwrites `A` in-place with intermediate calculations.
+"""
 skewchol!(A::AbstractMatrix) = @views  skewchol!(SkewHermitian(A))
 
 """

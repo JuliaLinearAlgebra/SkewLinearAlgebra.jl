@@ -25,7 +25,7 @@ function _exactpfaffian!(A::AbstractMatrix)
         k = 2n
         while k > 0 && iszero(A[2n-1,k]); k -= 1; end
         iszero(k) && return zero(eltype(A))
-        
+
         # swap rows/cols k and 2n
         if k != 2n
             for i = 1:2n
@@ -36,7 +36,7 @@ function _exactpfaffian!(A::AbstractMatrix)
             end
             signflip = !signflip
         end
-        
+
         # update, A, c, n
         for j = 1:2n-2, i = 1:j-1
             δ = A[2n-1,2n]*A[i,j] - A[i,2n-1]*A[j,2n] + A[j,2n-1]*A[i,2n]
@@ -54,12 +54,14 @@ function exactpfaffian!(A::AbstractMatrix)
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
     return _exactpfaffian!(A)
 end
+exactpfaffian!(A::SkewHermitian) = _exactpfaffian!(A.data)
+exactpfaffian(A::AbstractMatrix) = exactpfaffian!(copyto!(similar(A), A))
 
-exactpfaffian!(A::SkewHermitian{<:BigInt}) = _exactpfaffian!(A.data)
-pfaffian!(A::SkewHermitian{<:BigInt}) = _exactpfaffian!(A.data)
-pfaffian(A::SkewHermitian{<:BigInt}) = pfaffian!(copy(A))
-pfaffian!(A::AbstractMatrix{<:BigInt}) = exactpfaffian!(A)
-pfaffian(A::AbstractMatrix{<:BigInt}) = pfaffian!(copy(A))
+const ExactRational = Union{BigInt,Rational{BigInt}}
+pfaffian!(A::SkewHermitian{<:ExactRational}) = _exactpfaffian!(A.data)
+pfaffian(A::SkewHermitian{<:ExactRational}) = pfaffian!(copy(A))
+pfaffian!(A::AbstractMatrix{<:ExactRational}) = exactpfaffian!(A)
+pfaffian(A::AbstractMatrix{<:ExactRational}) = pfaffian!(copy(A))
 
 function _pfaffian!(A::SkewHermitian{<:Real})
     n = size(A,1)
@@ -75,15 +77,21 @@ end
 
 pfaffian!(A::SkewHermitian{<:Real})= _pfaffian!(A)
 pfaffian(A::SkewHermitian{<:Real})= pfaffian!(copyeigtype(A))
+
 """
     pfaffian(A)
 
 Returns the pfaffian of `A` where a is a real skew-Hermitian matrix.
 If `A` is not of type `SkewHermitian{<:Real}`, then `isskewhermitian(A)`
-is performed to ensure that `A = -A'`
+is checked to ensure that `A == -A'`
 """
 pfaffian(A::AbstractMatrix{<:Real}) = pfaffian!(copyeigtype(A))
 
+"""
+    pfaffian!(A)
+
+Similar to [`pfaffian`](@ref), but overwrites `A` in-place with intermediate calculations.
+"""
 function pfaffian!(A::AbstractMatrix{<:Real})
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
     return _pfaffian!(SkewHermitian(A))
@@ -104,16 +112,23 @@ function _logabspfaffian!(A::SkewHermitian{<:Real})
 end
 logabspfaffian!(A::SkewHermitian{<:Real})= _logabspfaffian!(A)
 logabspfaffian(A::SkewHermitian{<:Real})= logabspfaffian!(copyeigtype(A))
+
 """
     logabspfaffian(A)
 
 Returns a tuple `(log|Pf A|, sign)`, with the log of the absolute value of the pfaffian of `A` as first output
 and the sign (±1) of the pfaffian as second output. A must be a real skew-Hermitian matrix.
 If `A` is not of type `SkewHermitian{<:Real}`, then `isskewhermitian(A)`
-is performed to ensure that `A = -A'`
+is checked to ensure that `A == -A'`
 """
 logabspfaffian(A::AbstractMatrix{<:Real}) = logabspfaffian!(copyeigtype(A))
 
+
+"""
+    logabspfaffian!(A)
+
+Similar to [`logabspfaffian`](@ref), but overwrites `A` in-place with intermediate calculations.
+"""
 function logabspfaffian!(A::AbstractMatrix{<:Real})
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
     return _logabspfaffian!(SkewHermitian(A))
