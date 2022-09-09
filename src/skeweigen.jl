@@ -108,7 +108,7 @@ end
         reducetozero(ev, Ginit, n)
     end
     tol = eps(T) * T(10)
-    max_iter = 30 
+    max_iter = 30 * n
     iter = 0 ;
     N = n 
 
