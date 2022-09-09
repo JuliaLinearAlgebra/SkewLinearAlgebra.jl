@@ -62,8 +62,8 @@ end
     val[1] = complex(0, k)
     val[2] = complex(0, -k)
 end 
-function getshift(ev::AbstractVector{T}) where T
-    if ev[2] < T(1000) * eps(T)
+function getshift(ev::AbstractVector{T}, lim::Real) where T
+    if abs(ev[2]) < lim
         return ev[1]^2
     end
     return ev[2]^2
@@ -71,7 +71,8 @@ end
 
 @views function implicitstep_novec(ev::AbstractVector{T} , n::Integer ) where T
     buldge = zero(T)
-    shift = getshift(ev[n-1:n])
+    lim = T(10^(div(log(10, eps(T)), 2)))
+    shift = getshift(ev[n-1:n], lim)
     @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
@@ -107,7 +108,7 @@ end
         reducetozero(ev, Ginit, n)
     end
     tol = eps(T) * T(10)
-    max_iter = 30 * n
+    max_iter = 30 
     iter = 0 ;
     N = n 
 
@@ -131,7 +132,8 @@ end
 
 @views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer) where T
     buldge = zero(T)
-    shift = getshift(ev[n-1:n])
+    lim = T(10^(div(log(10, eps(T)), 2)))
+    shift = getshift(ev[n-1:n], lim)
     @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
@@ -176,14 +178,12 @@ end
         reducetozero(ev, Ginit, n)
     end
     
-    tol = eps(T)*T(100)
-    max_iter = 20
+    tol = eps(T)*T(10)
+    max_iter = 30 * n
     iter = 0 ;
     halfN = div(n,2)
 
     while n > 2 && iter < max_iter
-        display(n - 1)
-        display(ev)
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
         while n > 2 && abs(ev[n - 2]) < tol*abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n])
