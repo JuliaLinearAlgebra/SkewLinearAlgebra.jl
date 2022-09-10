@@ -206,14 +206,32 @@ end
         end
         B = Matrix(A)
         @test exp(B) ≈ exp(A)
-        @test  Matrix(cis(A)) ≈ exp(Matrix(A)*1im)
-        @test cos(B) ≈ Matrix(cos(A))
-        @test sin(B) ≈  Matrix(sin(A))
+        @test  cis(A) ≈ Hermitian(exp(B*1im))
+        @test Hermitian(cos(B)) ≈ cos(A)
+        @test skewhermitian!(sin(B)) ≈  sin(A)
         sc = sincos(A)
-        @test sc[1]≈ sin(B)
+        @test sc[1]≈ skewhermitian!(sin(B))
         @test sc[2]≈ Hermitian(cos(B))
-        @test sinh(B) ≈  Matrix(sinh(A))
-        @test cosh(B) ≈  Matrix(cosh(A))
+        @test skewhermitian!(sinh(B)) ≈  sinh(A)
+        @test Hermitian(cosh(B)) ≈  cosh(A)
+        if T<:Complex || iseven(n)
+            @test exp(log(A)) ≈ A
+        end
+        if issuccess(lu(cos(B), check = false)) && issuccess(lu(det(exp(2A)+I), check = false))
+            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B)) 
+                @test tan(B) ≈ tan(A)
+                @test tanh(B) ≈ tanh(A)
+            end
+        end
+        if issuccess(lu(sin(B), check = false)) && issuccess(lu(det(exp(2A)-I), check = false))
+            try
+                if isapproxskewhermitian(cot(B)) && isapproxskewhermitian(coth(B))
+                    @test cot(B) ≈ cot(A)
+                    @test coth(B) ≈ coth(A)
+                end
+            catch
+            end
+        end 
     end
     for T in (Int32 ,Float32,Float64,ComplexF32), n in [2, 10, 11]
         if T<:Integer
@@ -227,14 +245,32 @@ end
         end
         B = Matrix(A)
         @test exp(B) ≈ exp(A)
-        @test  Matrix(cis(A)) ≈ exp(Matrix(A)*1im)
-        @test cos(B) ≈ Matrix(cos(A))
-        @test sin(B) ≈  Matrix(sin(A))
+        @test  cis(A) ≈ Hermitian(exp(B*1im))
+        @test Hermitian(cos(B)) ≈ cos(A)
+        @test skewhermitian!(sin(B)) ≈  sin(A)
         sc = sincos(A)
-        @test sc[1]≈ sin(B)
+        @test sc[1]≈ skewhermitian!(sin(B))
         @test sc[2]≈ Hermitian(cos(B))
-        @test sinh(B) ≈  Matrix(sinh(A))
-        @test cosh(B) ≈  Matrix(cosh(A))
+        @test skewhermitian!(sinh(B)) ≈  sinh(A)
+        @test Hermitian(cosh(B)) ≈  cosh(A)
+        if T<:Complex || iseven(n)
+            @test exp(log(A)) ≈ A
+        end
+        if issuccess(lu(cos(B), check = false)) && issuccess(lu(det(exp(2A)+I), check = false))
+            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B)) 
+                @test tan(B) ≈ tan(A)
+                @test tanh(B) ≈ tanh(A)
+            end
+        end
+        if issuccess(lu(sin(B), check = false)) && issuccess(lu(det(exp(2A)-I), check = false))
+            try
+                if isapproxskewhermitian(cot(B)) && isapproxskewhermitian(coth(B))
+                    @test cot(B) ≈ cot(A)
+                    @test coth(B) ≈ coth(A)
+                end
+            catch
+            end
+        end
     end
 end
 
@@ -312,9 +348,6 @@ end
         @test yb * A ≈ yb * B
         @test B * A ≈ A * B ≈ B * B
         @test size(A,1) == n
-        if T<:Int32
-            display(A)
-        end
         EA = eigen(A)
         EB = eigen(B)
         Q = EA.vectors
@@ -355,6 +388,10 @@ end
         @test Float64(pfaffian(Abig)^2) ≈ (iseven(n) ? det(Float64.(A)) : 0.0)
         logpf, sign = logabspfaffian(A)
         @test pfaffian(A) ≈ sign * exp(logpf)
+
+        S = SkewHermTridiagonal(A)
+        logpf, sign = logabspfaffian(S)
+        @test pfaffian(S) ≈ sign * exp(logpf) ≈ sign * sqrt(det(Matrix(S)))
     end
     # issue #49
     @test pfaffian(big.([0 14 7 -10 0 10 0 -11; -14 0 -10 7 13 -9 -12 -13; -7 10 0 -4 6 -17 -1 18; 10 -7 4 0 -2 -4 0 11; 0 -13 -6 2 0 -8 -18 17; -10 9 17 4 8 0 -8 12; 0 12 1 0 18 8 0 0; 11 13 -18 -11 -17 -12 0 0])) == -119000

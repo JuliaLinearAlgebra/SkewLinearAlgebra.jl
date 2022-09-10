@@ -75,8 +75,18 @@ function _pfaffian!(A::SkewHermitian{<:Real})
     return pf
 end
 
-pfaffian!(A::SkewHermitian{<:Real})= _pfaffian!(A)
-pfaffian(A::SkewHermitian{<:Real})= pfaffian!(copyeigtype(A))
+function _pfaffian!(A::SkewHermTridiagonal{<:Real})
+    n = size(A,1)
+    isodd(n) && return zero(eltype(A.ev))
+    pf = one(eltype(A.ev))
+    for i=1:2:n-1
+        pf *= -A.ev[i]
+    end
+    return pf
+end
+
+pfaffian!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})= _pfaffian!(A)
+pfaffian(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})= pfaffian!(copyeigtype(A))
 
 """
     pfaffian(A)
@@ -110,8 +120,19 @@ function _logabspfaffian!(A::SkewHermitian{<:Real})
     end
     return logpf, sgn
 end
-logabspfaffian!(A::SkewHermitian{<:Real})= _logabspfaffian!(A)
-logabspfaffian(A::SkewHermitian{<:Real})= logabspfaffian!(copyeigtype(A))
+function _logabspfaffian!(A::SkewHermTridiagonal{<:Real})
+    n = size(A, 1)
+    isodd(n) && return convert(eltype(A.ev), -Inf), zero(eltype(A.ev))
+    logpf = zero(eltype(A.ev))
+    sgn = one(eltype(A.ev))
+    for i=1:2:n-1
+        logpf += log(abs(A.ev[i]))
+        sgn *= sign(-A.ev[i])
+    end
+    return logpf, sgn
+end
+logabspfaffian!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})= _logabspfaffian!(A)
+logabspfaffian(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})= logabspfaffian!(copyeigtype(A))
 
 """
     logabspfaffian(A)

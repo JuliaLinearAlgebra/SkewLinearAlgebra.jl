@@ -61,7 +61,8 @@ end
 @views function eigofblock(k::Number, val::AbstractVector)
     val[1] = complex(0, k)
     val[2] = complex(0, -k)
-end 
+end
+ 
 function getshift(ev::AbstractVector{T}, lim::Real) where T
     if abs(ev[2]) < lim
         return ev[1]^2
@@ -95,7 +96,6 @@ end
         end
     end)
     return
-
 end
 
 @views function skewtrieigvals!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
