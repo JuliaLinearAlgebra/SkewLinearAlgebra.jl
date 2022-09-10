@@ -15,6 +15,7 @@ export
     JMatrix,
     #functions
     isskewhermitian,
+    isapproxskewhermitian,
     skewhermitian,
     skewhermitian!,
     to_symtridiagonal,
@@ -34,8 +35,6 @@ include("eigen.jl")
 include("exp.jl")
 include("cholesky.jl")
 include("pfaffian.jl")
-
-
 end
 
 

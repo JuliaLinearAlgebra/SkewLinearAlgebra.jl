@@ -89,6 +89,16 @@ end
 isskewhermitian(A::SkewHermitian) = true
 isskewhermitian(a::Number) = a == -a'
 
+function isapproxskewhermitian(A::AbstractMatrix{<:Number})
+    axes(A,1) == axes(A,2) || throw(ArgumentError("axes $(axes(A,1)) and $(axex(A,2)) do not match"))
+    @inbounds for i in axes(A,1)
+        for j = firstindex(A, 1):i
+            A[i,j] ≈ -A[j,i]' || return false
+        end
+    end
+    return true
+end
+
 """
     skewhermitian!(A)
 

@@ -47,6 +47,55 @@ end
 
 Base.exp(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewexp!(copyeigtype(A))
 
+function skewlog!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
+    n = size(A, 1)
+    isodd(n) && throw("Logarithm of a singular matrix doesn't exist")
+    if typeof(A) <:SkewHermitian
+        vals, Qr, Qim = skeweigen!(A)
+    else
+        E = eigen!(A)
+        vals = E.values
+        Qr = real(E.vectors)
+        Qim = imag(E.vectors)
+    end
+    temp2 = similar(A, n, n)
+    Q1 = similar(A, n, n)
+    Q2 = similar(A, n, n)
+    r = similar(A, n)
+    θ = similar(A, n)
+
+    @simd for i = 1 : n
+        iszero(vals[i]) && throw("Logarithm of a singular matrix doesn't exist")
+        @inbounds r[i], θ[i] = log(abs(vals[i])), sign(imag(vals[i])) * π / 2
+    end
+    R = Diagonal(r)
+    Θ = Diagonal(θ) 
+
+    mul!(Q1, Qr, R)
+    mul!(Q2, Qim, Θ )
+    Q1 .-= Q2
+    mul!(temp2, Q1, transpose(Qr))
+    mul!(Q1, Qr, Θ)
+    mul!(Q2, Qim, R)
+    Q1 .+= Q2
+    mul!(Q2, Q1, transpose(Qim))
+    temp2 .+= Q2
+    return temp2
+end
+
+@views function skewlog!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
+    n = size(A, 1)
+    Eig = eigen!(A)
+    eig = log.(Eig.values)
+    temp = similar(A, n, n)
+    Exp = similar(A, n, n)
+    mul!(temp, Diagonal(eig), Eig.vectors')
+    mul!(Exp,Eig.vectors,temp)
+    return Exp
+end
+
+Base.log(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewlog!(copyeigtype(A))
+
 @views function skewcis!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A, 1)
     Eig = eigen!(A)
@@ -91,7 +140,7 @@ end
     mul!(temp2, Q1, transpose(Qr))
     mul!(Q1, Q2, transpose(Qim))
     Q1 .+= temp2
-    return Symmetric(Q1)
+    return Hermitian(Q1)
 end
 
 @views function skewcos!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
@@ -131,7 +180,7 @@ end
     mul!(temp2, Q1, transpose(Qim))
     mul!(Q1, Q2, transpose(Qr))
     Q1 .-= temp2
-    return Q1
+    return skewhermitian!(Q1)
 end
 
 @views function skewsin!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
@@ -149,7 +198,7 @@ end
     Sin .-= temp2
     Sin ./= -2
     Sin .*= 1im
-    return Sin
+    return skewhermitian!(Sin)
 end
 
 Base.cis(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewcis!(copyeigtype(A))
@@ -182,7 +231,7 @@ Base.sin(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsin!(copyeigtype(A))
     mul!(Sin, Q2, transpose(Qr))
     Sin .-= temp2
 
-    return Sin, Symmetric(Cos)
+    return skewhermitian!(Sin), Hermitian(Cos)
 end
 @views function skewsincos!(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     n = size(A, 1)
@@ -202,18 +251,36 @@ end
     Cos ./= 2
     Sin .-= temp2
     Sin .*= -1im/2
-    return Sin, Hermitian(Cos) 
+    return skewhermitian!(Sin), Hermitian(Cos) 
 end
 Base.sincos(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsincos!(copyeigtype(A))
 Base.sinh(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewhermitian!(exp(A))
 Base.cosh(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real} = hermitian!(exp(A))
 
-@views function Base.cosh(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}}) 
+function Base.cosh(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}}) 
     B = hermitian!(exp(A))
-    Cosh = complex.(real(B),-imag(B))
-    return Cosh
+    return Hermitian(complex.(real(B),-imag(B)))
 end
 
+function Base.tan(A::Union{SkewHermitian,SkewHermTridiagonal})
+    S, C = sincos(A)
+    return skewhermitian!(C \ S)
+end
+
+function Base.tanh(A::Union{SkewHermitian,SkewHermTridiagonal})
+    E = exp(2A)
+    return skewhermitian!((E+I)\(E-I))
+end
+
+function Base.cot(A::Union{SkewHermitian,SkewHermTridiagonal})
+    S, C = sincos(A)
+    return skewhermitian!(S \ C)
+end
+
+function Base.coth(A::Union{SkewHermitian,SkewHermTridiagonal})
+    E = exp(2A)
+    return skewhermitian!((E-I) \ (E+I))
+end
 
 # someday this should be in LinearAlgebra: https://github.com/JuliaLang/julia/pull/31836
 function hermitian!(A::AbstractMatrix{<:Number})
