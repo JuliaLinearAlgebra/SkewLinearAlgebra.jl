@@ -15,10 +15,8 @@ export
     JMatrix,
     #functions
     isskewhermitian,
-    isapproxskewhermitian,
     skewhermitian,
     skewhermitian!,
-    to_symtridiagonal,
     pfaffian,
     pfaffian!,
     logabspfaffian,
