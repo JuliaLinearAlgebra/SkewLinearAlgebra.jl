@@ -217,13 +217,13 @@ end
         if T<:Complex || iseven(n)
             @test exp(log(A)) ≈ A
         end
-        if !iszero(det(cos(B))) && !iszero(det(exp(2A)+I))
+        if issuccess(lu(cos(B), check = false)) && issuccess(lu(det(exp(2A)+I), check = false))
             if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B)) 
                 @test tan(B) ≈ tan(A)
                 @test tanh(B) ≈ tanh(A)
             end
         end
-        if !iszero(det(sin(B))) && !iszero(det(exp(2A)-I))
+        if issuccess(lu(sin(B), check = false)) && issuccess(lu(det(exp(2A)-I), check = false))
             if isapproxskewhermitian(cot(B)) && isapproxskewhermitian(coth(B))
                 @test cot(B) ≈ cot(A)
                 @test coth(B) ≈ coth(A)
@@ -253,18 +253,18 @@ end
         if T<:Complex || iseven(n)
             @test exp(log(A)) ≈ A
         end
-        if !iszero(det(cos(B))) && !iszero(det(exp(2A)+I))
+        if issuccess(lu(cos(B), check = false)) && issuccess(lu(det(exp(2A)+I), check = false))
             if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B)) 
                 @test tan(B) ≈ tan(A)
                 @test tanh(B) ≈ tanh(A)
             end
         end
-        if !iszero(det(sin(B))) && !iszero(det(exp(2A)-I))
+        if issuccess(lu(sin(B), check = false)) && issuccess(lu(det(exp(2A)-I), check = false))
             if isapproxskewhermitian(cot(B)) && isapproxskewhermitian(coth(B))
                 @test cot(B) ≈ cot(A)
                 @test coth(B) ≈ coth(A)
             end
-        end 
+        end
     end
 end
 
