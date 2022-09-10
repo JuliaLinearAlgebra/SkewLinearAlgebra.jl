@@ -9,8 +9,8 @@ and corresponds to an overall multiplicative sign factor.
 struct JMatrix{T<:Real, SGN} <: AbstractMatrix{T}
     n::Int    # size of the square matrix
     function JMatrix{T, SGN}(n::Integer) where {T, SGN}
-        n ≥ 0 || throw("size $n must be ≥ 0")
-        (SGN === +1 || SGN === -1) || throw("SGN parameter must be ±1")
+        n ≥ 0 || throw(ArgumentError("size $n must be ≥ 0"))
+        (SGN === +1 || SGN === -1) || throw(ArgumentError("SGN parameter must be ±1"))
         new{T, SGN}(n)
     end
 end

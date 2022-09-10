@@ -49,7 +49,7 @@ Base.exp(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewexp!(copyeigtype(A))
 
 function skewlog!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real}
     n = size(A, 1)
-    isodd(n) && throw("Logarithm of a singular matrix doesn't exist")
+    isodd(n) && throw(DomainError("Logarithm of a singular matrix doesn't exist"))
     if typeof(A) <:SkewHermitian
         vals, Qr, Qim = skeweigen!(A)
     else
@@ -65,11 +65,11 @@ function skewlog!(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:R
     θ = similar(A, n)
 
     @simd for i = 1 : n
-        iszero(vals[i]) && throw("Logarithm of a singular matrix doesn't exist")
+        iszero(vals[i]) && throw(DomainError("Logarithm of a singular matrix doesn't exist"))
         @inbounds r[i], θ[i] = log(abs(vals[i])), sign(imag(vals[i])) * π / 2
     end
     R = Diagonal(r)
-    Θ = Diagonal(θ) 
+    Θ = Diagonal(θ)
 
     mul!(Q1, Qr, R)
     mul!(Q2, Qim, Θ )
@@ -251,13 +251,13 @@ end
     Cos ./= 2
     Sin .-= temp2
     Sin .*= -1im/2
-    return skewhermitian!(Sin), Hermitian(Cos) 
+    return skewhermitian!(Sin), Hermitian(Cos)
 end
 Base.sincos(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewsincos!(copyeigtype(A))
 Base.sinh(A::Union{SkewHermitian,SkewHermTridiagonal}) = skewhermitian!(exp(A))
 Base.cosh(A::Union{SkewHermitian{T},SkewHermTridiagonal{T}}) where {T<:Real} = hermitian!(exp(A))
 
-function Base.cosh(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}}) 
+function Base.cosh(A::Union{SkewHermitian{<:Complex},SkewHermTridiagonal{<:Complex}})
     B = hermitian!(exp(A))
     return Hermitian(complex.(real(B),-imag(B)))
 end

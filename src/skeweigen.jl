@@ -2,25 +2,25 @@
 
 function getgivens(a,b)
     nm = hypot(a, b)
-    return a / nm , b / nm 
+    return a / nm , b / nm
 end
 
 @views function reducetozero(ev::AbstractVector{T}, G::AbstractVector{T}, n::Integer) where T
     n == 0 && return
     bulge = zero(T)
-    if n > 2 
+    if n > 2
         #Kill last row
         α = ev[n-2]
         β = ev[n-1]
         γ = ev[n]
         c, s = getgivens(-β, γ)
-        G[n-1] = c ; G[n] = -s;  
+        G[n-1] = c ; G[n] = -s;
         ev[n-2] *= c
         ev[n-1] = c * β - s * γ
         ev[n] = 0
         bulge  = -s * α
 
-        #Chase the bulge 
+        #Chase the bulge
         for i = n-2:-2:4
             α = ev[i-2]
             β = ev[i-1]
@@ -62,7 +62,7 @@ end
     val[1] = complex(0, k)
     val[2] = complex(0, -k)
 end
- 
+
 function getshift(ev::AbstractVector{T}, lim::Real) where T
     if abs(ev[2]) < lim
         return ev[1]^2
@@ -80,7 +80,7 @@ end
         γ = ev[i+1]
 
         x1 = - α * α - β * β + shift
-        x2 = - α * buldge + β * γ 
+        x2 = - α * buldge + β * γ
         c, s = getgivens(x1, x2)
         if i > 1
             ev[i-1] = c * α + s * buldge
@@ -110,7 +110,7 @@ end
     tol = eps(T) * T(10)
     max_iter = 30 * n
     iter = 0 ;
-    N = n 
+    N = n
 
     while n > 2 && iter < max_iter
         implicitstep_novec(ev, n - 1)
@@ -119,14 +119,14 @@ end
             n -= 2
         end
         iter += 1
-    end    
+    end
     if n == 2
         eigofblock(ev[1], values[1:2])
         return values
     elseif n == 0
         return values
     else
-        throw("Maximum number of iterations reached, the algorithm didn't converge")
+        error("Maximum number of iterations reached, the algorithm didn't converge")
     end
 end
 
@@ -140,7 +140,7 @@ end
         γ = ev[i+1]
 
         x1 = - α * α - β * β + shift
-        x2 = - α * buldge + β * γ 
+        x2 = - α * buldge + β * γ
         c, s = getgivens(x1, x2)
         if i > 1
             ev[i-1] = c * α + s * buldge
@@ -171,13 +171,13 @@ end
     Qodd = diagm(ones(T, div(n+1,2)))
     Qeven = diagm(ones(T, div(n,2)))
     ev = A.ev
-    N = n 
+    N = n
     if isodd(n)
         n -= 1
         Ginit = similar(A, T, n)
         reducetozero(ev, Ginit, n)
     end
-    
+
     tol = eps(T)*T(10)
     max_iter = 30 * n
     iter = 0 ;
@@ -190,13 +190,13 @@ end
             n -= 2
         end
         iter += 1
-    end   
+    end
     if n == 2
         eigofblock(ev[1], values[1:2])
         if isodd(N)
             getoddvectors(Qodd, Ginit, N - 1)
         end
-        
+
         s2 = T(1/sqrt(2))
         zero = T(0)
         @inbounds(for i = 1:2:N-1
@@ -213,7 +213,7 @@ end
                 vectors[N, i+1] = complex(zero, s2 * Qodd[halfN+1, ii])
             end
         end)
-        
+
         if isodd(N)
             @inbounds(for j = 1: 2: N
                 jj = div(j+1,2)
@@ -224,7 +224,7 @@ end
     elseif n == 0
         return Eigen(values, complex.(Qodd))
     else
-        throw("Maximum number of iterations reached, the algorithm didn't converge")
+        error("Maximum number of iterations reached, the algorithm didn't converge")
     end
 end
 
@@ -236,7 +236,7 @@ end
     Qodd = diagm(ones(T, div(n+1,2)))
     Qeven = diagm(ones(T, div(n,2)))
     ev = A.ev
-    N = n 
+    N = n
 
     if isodd(n)
         n -= 1
@@ -261,7 +261,7 @@ end
         if isodd(N)
             getoddvectors(Qodd, Ginit, N - 1)
         end
-        
+
         s2 = T(1/sqrt(2))
         NN = div(N+1, 2)
         @inbounds(for i = 1:2:N-1
@@ -271,9 +271,9 @@ end
                 vectorsreal[j, i] = s2*Qodd[jj, ii]
                 vectorsreal[j+1, i+1] = -s2*Qeven[jj, ii]
                 vectorsim[j, i+1] = vectorsreal[j, i]
-                vectorsim[j+1, i] = vectorsreal[j+1, i+1] 
+                vectorsim[j+1, i] = vectorsreal[j+1, i+1]
             end
-            
+
             if isodd(N)
                 vectorsreal[N, i] = s2 * Qodd[halfN+1, ii]
                 vectorsim[N, i+1] = vectorsreal[N, i]
@@ -289,7 +289,7 @@ end
     elseif n == 0
         return values, vectorsreal, vectorsim
     else
-        throw("Maximum number of iterations reached, the algorithm didn't converge")
+        error("Maximum number of iterations reached, the algorithm didn't converge")
     end
-      
+
 end
