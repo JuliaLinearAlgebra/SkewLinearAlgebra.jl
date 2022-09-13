@@ -18,7 +18,6 @@ export
     isapproxskewhermitian,
     skewhermitian,
     skewhermitian!,
-    to_symtridiagonal,
     pfaffian,
     pfaffian!,
     logabspfaffian,

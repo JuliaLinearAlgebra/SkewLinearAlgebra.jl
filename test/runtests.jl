@@ -4,6 +4,8 @@ using Test
 
 Random.seed!(314159) # use same pseudorandom stream for every test
 
+isapproxskewhermitian(A) = A ≈ -A'
+
 @testset "README.md" begin # test from the README examples
     A = [0 2 -7 4; -2 0 -8 3; 7 8 0 1;-4 -3 -1 0]
     @test isskewhermitian(A)
@@ -231,7 +233,7 @@ end
                 end
             catch
             end
-        end 
+        end
     end
     for T in (Int32 ,Float32,Float64,ComplexF32), n in [2, 10, 11]
         if T<:Integer
