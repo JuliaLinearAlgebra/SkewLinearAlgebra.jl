@@ -220,7 +220,7 @@ end
             @test exp(log(A)) ≈ A
         end
         if issuccess(lu(cos(B), check = false)) && issuccess(lu(det(exp(2A)+I), check = false))
-            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B))
+            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B)) 
                 @test tan(B) ≈ tan(A)
                 @test tanh(B) ≈ tanh(A)
             end
@@ -259,7 +259,7 @@ end
             @test exp(log(A)) ≈ A
         end
         if issuccess(lu(cos(B), check = false)) && issuccess(lu(det(exp(2A)+I), check = false))
-            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B))
+            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B)) 
                 @test tan(B) ≈ tan(A)
                 @test tanh(B) ≈ tanh(A)
             end

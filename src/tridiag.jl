@@ -22,7 +22,7 @@ regular matrix with `convert(Array, _)` (or `Array(_)` for short).
 # Examples
 ```jldoctest
 julia> ev = complex.([7, 8, 9] , [7, 8, 9])
-3-element Vector{Int64}:
+3-element Vector{Complex{Int64}}:
  7 + 7im
  8 + 8im
  9 + 9im
