@@ -58,10 +58,12 @@ exactpfaffian!(A::SkewHermitian) = _exactpfaffian!(A.data)
 exactpfaffian(A::AbstractMatrix) = exactpfaffian!(copyto!(similar(A), A))
 
 const ExactRational = Union{BigInt,Rational{BigInt}}
-pfaffian!(A::SkewHermitian{<:ExactRational}) = _exactpfaffian!(A.data)
-pfaffian(A::SkewHermitian{<:ExactRational}) = pfaffian!(copy(A))
 pfaffian!(A::AbstractMatrix{<:ExactRational}) = exactpfaffian!(A)
 pfaffian(A::AbstractMatrix{<:ExactRational}) = pfaffian!(copy(A))
+
+# prevent method ambiguities:
+pfaffian(A::SkewHermitian{<:ExactRational}) = pfaffian!(copy(A))
+pfaffian!(A::SkewHermitian{<:ExactRational}) = exactpfaffian!(A)
 
 function _pfaffian!(A::SkewHermitian{<:Real})
     n = size(A,1)
