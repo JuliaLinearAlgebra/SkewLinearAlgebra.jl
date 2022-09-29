@@ -2,7 +2,7 @@
 
 function getgivens(a,b)
     nm = hypot(a, b)
-    iszero(nm) && return one(typeof(a)), b
+    iszero(nm) && return 1, 0
     return a / nm , b / nm
 end
 
@@ -72,19 +72,19 @@ function getshift(ev::AbstractVector{T}, lim::Real) where T
 end
 
 @views function implicitstep_novec(ev::AbstractVector{T} , n::Integer ) where T
-    buldge = zero(T)
+    bulge = zero(T)
     lim = T(10^(div(log(10, eps(T)), 2)))
     shift = getshift(ev[n-1:n], lim)
     @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
         γ = ev[i+1]
-
         x1 = - α * α - β * β + shift
-        x2 = - α * buldge + β * γ
-        c, s = getgivens(x1, x2)
+        x2 = - α * bulge + β * γ
+        c, s = ((iszero(x1) && iszero(x2)) ? getgivens(α,bulge) : getgivens(x1, x2))
+          
         if i > 1
-            ev[i-1] = c * α + s * buldge
+            ev[i-1] = c * α + s * bulge
         end
 
         ev[i] = c * β - s * γ
@@ -93,7 +93,7 @@ end
         if i < n-1
             ζ = ev[i+2]
             ev[i+2] *= c
-            buldge = s * ζ
+            bulge = s * ζ
         end
     end)
     return
@@ -131,7 +131,7 @@ end
 end
 
 @views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer) where T
-    buldge = zero(T)
+    bulge = zero(T)
     lim = T(10^(div(log(10, eps(T)), 2)))
     shift = getshift(ev[n-1:n], lim)
     @inbounds(for i=1:n-1
@@ -140,17 +140,17 @@ end
         γ = ev[i+1]
 
         x1 = - α * α - β * β + shift
-        x2 = - α * buldge + β * γ
-        c, s = getgivens(x1, x2)
+        x2 = - α * bulge + β * γ
+        c, s = ((iszero(x1) && iszero(x2)) ? getgivens(α,bulge) : getgivens(x1, x2))
         if i > 1
-            ev[i-1] = c * α + s * buldge
+            ev[i-1] = c * α + s * bulge
         end
         ev[i] = c * β - s * γ
         ev[i+1] = s * β + c * γ
         if i < n-1
             ζ = ev[i+2]
             ev[i+2] *= c
-            buldge = s * ζ
+            bulge = s * ζ
         end
         Q = (isodd(i) ? Qodd : Qeven)
         k = div(i+1, 2)
