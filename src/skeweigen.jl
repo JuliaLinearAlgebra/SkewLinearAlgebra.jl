@@ -2,6 +2,7 @@
 
 function getgivens(a,b)
     nm = hypot(a, b)
+    iszero(nm) && return one(typeof(a)), b
     return a / nm , b / nm
 end
 
@@ -111,10 +112,9 @@ end
     max_iter = 30 * n
     iter = 0 ;
     N = n
-
     while n > 2 && iter < max_iter
         implicitstep_novec(ev, n - 1)
-        while n > 2 && abs(ev[n - 2]) < tol * abs(ev[n - 1])
+        while n > 2 && abs(ev[n - 2]) <= tol * abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
@@ -185,7 +185,7 @@ end
 
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        while n > 2 && abs(ev[n - 2]) < tol*abs(ev[n - 1])
+        while n > 2 && abs(ev[n - 2]) <= tol*abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n])
             n -= 2
         end
@@ -250,7 +250,7 @@ end
     halfN = div(n, 2)
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        while n > 2 && abs(ev[n - 2]) < tol*abs(ev[n - 1])
+        while n > 2 && abs(ev[n - 2]) <= tol*abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n])
             n -= 2
         end
