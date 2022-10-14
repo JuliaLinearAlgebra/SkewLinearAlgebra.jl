@@ -64,25 +64,24 @@ end
     val[2] = complex(0, -k)
 end
 
-function getshift(ev::AbstractVector{T}, lim::Real) where T
-    if abs(ev[2]) < lim
-        return ev[1]^2
+function getshift(ev::AbstractVector{T}) where T
+    if abs(ev[2]) ≈ abs(ev[1])
+        return 0
     end
     return ev[2]^2
 end
 
 @views function implicitstep_novec(ev::AbstractVector{T} , n::Integer ) where T
     bulge = zero(T)
-    lim = T(10^(div(log(10, eps(T)), 2)))
-    shift = getshift(ev[n-1:n], lim)
-    @inbounds(for i=1:n-1
+    shift = getshift(ev[n-1:n])
+    activation = 0
+    @inbounds(for i = 1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
         γ = ev[i+1]
         x1 = - α * α - β * β + shift
         x2 = - α * bulge + β * γ
-        c, s = ((iszero(x1) && iszero(x2)) ? getgivens(α,bulge) : getgivens(x1, x2))
-          
+        c, s = ((iszero(x1) && iszero(x2)) ? getgivens(α, bulge) : getgivens(x1, x2))
         if i > 1
             ev[i-1] = c * α + s * bulge
         end
@@ -94,6 +93,14 @@ end
             ζ = ev[i+2]
             ev[i+2] *= c
             bulge = s * ζ
+        end
+        #Make it compulsory to initiate a bulge before stopping
+        if !iszero(bulge)
+            activation += 1
+        else
+            if activation > 0
+               return
+            end
         end
     end)
     return
@@ -114,6 +121,10 @@ end
     N = n
     while n > 2 && iter < max_iter
         implicitstep_novec(ev, n - 1)
+        while n > 2 && abs(ev[n-1]) <= tol
+                values[n] = 0
+                n -= 1
+        end
         while n > 2 && abs(ev[n - 2]) <= tol * abs(ev[n - 1])
             eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
@@ -122,6 +133,9 @@ end
     end
     if n == 2
         eigofblock(ev[1], values[1:2])
+        return values
+    elseif n == 1
+        values[1] = 0
         return values
     elseif n == 0
         return values
@@ -132,8 +146,8 @@ end
 
 @views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer) where T
     bulge = zero(T)
-    lim = T(10^(div(log(10, eps(T)), 2)))
-    shift = getshift(ev[n-1:n], lim)
+    shift = getshift(ev[n-1:n])
+    activation = 0
     @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
@@ -160,6 +174,14 @@ end
             Q[j, k] = c*σ + s*ω
             Q[j, k+1] = -s*σ + c*ω
         end
+
+        if !iszero(bulge)
+            activation += 1
+        else
+            if activation > 0
+               return
+            end
+        end
     end)
     return
 end
@@ -181,37 +203,82 @@ end
     tol = eps(T)*T(10)
     max_iter = 30 * n
     iter = 0 ;
-    halfN = div(n,2)
+    halfN = div(n, 2)
 
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        while n > 2 && abs(ev[n - 2]) <= tol*abs(ev[n - 1])
-            eigofblock(ev[n - 1], values[n-1:n])
+        while n > 2 && abs(ev[n-1]) <= tol
+            values[n] = 0
+            n -= 1
+        end
+        while n > 2 && abs(ev[n - 2]) <= tol * abs(ev[n - 1])
+            eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
         iter += 1
     end
-    if n == 2
-        eigofblock(ev[1], values[1:2])
+    if n > 0
+        if n == 2 
+            eigofblock(ev[1], values[1:2])
+        else
+            values[1] = 0
+        end
         if isodd(N)
             getoddvectors(Qodd, Ginit, N - 1)
         end
 
         s2 = T(1/sqrt(2))
         zero = T(0)
-        @inbounds(for i = 1:2:N-1
+        i = 1
+        countzeros = 0
+        @inbounds(while i <= N 
             ii = div(i+1,2)
-            for j = 1:2:N-1
-                jj = div(j+1, 2)
-                vectors[j, i] = complex(s2 * Qodd[jj, ii], zero)
-                vectors[j+1, i] = complex(zero, - s2 * Qeven[jj, ii])
-                vectors[j, i+1] = complex(zero,s2 * Qodd[jj, ii])
-                vectors[j+1, i+1] = complex(- s2 * Qeven[jj,ii], zero)
+            if iszero(values[i])
+                if iseven(countzeros)
+                    for j = 1:2:N-1
+                        jj = div(j+1, 2)
+                        vectors[j, i] = complex(Qodd[jj, ii], zero)
+                    end
+                    if isodd(N)
+                        vectors[N, i] = complex(Qodd[halfN+1, ii],zero)
+                    end
+                else
+                    for j = 1:2:N-1
+                        jj = div(j+1, 2)
+                        vectors[j+1, i] = complex(Qeven[jj, ii], zero)
+                    end
+                end
+                countzeros +=1
+                i += 1
+            else
+                if isodd(countzeros)
+                    for j = 1:2:N-1
+                        jj = div(j+1, 2)
+                        vectors[j, i] = complex(zero, -s2 * Qodd[jj, ii+1])
+                        vectors[j+1, i] = complex(s2 * Qeven[jj, ii], zero)
+                        vectors[j, i+1] = complex(-s2 * Qodd[jj, ii+1], zero)
+                        vectors[j+1, i+1] = complex(zero,  s2 * Qeven[jj,ii])
+                    end
+                    if isodd(N)
+                        vectors[N, i] = complex(zero, -s2 * Qodd[halfN+1, ii+1])
+                        vectors[N, i+1] = complex(-s2 * Qodd[halfN+1, ii+1], zero)
+                    end
+                else
+                    for j = 1:2:N-1
+                        jj = div(j+1, 2)
+                        vectors[j, i] = complex(s2 * Qodd[jj, ii], zero)
+                        vectors[j+1, i] = complex(zero, - s2 * Qeven[jj, ii])
+                        vectors[j, i+1] = complex(zero,s2 * Qodd[jj, ii])
+                        vectors[j+1, i+1] = complex(- s2 * Qeven[jj,ii], zero)
+                    end
+                    if isodd(N)
+                        vectors[N, i] = complex(s2 * Qodd[halfN+1, ii],zero)
+                        vectors[N, i+1] = complex(zero, s2 * Qodd[halfN+1, ii])
+                    end
+                end
+                i+=2
             end
-            if isodd(N)
-                vectors[N, i] = complex(s2 * Qodd[halfN+1, ii],zero)
-                vectors[N, i+1] = complex(zero, s2 * Qodd[halfN+1, ii])
-            end
+                
         end)
 
         if isodd(N)
@@ -250,35 +317,82 @@ end
     halfN = div(n, 2)
     while n > 2 && iter < max_iter
         implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
-        while n > 2 && abs(ev[n - 2]) <= tol*abs(ev[n - 1])
-            eigofblock(ev[n - 1], values[n-1:n])
+        while n > 2 && abs(ev[n-1]) <= tol
+            values[n] = 0
+            n -= 1
+        end
+        while n > 2 && abs(ev[n - 2]) <= tol * abs(ev[n - 1])
+            eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
         iter += 1
     end
-    if n == 2
-        eigofblock(ev[1], values[1:2])
+    if n > 0
+        if n == 2 
+            eigofblock(ev[1], values[1:2])
+        else
+            values[1] = 0
+        end
+        
         if isodd(N)
             getoddvectors(Qodd, Ginit, N - 1)
         end
 
         s2 = T(1/sqrt(2))
         NN = div(N+1, 2)
-        @inbounds(for i = 1:2:N-1
-            ii = div(i+1,2)
-            for j = 1:2:N-1
-                jj = div(j+1,2)
-                vectorsreal[j, i] = s2*Qodd[jj, ii]
-                vectorsreal[j+1, i+1] = -s2*Qeven[jj, ii]
-                vectorsim[j, i+1] = vectorsreal[j, i]
-                vectorsim[j+1, i] = vectorsreal[j+1, i+1]
-            end
 
-            if isodd(N)
-                vectorsreal[N, i] = s2 * Qodd[halfN+1, ii]
-                vectorsim[N, i+1] = vectorsreal[N, i]
+        i = 1
+        countzeros = 0
+        @inbounds(while i <= N 
+            ii = div(i+1,2)
+            if iszero(values[i])
+                if iseven(countzeros)
+                    for j = 1:2:N-1
+                        jj = div(j+1, 2)
+                        vectorsreal[j, i] = Qodd[jj, ii]
+                    end
+                    if isodd(N)
+                        vectorsreal[N, i] = Qodd[halfN+1, ii]
+                    end
+                else
+                    for j = 1:2:N-1
+                        jj = div(j+1, 2)
+                        vectorsreal[j+1, i] = Qeven[jj, ii]
+                    end
+                end
+                countzeros +=1
+                i += 1
+            else
+                if isodd(countzeros)
+                    for j = 1:2:N-1
+                        jj = div(j+1, 2)
+                        vectorsim[j, i] =  -s2 * Qodd[jj, ii+1]
+                        vectorsreal[j+1, i] = s2 * Qeven[jj, ii]
+                        vectorsreal[j, i+1] = -s2 * Qodd[jj, ii+1]
+                        vectorsim[j+1, i+1] =  s2 * Qeven[jj,ii]
+                    end
+                    if isodd(N)
+                        vectorsreal[N, i] =  -s2 * Qodd[halfN+1, ii+1]
+                        vectorsim[N, i+1] = -s2 * Qodd[halfN+1, ii+1]
+                    end
+                else
+                    for j = 1:2:N-1
+                        jj = div(j+1, 2)
+                        vectorsreal[j, i] = s2 * Qodd[jj, ii]
+                        vectorsim[j+1, i] =  - s2 * Qeven[jj, ii]
+                        vectorsim[j, i+1] = s2 * Qodd[jj, ii]
+                        vectorsreal[j+1, i+1] = - s2 * Qeven[jj,ii]
+                    end
+                    if isodd(N)
+                        vectorsreal[N, i] = s2 * Qodd[halfN+1, ii]
+                        vectorsim[N, i+1] =  s2 * Qodd[halfN+1, ii]
+                    end
+                end
+                i+=2
             end
+                
         end)
+
         if isodd(N)
             @inbounds(for j = 1:2:N
                 jj = div(j+1,2)
