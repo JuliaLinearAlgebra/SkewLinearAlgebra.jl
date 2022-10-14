@@ -73,26 +73,15 @@ end
 
 @views function implicitstep_novec(ev::AbstractVector{T} , n::Integer ) where T
     bulge = zero(T)
-<<<<<<< HEAD
     shift = getshift(ev[n-1:n])
     activation = 0
     @inbounds(for i = 1:n-1
-=======
-    lim = T(10^(div(log(10, eps(T)), 2)))
-    shift = getshift(ev[n-1:n], lim)
-    @inbounds(for i=1:n-1
->>>>>>> f9dc7fb5214c05adabee9e64b9b8550ca3f92e48
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
         γ = ev[i+1]
         x1 = - α * α - β * β + shift
         x2 = - α * bulge + β * γ
-<<<<<<< HEAD
         c, s = ((iszero(x1) && iszero(x2)) ? getgivens(α, bulge) : getgivens(x1, x2))
-=======
-        c, s = ((iszero(x1) && iszero(x2)) ? getgivens(α,bulge) : getgivens(x1, x2))
-          
->>>>>>> f9dc7fb5214c05adabee9e64b9b8550ca3f92e48
         if i > 1
             ev[i-1] = c * α + s * bulge
         end
@@ -104,7 +93,6 @@ end
             ζ = ev[i+2]
             ev[i+2] *= c
             bulge = s * ζ
-<<<<<<< HEAD
         end
         #Make it compulsory to initiate a bulge before stopping
         if !iszero(bulge)
@@ -113,8 +101,6 @@ end
             if activation > 0
                return
             end
-=======
->>>>>>> f9dc7fb5214c05adabee9e64b9b8550ca3f92e48
         end
     end)
     return
@@ -160,13 +146,8 @@ end
 
 @views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer) where T
     bulge = zero(T)
-<<<<<<< HEAD
     shift = getshift(ev[n-1:n])
     activation = 0
-=======
-    lim = T(10^(div(log(10, eps(T)), 2)))
-    shift = getshift(ev[n-1:n], lim)
->>>>>>> f9dc7fb5214c05adabee9e64b9b8550ca3f92e48
     @inbounds(for i=1:n-1
         α = (i > 1 ? ev[i-1] : zero(ev[i]))
         β = ev[i]
