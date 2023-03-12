@@ -120,12 +120,10 @@ end
             mul!(W[i+1:n,i], W[i+1:n,1:i-1], W[1:i-1,i], -1, 1)
         end
         W[i+1:n,i] .*= τ_s
-        α = -τ_s  * dot(W[i+1:n,i],A[i+1:n,i]) / 2
         
         if T<:Complex
-            W[i+1:n,i].-= α.*A[i+1:n,i]
-        else
-            W[i+1:n,i].+= α.*A[i+1:n,i]
+            α = τ_s  * dot(W[i+1:n,i],A[i+1:n,i]) / 2
+            W[i+1:n,i] .+= α.*A[i+1:n,i]
         end
 
         τ[i] = τ_s

@@ -6,6 +6,8 @@ function getgivens(a,b)
     return a / nm , b / nm
 end
 
+#Eliminate the zero eigenvalue if odd size. 
+#Proposed in Ward, R.C., Gray L.,J., Eigensystem computation for skew-symmetric matrices and a class of symmetric matrices, 1975.
 @views function reducetozero(ev::AbstractVector{T}, G::AbstractVector{T}, n::Integer) where T
     n == 0 && return
     bulge = zero(T)
