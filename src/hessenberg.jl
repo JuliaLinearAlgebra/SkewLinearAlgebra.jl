@@ -38,7 +38,7 @@ is the first element of the output vector of H*x.
     else 
         τ = T(0)
         x .= 0
-        β = real(T)(0)
+        β = real(T)(abs(α))
     end
     return τ, β
 end
@@ -111,7 +111,6 @@ end
         #Generate elementary reflector H(i) to annihilate A(i+2:n,i)
         τ_s,α = householder!(A[i+1:n,i],n-i)
         η[i]   = α
-
         mul!(W[i+1:n,i], A[i+1:n,i+1:n], A[i+1:n,i], 1, 0)  
         if i>1
             mul!(W[1:i-1,i], adjoint(W[i+1:n,1:i-1]), A[i+1:n,i])
