@@ -74,7 +74,7 @@ function _pfaffian!(A::SkewHermitian{<:Real})
     for i=1:2:n-1
         pf *= -T.ev[i]
     end
-    return pf
+    return pf * sign(det(H.Q))
 end
 
 function _pfaffian!(A::SkewHermTridiagonal{<:Real})
@@ -120,7 +120,7 @@ function _logabspfaffian!(A::SkewHermitian{<:Real})
         logpf += log(abs(T.ev[i]))
         sgn *= sign(-T.ev[i])
     end
-    return logpf, sgn
+    return logpf, sgn*sign(det(H.Q))
 end
 function _logabspfaffian!(A::SkewHermTridiagonal{<:Real})
     n = size(A, 1)
