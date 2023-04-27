@@ -29,7 +29,7 @@ is the first element of the output vector of H*x.
     end
     xnorm = norm(x[2:end]) 
     α = x[1]
-    if !iszero(xnorm) || (n == 1 && !iszero(α))
+    if !iszero(xnorm) || (!iszero(α))
         β = (real(α) > 0 ? -1 : +1) * hypot(α,xnorm)
         τ = 1 - α / β
         α = 1 / (α - β)
@@ -38,7 +38,7 @@ is the first element of the output vector of H*x.
     else 
         τ = T(0)
         x .= 0
-        β = real(T)(abs(α))
+        β = real(T)(0)
     end
     return τ, β
 end
