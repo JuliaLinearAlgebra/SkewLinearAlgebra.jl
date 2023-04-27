@@ -220,7 +220,7 @@ end
             @test exp(log(A)) ≈ A
         end
         if issuccess(lu(cos(B), check = false)) && issuccess(lu(det(exp(2A)+I), check = false))
-            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B)) 
+            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B))
                 @test tan(B) ≈ tan(A)
                 @test tanh(B) ≈ tanh(A)
             end
@@ -259,7 +259,7 @@ end
             @test exp(log(A)) ≈ A
         end
         if issuccess(lu(cos(B), check = false)) && issuccess(lu(det(exp(2A)+I), check = false))
-            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B)) 
+            if isapproxskewhermitian(tan(B)) && isapproxskewhermitian(tanh(B))
                 @test tan(B) ≈ tan(A)
                 @test tanh(B) ≈ tanh(A)
             end
@@ -404,6 +404,9 @@ end
         A = [0 a b c; -a 0 d e; -b -d 0 f; -c -e -f 0]
         @test SkewLinearAlgebra.exactpfaffian(A) == c*d - b*e + a*f ≈ pfaffian(A)
     end
+
+    # issue #121
+    @test pfaffian([0 1 0 0; -1 0 0 0; 0 0 0 1; 0 0 -1 0]) == 1
 end
 
 @testset "cholesky.jl" begin
@@ -451,7 +454,7 @@ end
 end
 
 @testset "issue#116" begin
-    
+
         for ev in ([0,0,0], [1,2,3,2,1], [0,1,0], [1,0,0], [1,0,1], [1,1,0], [0,1,1], [0,0,1], [1,1,1],[1,1,0,1,1],[0,0,0,0,1,1,1],[0,1,0,1,0,1,1,1,0,0,0,1])
             A = SkewHermTridiagonal(float.(ev))
             a = sort(eigvals(A), by = imag)
@@ -469,6 +472,5 @@ end
             E = eigen(A)
             @test E.vectors*Diagonal(E.values)*E.vectors'≈A
         end
-        
-end
 
+end
