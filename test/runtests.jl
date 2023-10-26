@@ -47,7 +47,7 @@ end
         @test similar(A) == SkewHermitian(zeros(T, n, n))
         @test similar(A,ComplexF64) == SkewHermitian(zeros(ComplexF64, n, n))
         @test A == copy(A)::SkewHermitian
-        @test A === SkewHermitian(A)
+        @test A === SkewHermitian(A) # issue #126
         @test copyto!(copy(4 * A), A) == A
         @test size(A) == size(A.data)
         @test size(A, 1) == size(A.data, 1)
@@ -142,6 +142,11 @@ end
 
     # issue #98
     @test skewhermitian([1 2; 3 4]) == [0.0 -0.5; 0.5 0.0]
+
+    # issue #126
+    let D = Diagonal([1.0+0im]), S = SkewHermitian(fill(0+1.234im, 1,1))
+        @test D * S == S * D == D \ S == S / D
+    end
 end
 
 @testset "hessenberg.jl" begin
