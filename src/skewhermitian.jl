@@ -24,6 +24,7 @@ function SkewHermitian(A::AbstractMatrix)
     isskewhermitian(A) || throw(ArgumentError("matrix `A` must be skew-Hermitian (equal `-A')"))
     return SkewHermitian{eltype(A),typeof(A)}(A)
 end
+SkewHermitian(A::SkewHermitian) = A
 
 """
     skewhermitian(A)
@@ -47,6 +48,9 @@ end
 
 Base.similar(A::SkewHermitian, ::Type{T}) where {T} = SkewHermitian(similar(parent(A), T) .= 0)
 Base.similar(A::SkewHermitian) = SkewHermitian(similar(parent(A)) .= 0)
+
+# see https://github.com/JuliaLang/julia/pull/24163:
+Base.similar(A::SkewHermitian, ::Type{T}, dims::Dims{N}) where {T,N} = similar(parent(A), T, dims)
 
 # Conversion
 Base.Matrix(A::SkewHermitian) = Matrix(A.data)
@@ -220,3 +224,19 @@ LA.kron(A::StridedMatrix,B::SkewHermitian) = kron(A,B.data)
 
 end
 LA.schur(A::SkewHermitian{<:Real})= LA.schur!(copyeigtype(A))
+
+# special Diagonal rules, similar to those for HermOrSym in LinearAlgebra's diagonal.jl,
+# since we can't assume diagonal * skewhermitian is skewhermitian (unless it is real diagonal)
+Base.:*(A::SkewHermitian, D::Diagonal) =
+    mul!(similar(A, Base.promote_op(*, eltype(A), eltype(D.diag)), size(A)), A, D)
+Base.:*(D::Diagonal, A::SkewHermitian) =
+    mul!(similar(A, Base.promote_op(*, eltype(A), eltype(D.diag)), size(A)), D, A)
+if isdefined(LinearAlgebra, :_rdiv!) # JuliaLang/julia#42343 (julia ≈ 1.9)
+    Base.:/(A::SkewHermitian, D::Diagonal) =
+        LinearAlgebra._rdiv!(similar(A, Base.promote_op(/, eltype(A), eltype(D.diag)), size(A)), A, D)
+else
+    Base.:/(A::SkewHermitian, D::Diagonal) =
+        rdiv!(copyto!(similar(A, Base.promote_op(/, eltype(A), eltype(D.diag)), size(A)), A), D)
+end
+Base.:\(D::Diagonal, B::SkewHermitian) =
+    ldiv!(similar(B, Base.promote_op(\, eltype(D.diag), eltype(B)), size(B)), D, B)
