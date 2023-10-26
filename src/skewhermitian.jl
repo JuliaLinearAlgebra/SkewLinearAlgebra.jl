@@ -24,6 +24,7 @@ function SkewHermitian(A::AbstractMatrix)
     isskewhermitian(A) || throw(ArgumentError("matrix `A` must be skew-Hermitian (equal `-A')"))
     return SkewHermitian{eltype(A),typeof(A)}(A)
 end
+SkewHermitian(A::SkewHermitian) = A
 
 """
     skewhermitian(A)

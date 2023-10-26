@@ -47,6 +47,7 @@ end
         @test similar(A) == SkewHermitian(zeros(T, n, n))
         @test similar(A,ComplexF64) == SkewHermitian(zeros(ComplexF64, n, n))
         @test A == copy(A)::SkewHermitian
+        @test A === SkewHermitian(A)
         @test copyto!(copy(4 * A), A) == A
         @test size(A) == size(A.data)
         @test size(A, 1) == size(A.data, 1)
