@@ -4,7 +4,7 @@ The `SkewLinearAlgebra` package provides specialized matrix types, optimized met
 
 ## Introduction
 
-A skew-Hermitian matrix ``A`` is a square matrix that equals its conjugate-transpose: ``A=-\overline{A^{T}}=-A^{*}``, equivalent to `A == -A'` in Julia.  (In the real skew-symmetric case, this is simply ``A=-A^T``.)   Such matrices have special computational properties: orthogonal eigenvectors and purely imaginary eigenvalues, "skew-Cholesky" factorizations, and a relative of the determinant called the [Pfaffian](https://en.wikipedia.org/wiki/Pfaffian).
+A skew-Hermitian matrix ``A`` is a square matrix that equals the negative of its conjugate-transpose: ``A=-\overline{A^{T}}=-A^{*}``, equivalent to `A == -A'` in Julia.  (In the real skew-symmetric case, this is simply ``A=-A^T``.)   Such matrices have special computational properties: orthogonal eigenvectors and purely imaginary eigenvalues, "skew-Cholesky" factorizations, and a relative of the determinant called the [Pfaffian](https://en.wikipedia.org/wiki/Pfaffian).
 
 Although any skew-Hermitian matrix ``A`` can be transformed into a Hermitian matrix ``H=iA``, this transformation converts real matrices ``A`` into complex-Hermitian matrices ``H``, which entails at least a factor of two loss in performance and memory usage compared to the real case.   (And certain operations, like the Pfaffian, are *only* defined for the skew-symmetric case.)  `SkewLinearAlgebra` gives you access to the greater performance and functionality that are possible for purely real skew-symmetric matrices.
 
