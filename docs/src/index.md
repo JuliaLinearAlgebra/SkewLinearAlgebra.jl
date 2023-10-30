@@ -17,7 +17,7 @@ The `SkewLinearAlgebra` documentation is divided into the following sections:
 * [Skew-Hermitian matrices](@ref): the `SkewHermitian` type, constructors, and basic operations
 * [Skew-Hermitian tridiagonal matrices](@ref): the `SkewHermTridiagonal` type, constructors, and basic operations
 * [Skew-Hermitian eigenproblems](@ref): optimized eigenvalues/eigenvectors (& Schur/SVD), and Hessenberg factorization
-* [Trigonometric functions](@ref): optimize matrix exponentials and related functions (`exp`, `sin`, `cos`, etcetera)
+* [Trigonometric functions](@ref): optimized matrix exponentials and related functions (`exp`, `sin`, `cos`, etcetera)
 * [Pfaffian calculations](@ref): computation of the Pfaffian and log-Pfaffian
 * [Skew-Cholesky factorization](@ref): a skew-Hermitian analogue of Cholesky factorization
 
