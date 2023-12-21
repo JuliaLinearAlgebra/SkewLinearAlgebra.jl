@@ -67,23 +67,21 @@ end
 end
 
 function getshift(ev::AbstractVector{T}) where T
-    if abs(ev[2]) ≈ abs(ev[1])
-        return 0
-    end
     return ev[2]^2
 end
 
-@views function implicitstep_novec(ev::AbstractVector{T} , n::Integer ) where T
+@views function implicitstep_novec(ev::AbstractVector{T} , n::Integer, start::Integer) where T
     bulge = zero(T)
     shift = getshift(ev[n-1:n])
-    activation = 0
-    @inbounds(for i = 1:n-1
-        α = (i > 1 ? ev[i-1] : zero(ev[i]))
+    tol = T(1) * eps(T)
+    @inbounds(for i = start:n-1
+        α = (i > start ? ev[i-1] : zero(ev[i]))
         β = ev[i]
         γ = ev[i+1]
         x1 = - α * α - β * β + shift
         x2 = - α * bulge + β * γ
-        c, s = ((iszero(x1) && iszero(x2)) ? getgivens(α, bulge) : getgivens(x1, x2))
+        c, s = (i > start ? getgivens(α, bulge) : getgivens(x1, x2))
+
         if i > 1
             ev[i-1] = c * α + s * bulge
         end
@@ -95,17 +93,13 @@ end
             ζ = ev[i+2]
             ev[i+2] *= c
             bulge = s * ζ
-        end
-        #Make it compulsory to initiate a bulge before stopping
-        if !iszero(bulge)
-            activation += 1
-        else
-            if activation > 0
-               return
+            if abs(bulge) < tol && abs(ev[i]) < tol
+                start = i + 1
+                return start
             end
         end
     end)
-    return
+    return start
 end
 
 @views function skewtrieigvals!(A::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
@@ -120,9 +114,10 @@ end
     tol = eps(T) * T(10)
     max_iter = 30 * n
     iter = 0 ;
-    N = n
+    mem = T(1); count_static = 0    #mem and count_static allow to detect the failure of Wilkinson shifts.
+    start = 1                       #start remembers if a zero eigenvalue appeared in the middle of ev.
     while n > 2 && iter < max_iter
-        implicitstep_novec(ev, n - 1)
+        start = implicitstep_novec(ev, n - 1, start)
         while n > 2 && abs(ev[n-1]) <= tol
                 values[n] = 0
                 n -= 1
@@ -131,6 +126,20 @@ end
             eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
+        if start > n-2
+            start = 1
+        end
+        if abs(mem - ev[n-1]) < T(1e-4) * abs(ev[n-1])
+            count_static += 1
+            if count_static > 4
+                #Wilkinson shifts have failed, change strategy using LAPACK tridiagonal symmetric solver.
+                values[1:n] .= complex.(0, skewtrieigvals_backup!(SkewHermTridiagonal(ev[1:n-1])))
+                return values
+            end
+        else
+            count_static = 0
+        end
+        mem = ev[n-1]
         iter += 1
     end
     if n == 2
@@ -146,18 +155,18 @@ end
     end
 end
 
-@views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer) where T
+@views function implicitstep_vec!(ev::AbstractVector{T}, Qeven::AbstractMatrix{T}, Qodd::AbstractMatrix{T}, n::Integer, N::Integer, start::Integer) where T
     bulge = zero(T)
     shift = getshift(ev[n-1:n])
-    activation = 0
-    @inbounds(for i=1:n-1
-        α = (i > 1 ? ev[i-1] : zero(ev[i]))
+    tol = 10 * eps(T)
+    @inbounds(for i = start:n-1
+        α = (i > start ? ev[i-1] : zero(ev[i]))
         β = ev[i]
         γ = ev[i+1]
 
         x1 = - α * α - β * β + shift
         x2 = - α * bulge + β * γ
-        c, s = ((iszero(x1) && iszero(x2)) ? getgivens(α,bulge) : getgivens(x1, x2))
+        c, s = (i > start ? getgivens(α,bulge) : getgivens(x1, x2))
         if i > 1
             ev[i-1] = c * α + s * bulge
         end
@@ -167,6 +176,10 @@ end
             ζ = ev[i+2]
             ev[i+2] *= c
             bulge = s * ζ
+            if abs(bulge) < tol && abs(ev[i]) < tol
+                start = i + 1
+                return start
+            end
         end
         Q = (isodd(i) ? Qodd : Qeven)
         k = div(i+1, 2)
@@ -176,19 +189,12 @@ end
             Q[j, k] = c*σ + s*ω
             Q[j, k+1] = -s*σ + c*ω
         end
-
-        if !iszero(bulge)
-            activation += 1
-        else
-            if activation > 0
-               return
-            end
-        end
     end)
-    return
+    return start
 end
 
 @views function skewtrieigen_merged!(A::SkewHermTridiagonal{T}) where {T<:Real}
+    Backup = copy(A)
     n = size(A, 1)
     values = complex(zeros(T, n))
     vectors = similar(A, Complex{T}, n, n)
@@ -202,13 +208,14 @@ end
         reducetozero(ev, Ginit, n)
     end
 
-    tol = eps(T)*T(10)
+    tol = eps(T) * T(10)
     max_iter = 30 * n
     iter = 0 ;
     halfN = div(n, 2)
-
+    mem = T(1); count_static = 0    #mem and count_static allow to detect the failure of Wilkinson shifts.
+    start = 1                       #start remembers if a zero eigenvalue appeared in the middle of ev.
     while n > 2 && iter < max_iter
-        implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
+        start = implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN, start)
         while n > 2 && abs(ev[n-1]) <= tol
             values[n] = 0
             n -= 1
@@ -217,6 +224,20 @@ end
             eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
+        if start > n-2
+            start = 1
+        end
+        if abs(mem - ev[n-1]) < T(1e-4) * abs(ev[n-1])
+            count_static += 1
+            if count_static > 4
+                #Wilkinson shifts have failed, change strategy using LAPACK tridiagonal symmetric solver.
+                values, Q = skewtrieigen_backup!(Backup)
+                return Eigen(values, Q)
+            end
+        else
+            count_static = 0
+        end
+        mem = ev[n-1]
         iter += 1
     end
     if n > 0
@@ -298,6 +319,7 @@ end
 end
 
 @views function skewtrieigen_divided!(A::SkewHermTridiagonal{T}) where {T<:Real}
+    Backup = copy(A)
     n = size(A, 1)
     values = complex(zeros(T, n))
     vectorsreal = similar(A, n, n)
@@ -317,8 +339,10 @@ end
     max_iter = 30 * n
     iter = 0 ;
     halfN = div(n, 2)
+    mem = T(1); count_static = 0    #mem and count_static allow to detect the failure of Wilkinson shifts.
+    start = 1                       #start remembers if a zero eigenvalue appeared in the middle of ev.
     while n > 2 && iter < max_iter
-        implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN)
+        start = implicitstep_vec!(ev, Qeven, Qodd, n - 1, halfN, start)
         while n > 2 && abs(ev[n-1]) <= tol
             values[n] = 0
             n -= 1
@@ -327,6 +351,27 @@ end
             eigofblock(ev[n - 1], values[n-1:n] )
             n -= 2
         end
+        if n > 2 && abs(ev[n-1]-mem) < tol
+            eigofblock(ev[n - 1], values[n-1:n] )
+            n -= 2
+        end
+        if start > n-2
+            start = 1
+        end
+        if abs(mem - ev[n-1]) < T(1e-4) * abs(ev[n-1])
+            count_static += 1
+            if count_static > 4
+                #Wilkinson shifts have failed, change strategy using LAPACK tridiagonal symmetric solver.
+                Q  = complex.(vectorsreal, vectorsim)
+                values, Q = skewtrieigen_backup!(Backup)
+                vectorsreal .= real.(Q) 
+                vectorsim   .= imag.(Q)
+                return values, vectorsreal, vectorsim
+            end
+        else
+            count_static = 0
+        end
+        mem = ev[n-1]
         iter += 1
     end
     if n > 0
@@ -408,4 +453,37 @@ end
         error("Maximum number of iterations reached, the algorithm didn't converge")
     end
 
+end
+
+#The Wilkinson shifts have some pathological cases.
+#In these cases, the skew-symmetric eigenvalue problem is solved as detailed in
+#C. Penke, A. Marek, C. Vorwerk, C. Draxl, P. Benner, High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving the Bethe-Salpeter Eigenvalue Problem, Parallel Computing, Volume 96, 2020.
+
+@views function skewtrieigvals_backup!(S::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
+    n = size(S,1)
+    H = SymTridiagonal(zeros(eltype(S.ev), n), copy(S.ev))
+    vals = eigvals!(H)
+    return vals .= .-vals
+end
+
+@views function skewtrieigen_backup!(S::SkewHermTridiagonal{T,V,Vim}) where {T<:Real,V<:AbstractVector{T},Vim<:Nothing}
+
+    n = size(S, 1)
+    H = SymTridiagonal(zeros(T, n), S.ev)
+    trisol = eigen!(H)
+    vals  = complex.(0, -trisol.values)
+    Qdiag = complex(zeros(T,n,n))
+    c = 1
+    @inbounds for j=1:n
+        c = 1
+        @simd for i=1:2:n-1
+            Qdiag[i,j]  = trisol.vectors[i,j] * c
+            Qdiag[i+1,j] = complex(0, trisol.vectors[i+1,j] * c)
+            c *= (-1)
+        end
+    end
+    if n % 2 == 1
+        Qdiag[n,:] = trisol.vectors[n,:] * c
+    end
+    return vals, Qdiag
 end
