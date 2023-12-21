@@ -1,4 +1,3 @@
-import Pkg; Pkg.add("SparseArrays")
 using LinearAlgebra, Random, SparseArrays
 using SkewLinearAlgebra
 using Test
