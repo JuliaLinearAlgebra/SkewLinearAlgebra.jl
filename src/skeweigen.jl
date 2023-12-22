@@ -129,7 +129,7 @@ end
         if start > n-2
             start = 1
         end
-        if abs(mem - ev[n-1]) < T(1e-4) * abs(ev[n-1])
+        if n>1 && abs(mem - ev[n-1]) < T(0.0001) * abs(ev[n-1])
             count_static += 1
             if count_static > 4
                 #Wilkinson shifts have failed, change strategy using LAPACK tridiagonal symmetric solver.
@@ -139,7 +139,7 @@ end
         else
             count_static = 0
         end
-        mem = ev[n-1]
+        mem = (n>1 ? ev[n-1] : T(0))
         iter += 1
     end
     if n == 2
@@ -178,7 +178,6 @@ end
             bulge = s * ζ
             if abs(bulge) < tol && abs(ev[i]) < tol
                 start = i + 1
-                return start
             end
         end
         Q = (isodd(i) ? Qodd : Qeven)
@@ -227,7 +226,8 @@ end
         if start > n-2
             start = 1
         end
-        if abs(mem - ev[n-1]) < T(1e-4) * abs(ev[n-1])
+        
+        if n>1 && abs(mem - ev[n-1]) < T(0.0001) * abs(ev[n-1])
             count_static += 1
             if count_static > 4
                 #Wilkinson shifts have failed, change strategy using LAPACK tridiagonal symmetric solver.
@@ -237,9 +237,10 @@ end
         else
             count_static = 0
         end
-        mem = ev[n-1]
+        mem = (n>1 ? ev[n-1] : T(0))
         iter += 1
     end
+    
     if n > 0
         if n == 2 
             eigofblock(ev[1], values[1:2])
@@ -358,7 +359,7 @@ end
         if start > n-2
             start = 1
         end
-        if abs(mem - ev[n-1]) < T(1e-4) * abs(ev[n-1])
+        if n>1 && abs(mem - ev[n-1]) < T(0.0001) * abs(ev[n-1])
             count_static += 1
             if count_static > 4
                 #Wilkinson shifts have failed, change strategy using LAPACK tridiagonal symmetric solver.
@@ -371,7 +372,7 @@ end
         else
             count_static = 0
         end
-        mem = ev[n-1]
+        mem = (n>1 ? ev[n-1] : T(0))
         iter += 1
     end
     if n > 0
