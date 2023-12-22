@@ -480,6 +480,7 @@ end
         end
 
 end
+
 @testset "issue#118 and issue#130" begin
     #issue #130
     sp = sparse([2, 7, 1, 3, 6, 8, 2, 4, 7, 9, 3, 5, 8, 10, 4, 9, 2, 7, 1, 3, 6, 8, 2, 4, 7, 9, 3, 5, 8, 10, 4, 9], [1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10], [-0.8414709848, 1.5403023059, 0.8414709848, -0.8414709848, 0.4596976941, 1.5403023059, 0.8414709848, -0.8414709848, 0.4596976941, 1.5403023059, 0.8414709848, -0.8414709848, 0.4596976941, 1.5403023059, 0.8414709848, 0.4596976941, -0.4596976941, 0.8414709848, -1.5403023059, -0.4596976941, -0.8414709848, 0.8414709848, -1.5403023059, -0.4596976941, -0.8414709848, 0.8414709848, -1.5403023059, -0.4596976941, -0.8414709848, 0.8414709848, -1.5403023059, -0.8414709848], 10, 10)
@@ -492,10 +493,11 @@ end
     @test E.vectors*Diagonal(E.values)*E.vectors' ≈ A
     #issue #118
     for v ∈ ([1.0, 0.001, 1.0, 0.0001, 1.0], [2.0, 1e-11, 2.0, 1e-11, 2.0])
-    A = SkewHermTridiagonal(v)
-    E = eigen(A)
-    @test E.vectors*Diagonal(E.values)*E.vectors' ≈ A
-    B = SkewHermitian(Matrix(A))
-    E = eigen(B)
-    @test E.vectors*Diagonal(E.values)*E.vectors' ≈ B
+        A = SkewHermTridiagonal(v)
+        E = eigen(A)
+        @test E.vectors*Diagonal(E.values)*E.vectors' ≈ A
+        B = SkewHermitian(Matrix(A))
+        E = eigen(B)
+        @test E.vectors*Diagonal(E.values)*E.vectors' ≈ B
+    end
 end
