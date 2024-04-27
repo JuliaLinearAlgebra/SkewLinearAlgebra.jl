@@ -10,6 +10,6 @@ The `SkewLinearAlgebra` package provides specialized matrix types, optimized met
 
 In particular, it defines new `SkewHermitian` and `SkewHermTridiagonal` matrix types supporting optimized eigenvalue/eigenvector,
 Hessenberg factorization, and matrix exponential/trigonometric functions.  It also provides functions to compute the
-[Pfaffian](https://en.wikipedia.org/wiki/Pfaffian) of real skew-symmetric matrices, along with a Cholesky-like factorization.
+[Pfaffian](https://en.wikipedia.org/wiki/Pfaffian) of skew-symmetric matrices, along with a Cholesky-like factorization for real skew-symmetric matrices.
 
 See the [Documentation](https://julialinearalgebra.github.io/SkewLinearAlgebra.jl/dev/) for details.

@@ -386,6 +386,7 @@ end
 end
 
 @testset "pfaffian.jl" begin
+    # real skew-hermitian matrices
     for n in [1, 2, 3, 10, 11]
         A = skewhermitian(rand(-10:10,n,n) * 2)
         Abig = BigInt.(A.data)
@@ -401,6 +402,20 @@ end
         logpf, sign = logabspfaffian(S)
         @test pfaffian(S) ≈ sign * exp(logpf) ≈ sign * sqrt(det(Matrix(S)))
     end
+
+    # complex skew-symmetric matrices
+    # n=11 is a bit jinxed because of https://github.com/JuliaLang/julia/issues/54287
+    for n in [1, 2, 3, 10, 20]
+        A = rand((-10:10) .+ 1im * (-10:10)', n, n)
+        A = (A .- transpose(A)) ./ 2
+        Abig = Complex{Rational{BigInt}}.(A)
+        @test pfaffian(A) ≈ SkewLinearAlgebra.exactpfaffian(Abig)
+        @test pfaffian(A)^2 ≈ det(A) atol=√eps(Float64) * max(1, abs(det(A)))
+        if VERSION ≥ v"1.7" # for exact det of BigInt matrices
+            @test SkewLinearAlgebra.exactpfaffian(Abig)^2 == det(Abig)
+        end
+    end
+
     # issue #49
     @test pfaffian(big.([0 14 7 -10 0 10 0 -11; -14 0 -10 7 13 -9 -12 -13; -7 10 0 -4 6 -17 -1 18; 10 -7 4 0 -2 -4 0 11; 0 -13 -6 2 0 -8 -18 17; -10 9 17 4 8 0 -8 12; 0 12 1 0 18 8 0 0; 11 13 -18 -11 -17 -12 0 0])) == -119000
 

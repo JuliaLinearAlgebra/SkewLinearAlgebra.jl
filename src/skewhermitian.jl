@@ -82,7 +82,7 @@ Base.size(A::SkewHermitian) = size(A.data)
 Returns whether `A` is skew-Hermitian, i.e. whether `A == -A'`.
 """
 function isskewhermitian(A::AbstractMatrix{<:Number})
-    axes(A,1) == axes(A,2) || throw(ArgumentError("axes $(axes(A,1)) and $(axex(A,2)) do not match"))
+    axes(A,1) == axes(A,2) || throw(ArgumentError("axes $(axes(A,1)) and $(axes(A,2)) do not match"))
     @inbounds for i in axes(A,1)
         for j = firstindex(A, 1):i
             A[i,j] == -A[j,i]' || return false
@@ -92,6 +92,23 @@ function isskewhermitian(A::AbstractMatrix{<:Number})
 end
 isskewhermitian(A::SkewHermitian) = true
 isskewhermitian(a::Number) = a == -a'
+
+"""
+    isskewsymmetric(A)
+
+Returns whether `A` is skew-symmetric, i.e. whether `A == -transpose(A)`.
+"""
+function isskewsymmetric(A::AbstractMatrix{<:Number})
+    axes(A,1) == axes(A,2) || throw(ArgumentError("axes $(axes(A,1)) and $(axes(A,2)) do not match"))
+    @inbounds for i in axes(A,1)
+        for j = firstindex(A, 1):i
+            A[i,j] == -A[j,i] || return false
+        end
+    end
+    return true
+end
+isskewsymmetric(A::SkewHermitian{<:Real}) = true
+isskewsymmetric(a::Number) = iszero(a)
 
 """
     skewhermitian!(A)
