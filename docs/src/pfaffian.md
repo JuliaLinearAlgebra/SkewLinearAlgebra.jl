@@ -1,10 +1,10 @@
 # Pfaffian calculations
 
-A real skew-symmetrix matrix ``A = -A^T`` has a special property: its determinant is the square of a polynomial function of the
+A skew-symmetrix matrix ``A = -A^T`` has a special property: its determinant is the square of a polynomial function of the
 matrix entries, called the [Pfaffian](https://en.wikipedia.org/wiki/Pfaffian).   That is, ``\mathrm{det}(A) = \mathrm{Pf}(A)^2``, but
 knowing the Pfaffian itself (and its sign, which is lost in the determinant) is useful for a number of applications.
 
-We provide a function `pfaffian(A)` to compute the Pfaffian of a real skew-symmetric matrix `A`.
+We provide a function `pfaffian(A)` to compute the Pfaffian of a skew-symmetric matrix `A`.
 ```jl
 julia> using SkewLinearAlgebra, LinearAlgebra
 
@@ -49,7 +49,7 @@ julia> pfaffian!(BigInt[0 2 -7; -2 0 -8; 7 8 0])
 ```
 (Note that the Pfaffian is *always zero* for any *odd* size skew-symmetric matrix.)
 
-Since the computation of the pfaffian can easily overflow/underflow the maximum/minimum representable floating-point value, we also provide a function `logabspfaffian` (along with an in-place variant `logabspfaffian!`) that returns a tuple `(logpf, sign)` such
+Since the computation of the pfaffian can easily overflow/underflow the maximum/minimum representable floating-point value, we also provide a function `logabspfaffian` for real skew-symmetric matrices (along with an in-place variant `logabspfaffian!`) that returns a tuple `(logpf, sign)` such
 that the Pfaffian is `sign * exp(logpf)`.   (This is similar to the [`logabsdet`](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.logabsdet) function in Julia's `LinearAlgebra` library to compute the log of the determinant.)
 
 ```jl

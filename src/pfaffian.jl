@@ -51,7 +51,7 @@ end
 
 function exactpfaffian!(A::AbstractMatrix)
     LinearAlgebra.require_one_based_indexing(A)
-    isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
+    isskewsymmetric(A) || throw(ArgumentError("Pfaffian requires a skew-symmetric matrix"))
     return _exactpfaffian!(A)
 end
 exactpfaffian!(A::SkewHermitian) = _exactpfaffian!(A.data)
@@ -87,17 +87,59 @@ function _pfaffian!(A::SkewHermTridiagonal{<:Real})
     return pf
 end
 
-pfaffian!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})= _pfaffian!(A)
-pfaffian(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})= pfaffian!(copyeigtype(A))
+# Using the Parley-Reid algorithm from https://arxiv.org/abs/1102.3440 as implented
+# in https://github.com/KskAdch/TopologicalNumbers.jl/blob/42bda634d47aecb67cfcd495d97e0723b0e73a4f/src/pfaffian.jl#L332
+function _pfaffian!(A::AbstractMatrix{<:Complex})
+    n = size(A, 1)
+    isodd(n) && return zero(eltype(A))
+    tau = Array{eltype(A)}(undef, n - 2)
+    pf = one(eltype(A))
+    @inbounds for k in 1:2:n-1
+        tauk = @view tau[k:end]
+
+        # Pivot if neccessary
+        @views kp = k + argmax(abs.(A[k+1:end, k]))
+        if kp != k + 1
+            @inbounds @simd for l in k:n
+                A[k+1,l], A[kp,l] = A[kp,l], A[k+1,l]
+            end
+            @inbounds @simd for l in k:n
+                A[l,k+1], A[l,kp] = A[l,kp], A[l,k+1]
+            end
+            pf *= -1
+        end
+
+        # Apply Gauss transformation and update `pf`
+        @inbounds if A[k+1,k] != zero(eltype(A))
+            @inbounds @views tauk .= A[k,k+2:end] ./ A[k,k+1]
+            pf *= @inbounds A[k,k+1]
+            if k + 2 <= n
+                @inbounds for l1 in eachindex(tauk)
+                    @simd for l2 in eachindex(tauk)
+                        @fastmath A[k+1+l2,k+1+l1] +=
+                            tauk[l2] * A[k+1+l1,k+1] -
+                            tauk[l1] * A[k+1+l2,k+1]
+                    end
+                end
+            end
+        else
+            return zero(eltype(A)) # Pfaffian is zero if there is a zero on the super/subdiagonal
+        end
+    end
+
+    return pf
+end
+
+pfaffian!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}}) = _pfaffian!(A)
 
 """
     pfaffian(A)
 
-Returns the pfaffian of `A` where a is a real skew-Hermitian matrix.
-If `A` is not of type `SkewHermitian{<:Real}`, then `isskewhermitian(A)`
-is checked to ensure that `A == -A'`
+Returns the pfaffian of `A` where a is a  skew-symmetric matrix.
+If `A` is not of type `SkewHermitian{<:Real}`, then `isskewsymmetric(A)`
+is checked to ensure that `A == -transpose(A)`
 """
-pfaffian(A::AbstractMatrix{<:Real}) = pfaffian!(copyeigtype(A))
+pfaffian(A::AbstractMatrix) = pfaffian!(copyeigtype(A))
 
 """
     pfaffian!(A)
@@ -105,9 +147,16 @@ pfaffian(A::AbstractMatrix{<:Real}) = pfaffian!(copyeigtype(A))
 Similar to [`pfaffian`](@ref), but overwrites `A` in-place with intermediate calculations.
 """
 function pfaffian!(A::AbstractMatrix{<:Real})
-    isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
+    isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-symmetric matrix"))
     return _pfaffian!(SkewHermitian(A))
 end
+
+function pfaffian!(A::AbstractMatrix{<:Complex})
+    LinearAlgebra.require_one_based_indexing(A)
+    isskewsymmetric(A) || throw(ArgumentError("Pfaffian requires a skew-symmetric matrix"))
+    return _pfaffian!(A)
+end
+
 
 function _logabspfaffian!(A::SkewHermitian{<:Real})
     n = size(A, 1)
