@@ -100,21 +100,21 @@ function _pfaffian!(A::AbstractMatrix{<:Complex})
         # Pivot if neccessary
         @views kp = k + argmax(abs.(A[k+1:end, k]))
         if kp != k + 1
-            @inbounds @simd for l in k:n
+            @simd for l in k:n
                 A[k+1,l], A[kp,l] = A[kp,l], A[k+1,l]
             end
-            @inbounds @simd for l in k:n
+            @simd for l in k:n
                 A[l,k+1], A[l,kp] = A[l,kp], A[l,k+1]
             end
             pf *= -1
         end
 
         # Apply Gauss transformation and update `pf`
-        @inbounds if A[k+1,k] != zero(eltype(A))
-            @inbounds @views tauk .= A[k,k+2:end] ./ A[k,k+1]
-            pf *= @inbounds A[k,k+1]
+        if A[k+1,k] != zero(eltype(A))
+            @views tauk .= A[k,k+2:end] ./ A[k,k+1]
+            pf *= A[k,k+1]
             if k + 2 <= n
-                @inbounds for l1 in eachindex(tauk)
+                for l1 in eachindex(tauk)
                     @simd for l2 in eachindex(tauk)
                         @fastmath A[k+1+l2,k+1+l1] +=
                             tauk[l2] * A[k+1+l1,k+1] -
@@ -195,22 +195,22 @@ function _logabspfaffian!(A::AbstractMatrix{<:Complex})
         # Pivot if neccessary
         @views kp = k + argmax(Iterators.map(abs, A[k+1:end, k]))
         if kp != k + 1
-            @inbounds @simd for l in k:n
+            @simd for l in k:n
                 A[k+1,l], A[kp,l] = A[kp,l], A[k+1,l]
             end
-            @inbounds @simd for l in k:n
+            @simd for l in k:n
                 A[l,k+1], A[l,kp] = A[l,kp], A[l,k+1]
             end
             phase += π
         end
 
         # Apply Gauss transformation and update `pf`
-        @inbounds if A[k+1,k] != zero(eltype(A))
-            @inbounds @views tauk .= A[k,k+2:end] ./ A[k,k+1]
-            logpf += @inbounds log(abs(A[k,k+1]))
-            phase += @inbounds angle(A[k,k+1])
+        if A[k+1,k] != zero(eltype(A))
+            @views tauk .= A[k,k+2:end] ./ A[k,k+1]
+            logpf += log(abs(A[k,k+1]))
+            phase += angle(A[k,k+1])
             if k + 2 <= n
-                @inbounds for l1 in eachindex(tauk)
+                for l1 in eachindex(tauk)
                     @simd for l2 in eachindex(tauk)
                         @fastmath A[k+1+l2,k+1+l1] +=
                             tauk[l2] * A[k+1+l1,k+1] -
