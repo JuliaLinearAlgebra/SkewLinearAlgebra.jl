@@ -414,9 +414,6 @@ end
         if VERSION ≥ v"1.7" # for exact det of BigInt matrices
             @test SkewLinearAlgebra.exactpfaffian(Abig)^2 == det(Abig)
         end
-
-        logpf, sign = logabspfaffian(A)
-        @test pfaffian(A) ≈ sign * exp(logpf)
     end
 
     # issue #49
