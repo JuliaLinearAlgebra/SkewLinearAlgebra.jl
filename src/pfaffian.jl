@@ -171,6 +171,7 @@ function _logabspfaffian!(A::SkewHermitian{<:Real})
     end
     return logpf, sgn*sign(det(H.Q))
 end
+
 function _logabspfaffian!(A::SkewHermTridiagonal{<:Real})
     n = size(A, 1)
     isodd(n) && return convert(eltype(A.ev), -Inf), zero(eltype(A.ev))
@@ -182,18 +183,62 @@ function _logabspfaffian!(A::SkewHermTridiagonal{<:Real})
     end
     return logpf, sgn
 end
+
+function _logabspfaffian!(A::AbstractMatrix{<:Complex})
+    n = size(A, 1)
+    isodd(n) && return convert(real(eltype(A)), -Inf), zero(eltype(A))
+    tau = Array{eltype(A)}(undef, n - 2)
+    logpf = zero(real(eltype(A)))
+    phase = zero(real(eltype(A)))
+    @inbounds for k in 1:2:n-1
+        tauk = @view tau[k:end]
+
+        # Pivot if neccessary
+        @views kp = k + argmax(Iterators.map(abs, A[k+1:end, k]))
+        if kp != k + 1
+            @inbounds @simd for l in k:n
+                A[k+1,l], A[kp,l] = A[kp,l], A[k+1,l]
+            end
+            @inbounds @simd for l in k:n
+                A[l,k+1], A[l,kp] = A[l,kp], A[l,k+1]
+            end
+            phase += π
+        end
+
+        # Apply Gauss transformation and update `pf`
+        @inbounds if A[k+1,k] != zero(eltype(A))
+            @inbounds @views tauk .= A[k,k+2:end] ./ A[k,k+1]
+            logpf += @inbounds log(abs(A[k,k+1]))
+            phase += @inbounds angle(A[k,k+1])
+            if k + 2 <= n
+                @inbounds for l1 in eachindex(tauk)
+                    @simd for l2 in eachindex(tauk)
+                        @fastmath A[k+1+l2,k+1+l1] +=
+                            tauk[l2] * A[k+1+l1,k+1] -
+                            tauk[l1] * A[k+1+l2,k+1]
+                    end
+                end
+            end
+        else
+            return convert(real(eltype(A)), -Inf), zero(eltype(A))
+        end
+    end
+
+    return logpf, cis(phase)
+end
+
 logabspfaffian!(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})= _logabspfaffian!(A)
 logabspfaffian(A::Union{SkewHermitian{<:Real},SkewHermTridiagonal{<:Real}})= logabspfaffian!(copyeigtype(A))
 
 """
     logabspfaffian(A)
 
-Returns a tuple `(log|Pf A|, sign)`, with the log of the absolute value of the pfaffian of `A` as first output
-and the sign (±1) of the pfaffian as second output. A must be a real skew-Hermitian matrix.
-If `A` is not of type `SkewHermitian{<:Real}`, then `isskewhermitian(A)`
-is checked to ensure that `A == -A'`
+Returns a tuple `(log|pf(A)|, sign)`, with the log of the absolute value of the pfaffian of
+`A` as first output and the sign of the pfaffian as second output such that
+`pfaffian(A) ≈ sign * exp(log|pf(A)|)`. `A` must be a skew-symmetric matrix. If `A` is not of type
+`SkewHermitian{<:Real}`, then `isskewsymmetric(A)` is checked to ensure that `A == -transpose(A)`
 """
-logabspfaffian(A::AbstractMatrix{<:Real}) = logabspfaffian!(copyeigtype(A))
+logabspfaffian(A::AbstractMatrix) = logabspfaffian!(copyeigtype(A))
 
 
 """
@@ -204,4 +249,10 @@ Similar to [`logabspfaffian`](@ref), but overwrites `A` in-place with intermedia
 function logabspfaffian!(A::AbstractMatrix{<:Real})
     isskewhermitian(A) || throw(ArgumentError("Pfaffian requires a skew-Hermitian matrix"))
     return _logabspfaffian!(SkewHermitian(A))
+end
+
+function logabspfaffian!(A::AbstractMatrix{<:Complex})
+    LinearAlgebra.require_one_based_indexing(A)
+    isskewsymmetric(A) || throw(ArgumentError("Pfaffian requires a skew-symmetric matrix"))
+    return _logabspfaffian!(A)
 end
