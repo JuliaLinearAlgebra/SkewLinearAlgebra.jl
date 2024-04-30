@@ -188,8 +188,7 @@ function _logabspfaffian!(A::AbstractMatrix{<:Complex})
     n = size(A, 1)
     isodd(n) && return convert(real(eltype(A)), -Inf), zero(eltype(A))
     tau = Array{eltype(A)}(undef, n - 2)
-    logpf = zero(real(eltype(A)))
-    phase = zero(real(eltype(A)))
+    logpf = phase = zero(real(eltype(A)))
     @inbounds for k in 1:2:n-1
         tauk = @view tau[k:end]
 
