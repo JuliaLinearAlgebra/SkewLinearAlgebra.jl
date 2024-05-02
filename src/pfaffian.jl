@@ -199,7 +199,7 @@ function _logabspfaffian!(A::AbstractMatrix{<:Complex})
         tauk = @view tau[k:end]
 
         # Pivot if neccessary
-        @views kp = k + argmax(Iterators.map(abs, A[k+1:end, k]))
+        @views kp = k + argmaxabs(A[k+1:end, k])
         if kp != k + 1
             @simd for l in k:n
                 A[k+1,l], A[kp,l] = A[kp,l], A[k+1,l]
