@@ -8,6 +8,12 @@ else
     exactdiv(a::Integer, b::Integer) = div(a, b)
 end
 
+if VERSION ≥ v"1.7"
+    argmaxabs(a) = argmax(Iterators.map(abs, a))
+else
+    argmaxabs(a) = argmax(abs.(a))
+end
+
 # in-place O(n³) algorithm to compute the exact Pfaffian of
 # a skew-symmetric matrix over integers (or potentially any ring supporting exact division).
 #
@@ -98,7 +104,7 @@ function _pfaffian!(A::AbstractMatrix{<:Complex})
         tauk = @view tau[k:end]
 
         # Pivot if neccessary
-        @views kp = k + argmax(abs.(A[k+1:end, k]))
+        @views kp = k + argmaxabs(A[k+1:end, k])
         if kp != k + 1
             @simd for l in k:n
                 A[k+1,l], A[kp,l] = A[kp,l], A[k+1,l]
