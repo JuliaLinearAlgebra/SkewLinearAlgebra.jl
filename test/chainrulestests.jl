@@ -29,8 +29,13 @@ function FiniteDifferences.to_vec(x::SkewHermitian)
     return v, from_vec
 end
 
-m = 10
-A = skewhermitian(rand(m, m))
+@testset "automatic differentiation" begin
+    m = 10
+    inds = [1,2]
+    A = skewhermitian(rand(m, m))
 
-test_rrule(pfaffian, A)
+    test_rrule(SkewHermitian, A )#test constructor
 
+    test_rrule(pfaffian, A)#test pfaffian
+    test_rrule(pfaffian, SkewHermitian(A[inds, inds]))#test pfaffian of submatrix
+end
