@@ -1,5 +1,9 @@
 module SkewLinearAlgebraChainRulesCoreExt
 
+using SkewLinearAlgebra
+using ChainRulesCore
+using ChainRules
+
 function ChainRulesCore.rrule(::Type{SkewHermitian}, val) 
     y = SkewHermitian(val)
     function Foo_pb(ΔFoo) 
