@@ -34,6 +34,7 @@ include("eigen.jl")
 include("exp.jl")
 include("cholesky.jl")
 include("pfaffian.jl")
+include("chainrules.jl")
 end
 
 
