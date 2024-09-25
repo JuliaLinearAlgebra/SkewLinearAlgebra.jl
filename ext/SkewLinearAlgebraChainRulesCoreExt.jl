@@ -8,7 +8,11 @@ using ChainRulesCore
 function ChainRulesCore.rrule(::Type{SkewHermitian}, val) 
     y = SkewHermitian(val)
     function Foo_pb(ΔFoo) 
-        return (NoTangent(), unthunk(ΔFoo).data)
+        if isa(ΔFoo, SkewHermitian)
+            return NoTangent(), unthunk(ΔFoo).data
+        else
+            return (NoTangent(), unthunk(ΔFoo))
+        end
     end
     return y, Foo_pb
 end
