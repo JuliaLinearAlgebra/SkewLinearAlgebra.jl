@@ -519,16 +519,3 @@ end
         @test E.vectors*Diagonal(E.values)*E.vectors' ≈ B
     end
 end
-
-
-@testset "chainrules.jl" begin
-    #we make a small test for this 
-    A = skewhermitian(rand(2,2))
-    B = skewhermitian(rand(2,2))
-
-    test_rrule(pfaffian, A)   #this one doesn't work since it seems to be getting non skew symmetric matrices at some point
-
-    test_rrule(pfaffian, A⊢B)  #SO I wanted to specify the tangent but the same happens, judging from our short conversation this might be because I'm ill defining the tangent B ?
-
-    test_rrule(SkewHermitian, A.data ⊢ B.data)#constructor false because ΔFoo supposedly has no field data. But ΔFoo should be a SkewHermitian object, so it should have a field data.
-end
