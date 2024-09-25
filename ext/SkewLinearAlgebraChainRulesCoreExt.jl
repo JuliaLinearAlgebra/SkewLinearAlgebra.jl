@@ -1,8 +1,9 @@
 module SkewLinearAlgebraChainRulesCoreExt
 
+using LinearAlgebra
 using SkewLinearAlgebra
 using ChainRulesCore
-using ChainRules
+
 
 function ChainRulesCore.rrule(::Type{SkewHermitian}, val) 
     y = SkewHermitian(val)
