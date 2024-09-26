@@ -23,8 +23,8 @@ function ChainRulesCore.rrule(::typeof(pfaffian), A::SkewHermitian)
     return Ω, pfaffian_pullback
 end
 
-function ChainRulesCore.ProjectTo{<:SkewHermitian}(x::AbstractArray)
-    return skewhermitian(x)
+function ChainRulesCore.ProjectTo{<:SkewHermitian}(A::AbstractArray)
+    return skewhermitian(A)
 end
 
 end
