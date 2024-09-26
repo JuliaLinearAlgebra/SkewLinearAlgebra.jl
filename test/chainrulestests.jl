@@ -36,6 +36,6 @@ end
 
     test_rrule(SkewHermitian, A) # test constructor
 
-    test_rrule(pfaffian, A)#test pfaffian
-    test_rrule(pfaffian, SkewHermitian(A[inds, inds]))#test pfaffian of submatrix
+    test_rrule(pfaffian, A) # test pfaffian
+    test_rrule(pfaffian, SkewHermitian(A[inds, inds])) # test pfaffian of submatrix
 end
