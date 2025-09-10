@@ -1,6 +1,6 @@
 # SkewLinearAlgebra
 
-The `SkewLinearAlgebra` package provides specialized matrix types, optimized methods of `LinearAlgebra` functions, and a few entirely new functions for dealing with linear algebra on [skew-Hermitian matrices](https://en.wikipedia.org/wiki/Skew-Hermitian_matrix), especially for the case of [real skew-symmetric matrices](https://en.wikipedia.org/wiki/Skew-symmetric_matrix).
+The `SkewLinearAlgebra` package provides specialized matrix types, optimized methods of `LinearAlgebra` functions, and a few entirely new functions for dealing with linear algebra on [skew-Hermitian matrices](https://en.wikipedia.org/wiki/Skew-Hermitian_matrix) (also called **anti-Hermitian**), especially for the case of [real skew-symmetric matrices](https://en.wikipedia.org/wiki/Skew-symmetric_matrix) (also called **anti-symmetric**).
 
 ## Introduction
 
