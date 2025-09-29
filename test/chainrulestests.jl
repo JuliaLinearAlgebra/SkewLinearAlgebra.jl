@@ -7,24 +7,17 @@ using FiniteDifferences
 ChainRulesTestUtils.rand_tangent(rng::AbstractRNG, x::SkewHermitian) = skewhermitian!(rand(rng, eltype(x), size(x)...))
 
 # Required to make finite differences behave correctly
-function FiniteDifferences.to_vec(x::SkewHermitian)
-    m = size(x, 1)
-    v = Vector{eltype(x)}(undef, m * (m - 1) ÷ 2)
-    k = 1
-    for i in 2:m, j in 1:i-1
-        @inbounds v[k] = x[i, j]
-        k += 1
-    end
-
+function FiniteDifferences.to_vec(A::SkewHermitian)
+    m = size(A, 1)
+    v = [A[i,j] for i in 2:m for j in 1:i-1]
     function from_vec(v)
-        y = zero(x)
+        B = zero(A)
         k = 1
         for i in 2:m, j in 1:i-1
-            @inbounds y[i, j] = v[k]
-            @inbounds y[j, i] = -v[k]
+            @inbounds B[i,j] = v[k]
             k += 1
         end
-        return y
+        return B
     end
     return v, from_vec
 end
