@@ -312,7 +312,7 @@ function Base.:\(B::T,A::SkewHermTridiagonal) where {T<:Complex}
     end
 end
 
-function Base. ==(A::SkewHermTridiagonal, B::SkewHermTridiagonal)
+function Base.:(==)(A::SkewHermTridiagonal, B::SkewHermTridiagonal)
     if A.dvim !== nothing && B.dvim!== nothing
         return (A.ev==B.ev) &&(A.dvim==B.dvim)
     elseif A.dvim === nothing && B.dvim === nothing
