@@ -12,6 +12,7 @@ export
     SkewHermitian,
     SkewHermTridiagonal,
     SkewCholesky,
+    SkewCholeskyNoPivot,
     JMatrix,
     #functions
     isskewhermitian,

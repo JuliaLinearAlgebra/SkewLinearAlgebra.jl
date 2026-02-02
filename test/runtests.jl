@@ -442,9 +442,17 @@ end
         end
         C = skewchol(A)
         @test transpose(C.R) * C.J *C.R ≈ A.data[C.p, C.p]
+        C = skewchol(A, RowMaximum())
+        @test transpose(C.R) * C.J *C.R ≈ A.data[C.p, C.p]
+        C = skewchol(A, NoPivot())
+        @test transpose(C.R) * C.J *C.R ≈ A.data
         B = Matrix(A)
         C = skewchol(B)
         @test transpose(C.R)* C.J *C.R ≈ B[C.p, C.p]
+        C = skewchol(B, RowMaximum())
+        @test transpose(C.R)* C.J *C.R ≈ B[C.p, C.p]
+        C = skewchol(B, NoPivot())
+        @test transpose(C.R)* C.J *C.R ≈ B
     end
 end
 
